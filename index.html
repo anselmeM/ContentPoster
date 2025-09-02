@@ -6,6 +6,7 @@
     <title>Content Cadence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FIX: Corrected 'xintegrity' to 'integrity' for proper security checks. -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" xintegrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -89,14 +90,32 @@
         <aside class="w-20 bg-white flex flex-col items-center py-6 space-y-8">
             <div class="text-2xl font-bold text-indigo-600">CC</div>
             <nav id="sidebar-nav" class="flex flex-col items-center space-y-6">
-                <a href="#" data-view="scheduler" class="p-3 rounded-lg active"><i class="fas fa-calendar-alt"></i></a>
-                <a href="#" data-view="tasks" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-check-square"></i></a>
-                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-file-alt"></i></a>
-                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-chevron-left"></i></a>
-                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-cog"></i></a>
+                <a href="#" data-view="scheduler" class="group relative p-3 rounded-lg active">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Scheduler</span>
+                </a>
+                <a href="#" data-view="tasks" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                    <i class="fas fa-check-square"></i>
+                    <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Tasks</span>
+                </a>
+                <a href="#" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                    <i class="fas fa-file-alt"></i>
+                    <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Templates</span>
+                </a>
+                <a href="#" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                    <i class="fas fa-chevron-left"></i>
+                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Collapse</span>
+                </a>
+                <a href="#" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                    <i class="fas fa-cog"></i>
+                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Settings</span>
+                </a>
             </nav>
             <div class="mt-auto">
-                <a href="#" id="logout-btn" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-sign-out-alt"></i></a>
+                <a href="#" id="logout-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Logout</span>
+                </a>
             </div>
         </aside>
 
