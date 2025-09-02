@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduled Post UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" xintegrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .main-container {
+            background-color: #F4F7FE;
+        }
+        .post-card .actions, .task-item .actions {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .post-card:hover .actions, .task-item:hover .actions {
+            opacity: 1;
+        }
+        .calendar-day {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .calendar-day.selected {
+            background-color: #4f46e5 !important;
+            color: white !important;
+            border-radius: 9999px;
+        }
+        .platform-nav a.active {
+            color: #1f2937;
+            font-weight: 600;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 4px;
+        }
+        #sidebar-nav a.active {
+            background-color: #EEF2FF;
+            color: #4338CA;
+        }
+    </style>
+</head>
+<body class="main-container">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-20 bg-white flex flex-col items-center py-6 space-y-8">
+            <div class="text-2xl font-bold text-indigo-600">S</div>
+            <nav id="sidebar-nav" class="flex flex-col items-center space-y-6">
+                <a href="#" data-view="scheduler" class="p-3 rounded-lg active"><i class="fas fa-calendar-alt"></i></a>
+                <a href="#" data-view="tasks" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-check-square"></i></a>
+                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-file-alt"></i></a>
+                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-chevron-left"></i></a>
+                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-cog"></i></a>
+            </nav>
+            <div class="mt-auto">
+                <a href="#" class="text-gray-400 hover:text-indigo-600 p-3 rounded-lg"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <!-- Left Panel -->
+        <div class="w-80 bg-white p-6 border-r border-gray-200 flex flex-col">
+            <div class="flex items-center space-x-3 mb-8">
+                <img src="https://placehold.co/40x40/E0E7FF/4F46E5?text=CW" alt="User Avatar" class="rounded-full">
+                <div>
+                    <p class="text-sm text-gray-500">Hello 👋</p>
+                    <p class="font-semibold text-gray-800">Cameron Williamson</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-indigo-100 text-indigo-800 p-4 rounded-lg"><p id="stat-completed" class="text-3xl font-bold">0</p><p class="text-sm">Completed</p></div>
+                <div class="bg-gray-100 text-gray-800 p-4 rounded-lg"><p id="stat-total" class="text-3xl font-bold">0</p><p class="text-sm">Total Post</p></div>
+                <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg"><p id="stat-in-progress" class="text-3xl font-bold">0</p><p class="text-sm">In progress</p></div>
+                <div class="bg-red-100 text-red-800 p-4 rounded-lg"><p id="stat-out-of-scheduled" class="text-3xl font-bold">0</p><p class="text-sm">Out of scheduled</p></div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="mb-6">
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 id="calendar-month-year" class="font-semibold text-gray-800"></h3>
+                    <div class="flex space-x-2">
+                        <button id="prev-month" class="text-gray-500 hover:text-gray-800">&lt;</button>
+                        <button id="next-month" class="text-gray-500 hover:text-gray-800">&gt;</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 text-center text-sm text-gray-500">
+                    <div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 text-center text-sm mt-2">
+                    <!-- Calendar days will be generated by JS -->
+                </div>
+            </div>
+
+            <!-- Post Stats -->
+            <div class="mt-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-800">Post Stats</h3>
+                    <p class="text-sm text-gray-500">January 2023</p>
+                </div>
+                <div><canvas id="postStatsChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-y-auto">
+            <!-- SCHEDULER VIEW -->
+            <div id="scheduler-view">
+                <header class="flex justify-between items-center mb-8">
+                    <div class="platform-nav flex items-center space-x-6">
+                        <a href="#" data-platform="All" class="active">All</a>
+                        <a href="#" data-platform="instagram" class="text-gray-500 hover:text-gray-800">Instagram</a>
+                        <a href="#" data-platform="linkedin" class="text-gray-500 hover:text-gray-800">LinkedIn</a>
+                        <a href="#" data-platform="dribble" class="text-gray-500 hover:text-gray-800">Dribble</a>
+                        <a href="#" data-platform="facebook" class="text-gray-500 hover:text-gray-800">Facebook</a>
+                        <button id="add-post-btn" class="text-indigo-600 font-semibold">+ Add</button>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-gray-500 hover:text-gray-800"><i class="fas fa-search"></i></button>
+                        <button class="text-gray-500 hover:text-gray-800"><i class="fas fa-bell"></i></button>
+                        <img src="https://placehold.co/32x32/E0E7FF/4F46E5?text=CW" alt="User Avatar" class="rounded-full">
+                    </div>
+                </header>
+
+                <div>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 id="main-view-title" class="text-2xl font-bold text-gray-800">Scheduled Post</h2>
+                        <div id="main-view-controls" class="flex items-center space-x-4">
+                             <button id="clear-filter-btn" class="hidden px-3 py-1 bg-red-100 text-red-700 text-sm rounded-lg">Clear Filter</button>
+                        </div>
+                    </div>
+                    <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
+                </div>
+            </div>
+
+            <!-- TASKS VIEW -->
+            <div id="tasks-view" class="hidden">
+                 <header class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">My Tasks</h2>
+                     <div class="flex items-center space-x-4">
+                        <button class="text-gray-500 hover:text-gray-800"><i class="fas fa-search"></i></button>
+                        <img src="https://placehold.co/32x32/E0E7FF/4F46E5?text=CW" alt="User Avatar" class="rounded-full">
+                    </div>
+                </header>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <form id="add-task-form" class="flex items-center mb-6">
+                        <input type="text" id="new-task-input" placeholder="Add a new task..." class="w-full border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 mr-4" required>
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 whitespace-nowrap">Add Task</button>
+                    </form>
+                    <div id="task-list" class="space-y-4">
+                        <!-- Tasks will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Add/Edit Post Modal -->
+    <div id="post-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 id="modal-title" class="text-2xl font-bold mb-6">Add New Post</h2>
+            <form id="post-form">
+                <input type="hidden" id="post-id">
+                <div class="mb-4"><label for="post-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label><input type="text" id="post-title" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" required></div>
+                <div class="mb-4"><label for="post-image" class="block text-sm font-medium text-gray-700 mb-1">Image URL</label><input type="url" id="post-image" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://placehold.co/..." required></div>
+                <div class="mb-4"><label for="post-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label><input type="date" id="post-date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" required></div>
+                <div class="mb-4"><label for="post-time" class="block text-sm font-medium text-gray-700 mb-1">Time</label><input type="time" id="post-time" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" required></div>
+                <div class="mb-6"><label class="block text-sm font-medium text-gray-700 mb-2">Platform</label><div class="flex space-x-4"><label class="flex items-center"><input type="radio" name="platform" value="linkedin" class="mr-2"> LinkedIn</label><label class="flex items-center"><input type="radio" name="platform" value="instagram" class="mr-2"> Instagram</label><label class="flex items-center"><input type="radio" name="platform" value="dribble" class="mr-2"> Dribble</label></div></div>
+                <div class="flex justify-end space-x-4"><button type="button" id="cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button><button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Post</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA & STATE ---
+            const today = new Date();
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            
+            let posts = [
+                { id: 1, date: formatDate(new Date(new Date().setDate(today.getDate() - 3))), time: '10:00', title: 'Healthy Breakfast Ideas', image: 'https://placehold.co/200x100/A7F3D0/14532D?text=Breakfast', platform: 'instagram', completed: true },
+                { id: 2, date: formatDate(new Date(new Date().setDate(today.getDate() - 2))), time: '11:00', title: 'Remote Work Tips', image: 'https://placehold.co/200x100/DBEAFE/1E40AF?text=Work+Tips', platform: 'linkedin', completed: false },
+                { id: 3, date: formatDate(new Date(new Date().setDate(today.getDate() + 1))), time: '11:00', title: 'New Music App UI', image: 'https://placehold.co/200x100/1F2937/F9FAFB?text=Music+App', platform: 'dribble', completed: false },
+                { id: 4, date: formatDate(new Date(new Date().setDate(today.getDate() + 2))), time: '09:00', title: 'Telemedicine Advancements', image: 'https://placehold.co/200x100/D1FAE5/065F46?text=Healthcare', platform: 'linkedin', completed: false },
+            ];
+            let tasks = [
+                { id: 1, text: 'Draft blog post for Q1 campaign', completed: true },
+                { id: 2, text: 'Schedule next week\'s social media posts', completed: false },
+                { id: 3, text: 'Review and approve ad creatives', completed: false },
+            ];
+
+            let currentDate = new Date(); // Start calendar on current date
+            let selectedDate = null;
+            let selectedPlatform = 'All';
+
+            // --- DOM ELEMENTS ---
+            const schedulerView = document.getElementById('scheduler-view');
+            const tasksView = document.getElementById('tasks-view');
+            const sidebarNav = document.getElementById('sidebar-nav');
+            const postsGrid = document.getElementById('posts-grid');
+            const modal = document.getElementById('post-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const addPostBtn = document.getElementById('add-post-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const postForm = document.getElementById('post-form');
+            const postIdInput = document.getElementById('post-id');
+            const postTitleInput = document.getElementById('post-title');
+            const postImageInput = document.getElementById('post-image');
+            const postDateInput = document.getElementById('post-date');
+            const postTimeInput = document.getElementById('post-time');
+            const calendarGrid = document.getElementById('calendar-grid');
+            const calendarMonthYear = document.getElementById('calendar-month-year');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            const platformNav = document.querySelector('.platform-nav');
+            const mainViewTitle = document.getElementById('main-view-title');
+            const clearFilterBtn = document.getElementById('clear-filter-btn');
+            const taskList = document.getElementById('task-list');
+            const addTaskForm = document.getElementById('add-task-form');
+            const newTaskInput = document.getElementById('new-task-input');
+            // Stat elements
+            const statCompleted = document.getElementById('stat-completed');
+            const statTotal = document.getElementById('stat-total');
+            const statInProgress = document.getElementById('stat-in-progress');
+            const statOutOfScheduled = document.getElementById('stat-out-of-scheduled');
+
+
+            // --- FUNCTIONS ---
+            
+            const updateStats = () => {
+                const now = new Date();
+                
+                const totalPosts = posts.length;
+                const completedPosts = posts.filter(p => p.completed).length;
+                
+                const inProgressPosts = posts.filter(p => {
+                    const postDate = new Date(`${p.date}T${p.time}`);
+                    return !p.completed && postDate > now;
+                }).length;
+                
+                const outOfScheduledPosts = posts.filter(p => {
+                    const postDate = new Date(`${p.date}T${p.time}`);
+                    return !p.completed && postDate < now;
+                }).length;
+
+                statCompleted.textContent = completedPosts;
+                statTotal.textContent = totalPosts;
+                statInProgress.textContent = inProgressPosts;
+                statOutOfScheduled.textContent = outOfScheduledPosts;
+            };
+
+            // --- VIEW SWITCHING ---
+            const handleViewSwitch = (e) => {
+                e.preventDefault();
+                const link = e.target.closest('a');
+                if (!link || !link.dataset.view) return;
+                const view = link.dataset.view;
+                sidebarNav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+                if (view === 'scheduler') {
+                    schedulerView.classList.remove('hidden');
+                    tasksView.classList.add('hidden');
+                } else if (view === 'tasks') {
+                    schedulerView.classList.add('hidden');
+                    tasksView.classList.remove('hidden');
+                    renderTasks();
+                }
+            };
+            
+            // --- TASK MANAGEMENT ---
+            const renderTasks = () => {
+                taskList.innerHTML = '';
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `<p class="text-gray-500 text-center">No tasks yet. Add one above!</p>`;
+                    return;
+                }
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'task-item flex items-center justify-between p-3 border-b border-gray-200';
+                    taskItem.dataset.id = task.id;
+                    taskItem.innerHTML = `<div class="flex items-center"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-4 toggle-task" ${task.completed ? 'checked' : ''}><span class="task-text ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${task.text}</span></div><div class="actions"><button class="delete-task text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button></div>`;
+                    taskList.appendChild(taskItem);
+                });
+            };
+            const handleAddTask = (e) => {
+                e.preventDefault();
+                const text = newTaskInput.value.trim();
+                if (text) {
+                    tasks.push({ id: Date.now(), text, completed: false });
+                    newTaskInput.value = '';
+                    renderTasks();
+                }
+            };
+            const handleTaskListClick = (e) => {
+                 const taskId = e.target.closest('.task-item')?.dataset.id;
+                 if (!taskId) return;
+                 if (e.target.classList.contains('toggle-task')) {
+                     const task = tasks.find(t => t.id == taskId);
+                     task.completed = !task.completed;
+                     renderTasks();
+                 }
+                 if (e.target.closest('.delete-task')) {
+                     tasks = tasks.filter(t => t.id != taskId);
+                     renderTasks();
+                 }
+            };
+            
+            // --- SCHEDULER FUNCTIONS ---
+            const renderPosts = () => {
+                let filteredPosts = [...posts];
+                if (selectedPlatform !== 'All') { filteredPosts = filteredPosts.filter(p => p.platform === selectedPlatform); }
+                postsGrid.innerHTML = '';
+                postsGrid.className = 'grid gap-6';
+
+                if (selectedDate) {
+                    filteredPosts = filteredPosts.filter(p => p.date === selectedDate);
+                    postsGrid.classList.add('grid-cols-1');
+                    mainViewTitle.textContent = `Posts for ${new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
+                    clearFilterBtn.classList.remove('hidden');
+                    if (filteredPosts.length > 0) { filteredPosts.forEach(post => postsGrid.appendChild(createPostCard(post)));
+                    } else { postsGrid.innerHTML = `<div class="text-center text-gray-500 col-span-full">No posts scheduled for this day.</div>`; }
+                } else {
+                    postsGrid.classList.add('grid-cols-1', 'md:grid-cols-3', 'lg:grid-cols-5');
+                    mainViewTitle.textContent = 'Scheduled Post';
+                    clearFilterBtn.classList.add('hidden');
+                    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                    daysOfWeek.forEach((day, index) => {
+                        const dayColumn = document.createElement('div');
+                        dayColumn.className = 'space-y-4';
+                        // Simple day matching for demo purposes
+                        const postsForDay = filteredPosts.filter(p => {
+                            const postDay = new Date(p.date + 'T00:00:00').getUTCDay();
+                            // Match Monday (1) to index 0, Tuesday (2) to index 1, etc. Sunday (0) is filtered out in this view.
+                            return postDay === index + 1;
+                        });
+                        dayColumn.innerHTML = `<div class="text-center"><p class="font-semibold">${day}</p><p class="text-sm text-gray-500">${postsForDay.length} Post${postsForDay.length !== 1 ? 's' : ''}</p></div>`;
+                        if (postsForDay.length > 0) { postsForDay.forEach(post => dayColumn.appendChild(createPostCard(post)));
+                        } else { dayColumn.innerHTML += `<div class="text-center text-sm text-gray-400 p-4 border-2 border-dashed rounded-lg">No posts</div>`; }
+                        postsGrid.appendChild(dayColumn);
+                    });
+                }
+            };
+            const createPostCard = (post) => {
+                const postCard = document.createElement('div');
+                postCard.className = 'bg-white p-4 rounded-lg shadow-sm relative post-card';
+                postCard.dataset.id = post.id;
+                let platformIcon = '';
+                if (post.platform === 'linkedin') platformIcon = `<span class="w-5 h-5 bg-blue-500 rounded-full text-white flex items-center justify-center text-xs"><i class="fab fa-linkedin-in"></i></span>`;
+                else if (post.platform === 'instagram') platformIcon = `<span class="w-5 h-5 bg-pink-500 rounded-full"></span>`;
+                else if (post.platform === 'dribble') platformIcon = `<span class="w-5 h-5 bg-purple-500 rounded-full"></span>`;
+                postCard.innerHTML = `<div class="actions absolute top-2 right-2 flex space-x-2"><button class="edit-btn text-gray-500 hover:text-indigo-600" data-id="${post.id}"><i class="fas fa-pencil-alt fa-xs"></i></button><button class="delete-btn text-gray-500 hover:text-red-600" data-id="${post.id}"><i class="fas fa-trash-alt fa-xs"></i></button></div><img src="${post.image}" alt="${post.title}" class="rounded-lg mb-3 w-full h-24 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/200x100/cccccc/ffffff?text=Error';"><h4 class="font-semibold mb-1 truncate">${post.title}</h4><p class="text-sm text-gray-500 mb-2"><i class="far fa-clock mr-1"></i> ${post.time}</p><div class="flex items-center space-x-2">${platformIcon}</div>`;
+                return postCard;
+            };
+            const renderCalendar = () => {
+                calendarGrid.innerHTML = '';
+                const year = currentDate.getFullYear(); const month = currentDate.getMonth();
+                calendarMonthYear.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${year}`;
+                const firstDayOfMonth = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const startOffset = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1;
+                for (let i = 0; i < startOffset; i++) { calendarGrid.appendChild(document.createElement('div')); }
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'py-2 calendar-day'; dayEl.textContent = day;
+                    const dayDate = new Date(year, month, day); dayEl.dataset.date = formatDate(dayDate);
+                    if (dayEl.dataset.date === selectedDate) { dayEl.classList.add('selected'); }
+                    calendarGrid.appendChild(dayEl);
+                }
+            };
+            const openModal = (mode, post = null) => {
+                postForm.reset();
+                if (mode === 'edit' && post) {
+                    modalTitle.textContent = 'Edit Post'; postIdInput.value = post.id; postTitleInput.value = post.title; postImageInput.value = post.image; postDateInput.value = post.date; postTimeInput.value = post.time; postForm.querySelector(`input[name="platform"][value="${post.platform}"]`).checked = true;
+                } else {
+                    modalTitle.textContent = 'Add New Post'; postIdInput.value = '';
+                }
+                modal.classList.remove('hidden');
+            };
+            const closeModal = () => modal.classList.add('hidden');
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                const id = postIdInput.value; const platformInput = postForm.querySelector('input[name="platform"]:checked');
+                const postData = { title: postTitleInput.value, image: postImageInput.value, date: postDateInput.value, time: postTimeInput.value, platform: platformInput ? platformInput.value : 'instagram', completed: false };
+                if (id) { const postIndex = posts.findIndex(p => p.id == id); if (postIndex > -1) posts[postIndex] = { ...posts[postIndex], ...postData };
+                } else { postData.id = Date.now(); posts.push(postData); }
+                renderPosts(); closeModal(); updateStats();
+            };
+            const handleGridClick = (e) => {
+                const editButton = e.target.closest('.edit-btn'); if (editButton) { const postToEdit = posts.find(p => p.id == editButton.dataset.id); if (postToEdit) openModal('edit', postToEdit); }
+                const deleteButton = e.target.closest('.delete-btn'); if (deleteButton) { posts = posts.filter(p => p.id != deleteButton.dataset.id); renderPosts(); updateStats(); }
+            };
+            const handleCalendarClick = (e) => {
+                const dayEl = e.target.closest('.calendar-day'); if (dayEl && dayEl.dataset.date) { selectedDate = dayEl.dataset.date; renderCalendar(); renderPosts(); }
+            };
+            const handlePlatformNavClick = (e) => {
+                e.preventDefault(); const link = e.target.closest('a'); if (link && link.dataset.platform) { selectedPlatform = link.dataset.platform; platformNav.querySelectorAll('a').forEach(a => a.classList.remove('active', 'text-gray-800', 'font-semibold', 'border-b-2', 'border-indigo-600')); link.classList.add('active', 'text-gray-800', 'font-semibold', 'border-b-2', 'border-indigo-600'); renderPosts(); }
+            };
+            const handleClearFilter = () => { selectedDate = null; renderCalendar(); renderPosts(); };
+
+            // --- EVENT LISTENERS ---
+            sidebarNav.addEventListener('click', handleViewSwitch);
+            addPostBtn.addEventListener('click', () => openModal('add'));
+            cancelBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            postForm.addEventListener('submit', handleFormSubmit);
+            postsGrid.addEventListener('click', handleGridClick);
+            calendarGrid.addEventListener('click', handleCalendarClick);
+            prevMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+            nextMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
+            platformNav.addEventListener('click', handlePlatformNavClick);
+            clearFilterBtn.addEventListener('click', handleClearFilter);
+            addTaskForm.addEventListener('submit', handleAddTask);
+            taskList.addEventListener('click', handleTaskListClick);
+
+            // --- INITIALIZATION ---
+            renderCalendar();
+            renderPosts();
+            updateStats();
+
+            const ctx = document.getElementById('postStatsChart').getContext('2d');
+            new Chart(ctx, { type: 'line', data: { labels: ['M', 'T', 'W', 'T', 'F'], datasets: [{ label: 'Posts', data: [10, 15, 12, 20, 18], backgroundColor: 'rgba(79, 70, 229, 0.1)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 2, tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } } });
+        });
+    </script>
+</body>
+</html>
+
