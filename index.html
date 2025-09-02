@@ -87,7 +87,7 @@
     <!-- Main App Container -->
     <div id="app-container" class="hidden flex h-screen">
         <!-- Sidebar -->
-        <aside class="w-20 bg-white flex flex-col items-center py-6 space-y-8">
+        <aside class="w-20 bg-white flex flex-col items-center py-6 space-y-8 flex-shrink-0">
             <div class="text-2xl font-bold text-indigo-600">CC</div>
             <nav id="sidebar-nav" class="flex flex-col items-center space-y-6">
                 <a href="#" data-view="scheduler" class="group relative p-3 rounded-lg active">
@@ -102,8 +102,8 @@
                     <i class="fas fa-file-alt"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Templates</span>
                 </a>
-                <a href="#" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
-                    <i class="fas fa-chevron-left"></i>
+                <a href="#" id="collapse-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                    <i id="collapse-icon" class="fas fa-chevron-left"></i>
                      <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Collapse</span>
                 </a>
                 <a href="#" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
@@ -120,35 +120,37 @@
         </aside>
 
         <!-- Left Panel -->
-        <div class="w-80 bg-white p-6 border-r border-gray-200 flex flex-col">
-            <div class="flex items-center space-x-3 mb-8">
-                <img src="https://placehold.co/40x40/E0E7FF/4F46E5?text=AV" alt="User Avatar" class="rounded-full">
-                <div>
-                    <p class="text-sm text-gray-500">Hello 👋</p>
-                    <p id="user-name" class="font-semibold text-gray-800">Anselme Motcho</p>
+        <div id="left-panel" class="bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden w-80 p-6">
+            <div id="left-panel-content" class="transition-opacity duration-300 ease-in-out whitespace-nowrap">
+                <div class="flex items-center space-x-3 mb-8">
+                    <img src="https://placehold.co/40x40/E0E7FF/4F46E5?text=AV" alt="User Avatar" class="rounded-full">
+                    <div>
+                        <p class="text-sm text-gray-500">Hello 👋</p>
+                        <p id="user-name" class="font-semibold text-gray-800">Anselme Motcho</p>
+                    </div>
                 </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-indigo-100 text-indigo-800 p-4 rounded-lg"><p id="stat-completed" class="text-3xl font-bold">0</p><p class="text-sm">Completed</p></div>
-                <div class="bg-gray-100 text-gray-800 p-4 rounded-lg"><p id="stat-total" class="text-3xl font-bold">0</p><p class="text-sm">Total Post</p></div>
-                <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg"><p id="stat-in-progress" class="text-3xl font-bold">0</p><p class="text-sm">In progress</p></div>
-                <div class="bg-red-100 text-red-800 p-4 rounded-lg"><p id="stat-out-of-scheduled" class="text-3xl font-bold">0</p><p class="text-sm">Out of scheduled</p></div>
-            </div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-indigo-100 text-indigo-800 p-4 rounded-lg"><p id="stat-completed" class="text-3xl font-bold">0</p><p class="text-sm">Completed</p></div>
+                    <div class="bg-gray-100 text-gray-800 p-4 rounded-lg"><p id="stat-total" class="text-3xl font-bold">0</p><p class="text-sm">Total Post</p></div>
+                    <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg"><p id="stat-in-progress" class="text-3xl font-bold">0</p><p class="text-sm">In progress</p></div>
+                    <div class="bg-red-100 text-red-800 p-4 rounded-lg"><p id="stat-out-of-scheduled" class="text-3xl font-bold">0</p><p class="text-sm">Out of scheduled</p></div>
+                </div>
 
-            <!-- Calendar -->
-            <div class="mb-6">
-                 <div class="flex justify-between items-center mb-4">
-                     <h3 id="calendar-month-year" class="font-semibold text-gray-800"></h3>
-                     <div class="flex space-x-2"><button id="prev-month" class="text-gray-500 hover:text-gray-800">&lt;</button><button id="next-month" class="text-gray-500 hover:text-gray-800">&gt;</button></div>
-                 </div>
-                 <div class="grid grid-cols-7 text-center text-sm text-gray-500"><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div></div>
-                 <div id="calendar-grid" class="grid grid-cols-7 text-center text-sm mt-2"></div>
-            </div>
+                <!-- Calendar -->
+                <div class="mb-6">
+                     <div class="flex justify-between items-center mb-4">
+                         <h3 id="calendar-month-year" class="font-semibold text-gray-800"></h3>
+                         <div class="flex space-x-2"><button id="prev-month" class="text-gray-500 hover:text-gray-800">&lt;</button><button id="next-month" class="text-gray-500 hover:text-gray-800">&gt;</button></div>
+                     </div>
+                     <div class="grid grid-cols-7 text-center text-sm text-gray-500"><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div></div>
+                     <div id="calendar-grid" class="grid grid-cols-7 text-center text-sm mt-2"></div>
+                </div>
 
-            <!-- Post Stats -->
-            <div class="mt-auto">
-                <div class="flex justify-between items-center mb-4"><h3 class="font-semibold text-gray-800">Post Stats</h3><p id="stats-month" class="text-sm text-gray-500"></p></div>
-                <div><canvas id="postStatsChart"></canvas></div>
+                <!-- Post Stats -->
+                <div class="mt-auto">
+                    <div class="flex justify-between items-center mb-4"><h3 class="font-semibold text-gray-800">Post Stats</h3><p id="stats-month" class="text-sm text-gray-500"></p></div>
+                    <div><canvas id="postStatsChart"></canvas></div>
+                </div>
             </div>
         </div>
 
@@ -231,7 +233,7 @@
         const db = getFirestore(app);
 
         const App = {
-            state: { userId: null, posts: [], tasks: [], currentDate: new Date(), selectedDate: null, selectedPlatform: 'All', isInitialized: false, chart: null },
+            state: { userId: null, posts: [], tasks: [], currentDate: new Date(), selectedDate: null, selectedPlatform: 'All', isInitialized: false, chart: null, isPanelCollapsed: false },
             elements: {},
             utils: { formatDate: (date) => date.toISOString().split('T')[0] },
             renderers: {
@@ -363,18 +365,40 @@
                 }
             },
             handlers: {
+                handleCollapseToggle(e) {
+                    e.preventDefault();
+                    App.state.isPanelCollapsed = !App.state.isPanelCollapsed;
+                    
+                    const { leftPanel, leftPanelContent, collapseIcon } = App.elements;
+                    
+                    if (App.state.isPanelCollapsed) {
+                        leftPanel.classList.replace('w-80', 'w-0');
+                        leftPanel.classList.replace('p-6', 'p-0');
+                        leftPanelContent.classList.add('opacity-0');
+                        collapseIcon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+                    } else {
+                        leftPanel.classList.replace('w-0', 'w-80');
+                        leftPanel.classList.replace('p-0', 'p-6');
+                        leftPanelContent.classList.remove('opacity-0');
+                        collapseIcon.classList.replace('fa-chevron-right', 'fa-chevron-left');
+                    }
+                },
                 handleViewSwitch(e) {
                     e.preventDefault();
                     const link = e.target.closest('a');
                     if (!link || !link.dataset.view) return;
                     const view = link.dataset.view;
-                    App.elements.sidebarNav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+                    App.elements.sidebarNav.querySelectorAll('a').forEach(a => {
+                        if (a.dataset.view) a.classList.remove('active');
+                    });
                     link.classList.add('active');
+                    
+                    const views = ['schedulerView', 'tasksView'];
+                    views.forEach(v => App.elements[v] && App.elements[v].classList.add('hidden'));
+
                     if (view === 'scheduler') {
                         App.elements.schedulerView.classList.remove('hidden');
-                        App.elements.tasksView.classList.add('hidden');
                     } else if (view === 'tasks') {
-                        App.elements.schedulerView.classList.add('hidden');
                         App.elements.tasksView.classList.remove('hidden');
                         App.renderers.renderTasks();
                     }
@@ -530,7 +554,8 @@
                     'clearFilterBtn': 'clear-filter-btn', 'taskList': 'task-list', 'addTaskForm': 'add-task-form', 
                     'newTaskInput': 'new-task-input', 'statCompleted': 'stat-completed', 'statTotal': 'stat-total', 
                     'statInProgress': 'stat-in-progress', 'statOutOfScheduled': 'stat-out-of-scheduled', 
-                    'statsMonth': 'stats-month'
+                    'statsMonth': 'stats-month', 'leftPanel': 'left-panel', 'collapseBtn': 'collapse-btn', 
+                    'collapseIcon': 'collapse-icon', 'leftPanelContent': 'left-panel-content'
                 };
                 for (const key in elementMappings) {
                     this.elements[key] = document.getElementById(elementMappings[key]);
@@ -546,7 +571,7 @@
                 });
                 window.firestore.onTasksUpdate(this.state.userId, (snapshot) => { this.state.tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); if (this.elements.tasksView && !this.elements.tasksView.classList.contains('hidden')) { this.renderers.renderTasks(); } });
 
-                this.elements.sidebarNav.addEventListener('click', this.handlers.handleViewSwitch);
+                this.elements.sidebarNav.addEventListener('click', this.handlers.handleViewSwitch.bind(this.handlers));
                 this.elements.addPostBtn.addEventListener('click', () => this.handlers.openModal('add'));
                 this.elements.cancelBtn.addEventListener('click', this.handlers.closeModal.bind(this.handlers));
                 this.elements.postModal.addEventListener('click', (e) => { if (e.target === this.elements.postModal) this.handlers.closeModal(); });
@@ -560,6 +585,7 @@
                 this.elements.addTaskForm.addEventListener('submit', this.handlers.handleAddTask.bind(this.handlers));
                 this.elements.taskList.addEventListener('click', this.handlers.handleTaskListClick.bind(this.handlers));
                 this.elements.logoutBtn.addEventListener('click', () => signOut(auth));
+                this.elements.collapseBtn.addEventListener('click', this.handlers.handleCollapseToggle.bind(this.handlers));
 
                 this.setupPostStatsChart();
                 this.renderers.renderCalendar();

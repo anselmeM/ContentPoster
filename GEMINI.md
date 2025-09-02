@@ -5,13 +5,21 @@ This project is a web-based social media scheduling and task management applicat
 The user, Anselme Motcho, is a digital marketer and web developer proficient in the MERN/FERN stack. The development process is iterative, focusing on adding one major feature set at a time.
 
 2. Core Features Implemented
-The application currently operates as a single-page, client-side tool with the following features managed by JavaScript arrays:
+The application now operates as a full-stack application with data persistence, offering the following features:
 
-Full Post Management (CRUD):
+User Authentication (Firebase Auth):
+
+Secure user registration, login, and session management.
+
+Full Post Management (CRUD) with Firestore:
 
 Create, Update, and Delete social media posts via a reusable modal form.
+Post data (title, image URL, date, time, platform, completion status) is now stored and retrieved from Firestore, ensuring data persistence and privacy per user.
 
-Post data includes title, image URL, date, time, platform, and a completion status.
+Full Post Management (CRUD) with Firestore:
+
+Create, Update, and Delete social media posts via a reusable modal form.
+Post data (title, image URL, date, time, platform, completion status) is now stored and retrieved from Firestore, ensuring data persistence and privacy per user.
 
 Dynamic Calendar & Filtering:
 
@@ -19,9 +27,9 @@ A fully interactive calendar allows filtering posts by a specific day.
 
 Top navigation filters posts by social media platform (Instagram, LinkedIn, etc.).
 
-Task Management (CRUD):
+Task Management (CRUD) with Firestore:
 
-A separate view for creating, reading, updating (marking as complete), and deleting tasks.
+A separate view for creating, reading, updating (marking as complete), and deleting tasks. Task data is also stored and retrieved from Firestore.
 
 Dynamic Statistics Panel:
 
