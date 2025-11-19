@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- FIX: Corrected 'xintegrity' to 'integrity' for proper security checks. -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" xintegrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
         .main-container { background-color: #F4F7FE; }
@@ -15,6 +15,9 @@
         .post-card:hover .actions, .task-item:hover .actions { opacity: 1; }
         .calendar-day { cursor: pointer; transition: background-color 0.2s; }
         .calendar-day.selected { background-color: #4f46e5 !important; color: white !important; border-radius: 9999px; }
+        .calendar-day.drag-over { background-color: #E0E7FF; border: 2px dashed #4F46E5; border-radius: 8px; }
+        .post-card[draggable="true"] { cursor: grab; }
+        .post-card[draggable="true"]:active { cursor: grabbing; }
         .platform-nav a.active { color: #1f2937; font-weight: 600; border-bottom: 2px solid #4f46e5; padding-bottom: 4px; }
         #sidebar-nav a.active { background-color: #EEF2FF; color: #4338CA; }
     </style>
@@ -297,7 +300,7 @@
         const db = getFirestore(app);
 
         const App = {
-            state: { userId: null, posts: [], tasks: [], settings: {}, currentDate: new Date(), selectedDate: null, selectedPlatform: 'All', isInitialized: false, chart: null, isPanelCollapsed: false },
+            state: { userId: null, posts: [], tasks: [], settings: {}, currentDate: new Date(), selectedDate: null, selectedPlatform: 'All', isInitialized: false, listenersAttached: false, chart: null, isPanelCollapsed: false },
             elements: {},
             utils: { 
                 formatDate: (date) => date.toISOString().split('T')[0],
@@ -334,7 +337,8 @@
                 },
                 createPostCard(post) {
                     const postCard = document.createElement('div');
-                    postCard.className = 'bg-white p-4 rounded-lg shadow-sm relative post-card';
+                    postCard.className = 'bg-white p-4 rounded-lg shadow-sm relative post-card transition-opacity duration-200';
+                    postCard.setAttribute('draggable', 'true');
                     postCard.dataset.id = post.id;
                     const platformIcons = {
                         linkedin: `<span class="w-6 h-6 bg-blue-600 rounded-full text-white flex items-center justify-center text-sm"><i class="fab fa-linkedin-in"></i></span>`,
@@ -436,6 +440,45 @@
                 }
             },
             handlers: {
+                handleDragStart(e) {
+                    const postCard = e.target.closest('.post-card');
+                    if (!postCard) return;
+                    e.dataTransfer.setData('text/plain', postCard.dataset.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    setTimeout(() => postCard.classList.add('opacity-50'), 0);
+                },
+                handleDragEnd(e) {
+                    const postCard = e.target.closest('.post-card');
+                    if (postCard) postCard.classList.remove('opacity-50');
+                },
+                handleDragOver(e) {
+                    e.preventDefault();
+                    const dayEl = e.target.closest('.calendar-day');
+                    if (dayEl && dayEl.dataset.date) {
+                        dayEl.classList.add('drag-over');
+                        e.dataTransfer.dropEffect = 'move';
+                    }
+                },
+                handleDragLeave(e) {
+                    const dayEl = e.target.closest('.calendar-day');
+                    if (dayEl) dayEl.classList.remove('drag-over');
+                },
+                async handleDrop(e) {
+                    e.preventDefault();
+                    const dayEl = e.target.closest('.calendar-day');
+                    if (!dayEl) return;
+                    dayEl.classList.remove('drag-over');
+                    
+                    const postId = e.dataTransfer.getData('text/plain');
+                    const targetDate = dayEl.dataset.date;
+                    
+                    if (postId && targetDate) {
+                        const post = App.state.posts.find(p => p.id === postId);
+                        if (post && post.date !== targetDate) {
+                            await window.firestore.updatePost(App.state.userId, postId, { date: targetDate });
+                        }
+                    }
+                },
                 handleCollapseToggle(e) {
                     e.preventDefault();
                     App.state.isPanelCollapsed = !App.state.isPanelCollapsed;
@@ -715,24 +758,38 @@
                     }
                 });
 
-                this.elements.sidebarNav.addEventListener('click', this.handlers.handleViewSwitch.bind(this.handlers));
-                this.elements.addPostBtn.addEventListener('click', () => this.handlers.openModal('add'));
-                this.elements.cancelBtn.addEventListener('click', this.handlers.closeModal.bind(this.handlers));
-                this.elements.postModal.addEventListener('click', (e) => { if (e.target === this.elements.postModal) this.handlers.closeModal(); });
-                this.elements.postForm.addEventListener('submit', this.handlers.handleFormSubmit.bind(this.handlers));
-                this.elements.postsGrid.addEventListener('click', this.handlers.handleGridClick.bind(this.handlers));
-                this.elements.calendarGrid.addEventListener('click', this.handlers.handleCalendarClick.bind(this.handlers));
-                this.elements.prevMonth.addEventListener('click', () => this.handlers.handleCalendarNav(-1));
-                this.elements.nextMonth.addEventListener('click', () => this.handlers.handleCalendarNav(1));
-                this.elements.platformNav.addEventListener('click', this.handlers.handlePlatformNavClick.bind(this.handlers));
-                this.elements.clearFilterBtn.addEventListener('click', this.handlers.handleClearFilter.bind(this.handlers));
-                this.elements.addTaskForm.addEventListener('submit', this.handlers.handleAddTask.bind(this.handlers));
-                this.elements.taskList.addEventListener('click', this.handlers.handleTaskListClick.bind(this.handlers));
-                this.elements.logoutBtn.addEventListener('click', () => signOut(auth));
-                this.elements.collapseBtn.addEventListener('click', this.handlers.handleCollapseToggle.bind(this.handlers));
-                this.elements.savePreferencesBtn.addEventListener('click', this.handlers.handleSavePreferences.bind(this.handlers));
-                this.elements.changePasswordForm.addEventListener('submit', this.handlers.handleChangePassword.bind(this.handlers));
-                this.elements.exportCsvBtn.addEventListener('click', this.handlers.handleExportCSV.bind(this.handlers));
+                if (!this.state.listenersAttached) {
+                    this.elements.sidebarNav.addEventListener('click', this.handlers.handleViewSwitch.bind(this.handlers));
+                    this.elements.addPostBtn.addEventListener('click', () => this.handlers.openModal('add'));
+                    this.elements.cancelBtn.addEventListener('click', this.handlers.closeModal.bind(this.handlers));
+                    this.elements.postModal.addEventListener('click', (e) => { if (e.target === this.elements.postModal) this.handlers.closeModal(); });
+                    this.elements.postForm.addEventListener('submit', this.handlers.handleFormSubmit.bind(this.handlers));
+                    this.elements.postsGrid.addEventListener('click', this.handlers.handleGridClick.bind(this.handlers));
+                    this.elements.calendarGrid.addEventListener('click', this.handlers.handleCalendarClick.bind(this.handlers));
+                    this.elements.prevMonth.addEventListener('click', () => this.handlers.handleCalendarNav(-1));
+                    this.elements.nextMonth.addEventListener('click', () => this.handlers.handleCalendarNav(1));
+                    this.elements.platformNav.addEventListener('click', this.handlers.handlePlatformNavClick.bind(this.handlers));
+                    this.elements.clearFilterBtn.addEventListener('click', this.handlers.handleClearFilter.bind(this.handlers));
+                    this.elements.addTaskForm.addEventListener('submit', this.handlers.handleAddTask.bind(this.handlers));
+                    this.elements.taskList.addEventListener('click', this.handlers.handleTaskListClick.bind(this.handlers));
+                    this.elements.logoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        signOut(auth);
+                    });
+                    this.elements.collapseBtn.addEventListener('click', this.handlers.handleCollapseToggle.bind(this.handlers));
+                    this.elements.savePreferencesBtn.addEventListener('click', this.handlers.handleSavePreferences.bind(this.handlers));
+                    this.elements.changePasswordForm.addEventListener('submit', this.handlers.handleChangePassword.bind(this.handlers));
+                    this.elements.exportCsvBtn.addEventListener('click', this.handlers.handleExportCSV.bind(this.handlers));
+
+                    // Drag and Drop Listeners
+                    this.elements.postsGrid.addEventListener('dragstart', this.handlers.handleDragStart.bind(this.handlers));
+                    this.elements.postsGrid.addEventListener('dragend', this.handlers.handleDragEnd.bind(this.handlers));
+                    this.elements.calendarGrid.addEventListener('dragover', this.handlers.handleDragOver.bind(this.handlers));
+                    this.elements.calendarGrid.addEventListener('dragleave', this.handlers.handleDragLeave.bind(this.handlers));
+                    this.elements.calendarGrid.addEventListener('drop', this.handlers.handleDrop.bind(this.handlers));
+                    
+                    this.state.listenersAttached = true;
+                }
 
                 this.setupPostStatsChart();
                 this.renderers.renderCalendar();
