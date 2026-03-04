@@ -33,7 +33,7 @@ A separate view for creating, reading, updating (marking as complete), and delet
 
 Dynamic Statistics Panel:
 
-The stats widgets (Completed, Total Post, In Progress, Out of Scheduled) are calculated in real-time based on the current date and the status of the posts in the data array.
+The stats widgets (Completed, Total Post, In Progress, Out of Scheduled) are calculated in real-time based on the current date and the status of the posts in the Firestore database.
 
 View Switching:
 
@@ -42,11 +42,7 @@ Users can toggle between the main "Scheduler" view and the "Tasks" view.
 3. Future Roadmap & Development Goals
 The immediate next steps involve transforming this from a client-side prototype into a full-stack application.
 
-Backend & Database Integration (Priority 1):
 
-Technology: Use Firebase (Firestore for database, Firebase Auth for users, Firebase Storage for uploads).
-
-Goal: Replace the local JavaScript arrays (posts, tasks) with data fetched from Firestore. Implement user authentication so that data is persistent and private to each user.
 
 Advanced SaaS Features (Phase 2):
 
@@ -67,7 +63,7 @@ Charts: Chart.js for the "Post Stats" graph.
 
 Icons: Font Awesome.
 
-Planned Backend: Firebase.
+Backend: Firebase (Firestore for database, Firebase Auth for users, Firebase Storage for uploads).
 
 5. Code Architecture & Style
 Single-File Structure: All HTML, CSS (via <style> tag), and JavaScript are contained within a single index.html file. Please maintain this structure.
