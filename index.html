@@ -693,6 +693,9 @@
             elements: {},
             utils: { 
                 sanitizeURL: (url) => {
+                    if (!url) {
+                        return 'https://placehold.co/200x100/cccccc/ffffff?text=Invalid+URL';
+                    }
                     try {
                         const parsed = new URL(url, window.location.origin);
                         if (['http:', 'https:', 'mailto:'].includes(parsed.protocol)) {
