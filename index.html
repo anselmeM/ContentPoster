@@ -1341,13 +1341,17 @@
                         const now = new Date();
                         const tenMinsLater = new Date(now.getTime() + 10 * 60000);
                         
+                        // ⚡ Bolt: Convert array to Set for O(1) lookups instead of O(N) array.some()
+                        const existingNotifKeys = new Set(App.state.notifications.map(n => n.key).filter(Boolean));
+
                         // Check Posts
                         App.state.posts.forEach(async post => {
                             if (post.status !== 'scheduled' || post.completed) return;
                             const postTime = new Date(`${post.date}T${post.time}`);
                             if (postTime > now && postTime <= tenMinsLater) {
                                 const notifKey = `post_${post.id}_reminder`;
-                                if (!App.state.notifications.some(n => n.key === notifKey)) {
+                                if (!existingNotifKeys.has(notifKey)) {
+                                    existingNotifKeys.add(notifKey); // Prevent duplicate triggers in the same tick
                                     await window.firestore.createNotification(App.state.userId, {
                                         title: 'Upcoming Post',
                                         message: `Your ${post.platform} post "${post.title}" is due in 10 minutes!`,
@@ -1364,7 +1368,8 @@
                             const dueDate = new Date(task.dueDate);
                             if (dueDate < now) {
                                 const notifKey = `task_${task.id}_overdue`;
-                                if (!App.state.notifications.some(n => n.key === notifKey)) {
+                                if (!existingNotifKeys.has(notifKey)) {
+                                    existingNotifKeys.add(notifKey); // Prevent duplicate triggers in the same tick
                                     await window.firestore.createNotification(App.state.userId, {
                                         title: 'Task Overdue',
                                         message: `Task "${task.text}" is past its due date!`,
