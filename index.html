@@ -692,6 +692,27 @@
             },
             elements: {},
             utils: { 
+                sanitizeURL: (url) => {
+                    try {
+                        const parsed = new URL(url, window.location.origin);
+                        if (['http:', 'https:', 'mailto:'].includes(parsed.protocol)) {
+                            return parsed.href;
+                        }
+                    } catch (e) {
+                        // Invalid URL
+                    }
+                    return 'https://placehold.co/200x100/cccccc/ffffff?text=Invalid+URL';
+                },
+                escapeHTML: (str) => {
+                    const escapeMap = {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    };
+                    return String(str).replace(/[&<>"']/g, match => escapeMap[match]);
+                },
                 formatDate: (date) => {
                     const d = new Date(date);
                     const year = d.getFullYear();
@@ -726,7 +747,7 @@
                         const taskItem = document.createElement('div');
                         taskItem.className = 'task-item flex items-center justify-between p-3 border-b border-gray-200';
                         taskItem.dataset.id = task.id;
-                        taskItem.innerHTML = `<div class="flex items-center"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-4 toggle-task" ${task.completed ? 'checked' : ''}><span class="task-text ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${task.text}</span></div><div class="actions"><button class="delete-task text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button></div>`;
+                        taskItem.innerHTML = `<div class="flex items-center"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-4 toggle-task" ${task.completed ? 'checked' : ''}><span class="task-text ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${App.utils.escapeHTML(task.text)}</span></div><div class="actions"><button class="delete-task text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button></div>`;
                         App.elements.taskList.appendChild(taskItem);
                     });
                 },
@@ -768,9 +789,9 @@
                         <div class="mb-2">
                             <span class="status-badge status-${status}">${statusLabels[status]}</span>
                         </div>
-                        <img src="${post.image}" alt="${post.title}" class="rounded-lg mb-3 w-full h-24 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/200x100/cccccc/ffffff?text=Error';">
-                        <h4 class="font-semibold mb-1 truncate">${post.title}</h4>
-                        <p class="text-sm text-gray-500 mb-2"><i class="far fa-clock mr-1"></i> ${post.time}</p>
+                        <img src="${App.utils.escapeHTML(App.utils.sanitizeURL(post.image))}" alt="${App.utils.escapeHTML(post.title)}" class="rounded-lg mb-3 w-full h-24 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/200x100/cccccc/ffffff?text=Error';">
+                        <h4 class="font-semibold mb-1 truncate">${App.utils.escapeHTML(post.title)}</h4>
+                        <p class="text-sm text-gray-500 mb-2"><i class="far fa-clock mr-1"></i> ${App.utils.escapeHTML(post.time)}</p>
                         <div class="flex items-center space-x-2">${platformIcons[post.platform] || ''}</div>
                     `;
                     return postCard;
@@ -942,10 +963,10 @@
                     notificationList.innerHTML = notifications.map(n => `
                         <div class="notification-item ${n.read ? '' : 'unread'}" data-id="${n.id}">
                             <div class="flex justify-between items-start mb-1">
-                                <span class="font-bold text-sm">${n.title}</span>
+                                <span class="font-bold text-sm">${App.utils.escapeHTML(n.title)}</span>
                                 <span class="text-[10px] text-gray-400">${new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">${n.message}</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">${App.utils.escapeHTML(n.message)}</p>
                         </div>
                     `).join('');
                 }
@@ -1065,14 +1086,14 @@
                                     <i class="fas fa-ellipsis-h text-gray-400 text-xs"></i>
                                 </div>
                                 <div class="relative w-full aspect-square bg-gray-100 overflow-hidden">
-                                    <img src="${image}" class="w-full h-full object-cover mockup-image" onerror="this.src='https://placehold.co/600x600/f1f5f9/94a3b8?text=Broken+Image'">
+                                    <img src="${App.utils.escapeHTML(App.utils.sanitizeURL(image))}" class="w-full h-full object-cover mockup-image" onerror="this.src='https://placehold.co/600x600/f1f5f9/94a3b8?text=Broken+Image'">
                                 </div>
                                 <div class="mockup-body">
                                     <div class="flex gap-4 mb-2">
                                         <i class="far fa-heart"></i><i class="far fa-comment"></i><i class="far fa-paper-plane"></i>
                                     </div>
                                     <div class="mockup-content">
-                                        <span class="font-bold">ContentCadence</span> ${title}
+                                        <span class="font-bold">ContentCadence</span> ${App.utils.escapeHTML(title)}
                                     </div>
                                     <div class="text-[10px] text-gray-400 mt-2 uppercase">Just now</div>
                                 </div>
@@ -1088,9 +1109,9 @@
                                         <div class="mockup-meta">Now • <i class="fas fa-globe-americas"></i></div>
                                     </div>
                                 </div>
-                                <div class="p-3 text-xs leading-5">${title}</div>
+                                <div class="p-3 text-xs leading-5">${App.utils.escapeHTML(title)}</div>
                                 <div class="relative w-full aspect-[1.91/1] bg-gray-100 overflow-hidden">
-                                    <img src="${image}" class="w-full h-full object-cover mockup-image" onerror="this.src='https://placehold.co/1200x627/f1f5f9/94a3b8?text=Broken+Image'">
+                                    <img src="${App.utils.escapeHTML(App.utils.sanitizeURL(image))}" class="w-full h-full object-cover mockup-image" onerror="this.src='https://placehold.co/1200x627/f1f5f9/94a3b8?text=Broken+Image'">
                                 </div>
                                 <div class="px-3 py-2 border-t border-gray-100 flex gap-6 text-gray-400 font-semibold text-[11px]">
                                     <span><i class="far fa-thumbs-up mr-1 text-sm"></i> Like</span>
@@ -1102,9 +1123,9 @@
                         mockupHtml = `
                             <div class="mockup-card platform-dribbble animate-[fadeIn_0.3s_ease-out]">
                                 <div class="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden group">
-                                    <img src="${image}" class="w-full h-full object-cover mockup-image" onerror="this.src='https://placehold.co/800x600/f1f5f9/94a3b8?text=Broken+Shot'">
+                                    <img src="${App.utils.escapeHTML(App.utils.sanitizeURL(image))}" class="w-full h-full object-cover mockup-image" onerror="this.src='https://placehold.co/800x600/f1f5f9/94a3b8?text=Broken+Shot'">
                                     <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div class="text-white text-xs font-bold truncate">${title}</div>
+                                        <div class="text-white text-xs font-bold truncate">${App.utils.escapeHTML(title)}</div>
                                     </div>
                                 </div>
                                 <div class="p-3 flex justify-between items-center text-xs text-gray-500">
