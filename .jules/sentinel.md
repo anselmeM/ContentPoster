@@ -1,0 +1,4 @@
+## 2026-03-14 - XSS Vulnerability in DOM Injection
+**Vulnerability:** User-controlled inputs like task text, post titles, images, and notifications were being inserted directly into the DOM using `innerHTML` without prior sanitization.
+**Learning:** This exposes the application to severe Cross-Site Scripting (XSS) attacks. Malicious users could execute arbitrary JavaScript. The root cause was trusting user-provided inputs within template literals that directly formed HTML injected into the page.
+**Prevention:** Implement a global escaping utility (e.g., `App.utils.escapeHTML`) to convert potentially dangerous characters (`&`, `<`, `>`, `"`, `'`) to their HTML entity equivalents before embedding any user data into the DOM via `innerHTML`. Alternatively, use safer properties like `textContent` where HTML parsing is not intended.
