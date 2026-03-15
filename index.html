@@ -727,6 +727,18 @@
                     element.textContent = message;
                     element.className = `text-sm ${isError ? 'text-red-600' : 'text-green-600'}`;
                     setTimeout(() => element.textContent = '', 3000);
+                },
+                // ⚡ Bolt: Added debounce to reduce frequent function execution
+                debounce: (func, wait) => {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
                 }
             },
             renderers: {
@@ -1542,8 +1554,10 @@
                 });
 
                 // Real-time Preview Listeners
+                // ⚡ Bolt: Debounce text input events to prevent layout thrashing and excessive preview rendering during rapid typing
+                const debouncedUpdatePreview = App.utils.debounce(() => this.handlers.updatePreview(), 300);
                 ['postTitle', 'postImage'].forEach(id => {
-                    this.elements[id].addEventListener('input', () => this.handlers.updatePreview());
+                    this.elements[id].addEventListener('input', debouncedUpdatePreview);
                 });
                 this.elements.postForm.querySelectorAll('input[name="platform"]').forEach(radio => {
                     radio.addEventListener('change', () => this.handlers.updatePreview());
