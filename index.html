@@ -890,7 +890,10 @@
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                     const startOffset = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1;
                     
-                    for (let i = 0; i < startOffset; i++) { calendarGrid.appendChild(document.createElement('div')); }
+                    // ⚡ Bolt: Use DocumentFragment to batch DOM insertions and prevent layout thrashing
+                    const fragment = document.createDocumentFragment();
+
+                    for (let i = 0; i < startOffset; i++) { fragment.appendChild(document.createElement('div')); }
                     
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dayEl = document.createElement('div');
@@ -914,8 +917,10 @@
                             App.handlers.handlePostDrop(postId, thisDate);
                         });
 
-                        calendarGrid.appendChild(dayEl);
+                        fragment.appendChild(dayEl);
                     }
+
+                    calendarGrid.appendChild(fragment);
                 },
                 renderPostStatsChart() {
                     if (!App.state.charts.activity || !App.state.charts.platforms) return;
