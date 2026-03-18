@@ -742,14 +742,33 @@
                 }
             },
             renderers: {
+                // ⚡ Bolt: Replaced multiple O(N) array.filter() calls with a single-pass O(N) loop to calculate stats, eliminating unnecessary intermediate array allocations and reducing loop iterations by 66%.
                 updateStats() {
                     if (!App.elements.statCompleted) return;
                     const { posts } = App.state;
                     const now = new Date();
-                    App.elements.statCompleted.textContent = posts.filter(p => p.completed).length;
+
+                    let completedCount = 0;
+                    let inProgressCount = 0;
+                    let outOfScheduledCount = 0;
+
+                    for (const p of posts) {
+                        if (p.completed) {
+                            completedCount++;
+                        } else {
+                            const postDate = new Date(`${p.date}T${p.time}`);
+                            if (postDate > now) {
+                                inProgressCount++;
+                            } else {
+                                outOfScheduledCount++;
+                            }
+                        }
+                    }
+
+                    App.elements.statCompleted.textContent = completedCount;
                     App.elements.statTotal.textContent = posts.length;
-                    App.elements.statInProgress.textContent = posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) > now).length;
-                    App.elements.statOutOfScheduled.textContent = posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length;
+                    App.elements.statInProgress.textContent = inProgressCount;
+                    App.elements.statOutOfScheduled.textContent = outOfScheduledCount;
                 },
                 renderTasks() {
                     const { tasks } = App.state;
