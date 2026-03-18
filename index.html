@@ -746,10 +746,27 @@
                     if (!App.elements.statCompleted) return;
                     const { posts } = App.state;
                     const now = new Date();
-                    App.elements.statCompleted.textContent = posts.filter(p => p.completed).length;
+
+                    // ⚡ Bolt: Single-pass array counting. Reduces time complexity from O(3N) to O(N)
+                    // and eliminates intermediate array garbage collection from repeated .filter() calls.
+                    let completed = 0, inProgress = 0, outOfScheduled = 0;
+                    for (const p of posts) {
+                        if (p.completed) {
+                            completed++;
+                        } else {
+                            const postDate = new Date(`${p.date}T${p.time}`);
+                            if (postDate > now) {
+                                inProgress++;
+                            } else if (postDate < now) {
+                                outOfScheduled++;
+                            }
+                        }
+                    }
+
+                    App.elements.statCompleted.textContent = completed;
                     App.elements.statTotal.textContent = posts.length;
-                    App.elements.statInProgress.textContent = posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) > now).length;
-                    App.elements.statOutOfScheduled.textContent = posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length;
+                    App.elements.statInProgress.textContent = inProgress;
+                    App.elements.statOutOfScheduled.textContent = outOfScheduled;
                 },
                 renderTasks() {
                     const { tasks } = App.state;
