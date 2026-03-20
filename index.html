@@ -947,32 +947,33 @@
                     const { currentDate, posts } = App.state;
                     const year = currentDate.getFullYear();
                     const month = currentDate.getMonth();
-
-                    // Activity Chart Data
-                    const postsThisMonth = posts.filter(post => {
-                        const postDate = new Date(post.date + 'T00:00:00');
-                        return postDate.getFullYear() === year && postDate.getMonth() === month;
-                    });
                     
+                    // ⚡ Bolt: Single-pass iteration and reduced Date instantiations for performance
                     const weeklyPublished = [0, 0, 0, 0, 0];
                     const weeklyScheduled = [0, 0, 0, 0, 0];
-                    
-                    postsThisMonth.forEach(post => {
+                    const pCounts = { linkedin: 0, instagram: 0, dribbble: 0 };
+                    const now = new Date();
+
+                    for (const post of posts) {
+                        // Platform Distribution Data
+                        if (pCounts[post.platform] !== undefined) {
+                            pCounts[post.platform]++;
+                        }
+
+                        // Activity Chart Data
                         const postDate = new Date(post.date + 'T00:00:00');
-                        const dayOfMonth = postDate.getDate();
-                        const weekOfMonth = Math.floor((dayOfMonth - 1) / 7);
-                        if (weekOfMonth < 5) {
-                            if (post.completed || postDate < new Date()) {
-                                weeklyPublished[weekOfMonth]++;
-                            } else {
-                                weeklyScheduled[weekOfMonth]++;
+                        if (postDate.getFullYear() === year && postDate.getMonth() === month) {
+                            const dayOfMonth = postDate.getDate();
+                            const weekOfMonth = Math.floor((dayOfMonth - 1) / 7);
+                            if (weekOfMonth < 5) {
+                                if (post.completed || postDate < now) {
+                                    weeklyPublished[weekOfMonth]++;
+                                } else {
+                                    weeklyScheduled[weekOfMonth]++;
+                                }
                             }
                         }
-                    });
-
-                    // Platform Distribution Data
-                    const pCounts = { linkedin: 0, instagram: 0, dribbble: 0 };
-                    posts.forEach(p => { if(pCounts[p.platform] !== undefined) pCounts[p.platform]++; });
+                    }
 
                     // Update Activity Chart
                     App.state.charts.activity.data.datasets[0].data = weeklyPublished;
