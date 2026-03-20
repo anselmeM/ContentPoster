@@ -777,13 +777,16 @@
                         App.elements.taskList.innerHTML = `<p class="text-gray-500 text-center">No tasks yet. Add one above!</p>`;
                         return;
                     }
+                    // ⚡ Bolt: Use DocumentFragment to batch DOM insertions and prevent layout thrashing
+                    const fragment = document.createDocumentFragment();
                     tasks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(task => {
                         const taskItem = document.createElement('div');
                         taskItem.className = 'task-item flex items-center justify-between p-3 border-b border-gray-200';
                         taskItem.dataset.id = task.id;
                         taskItem.innerHTML = `<div class="flex items-center"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-4 toggle-task" ${task.completed ? 'checked' : ''}><span class="task-text ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${App.utils.escapeHTML(task.text)}</span></div><div class="actions"><button class="delete-task text-gray-400 hover:text-red-600" aria-label="Delete task"><i class="fas fa-trash-alt"></i></button></div>`;
-                        App.elements.taskList.appendChild(taskItem);
+                        fragment.appendChild(taskItem);
                     });
+                    App.elements.taskList.appendChild(fragment);
                 },
                 createPostCard(post) {
                     const postCard = document.createElement('div');
@@ -841,8 +844,14 @@
                         grid.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
                         App.elements.mainViewTitle.textContent = `Posts for ${new Date(App.state.selectedDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
                         App.elements.clearFilterBtn.classList.remove('hidden');
-                        if (filteredPosts.length > 0) { filteredPosts.forEach(post => grid.appendChild(this.createPostCard(post))); } 
-                        else { grid.innerHTML = `<div class="text-center text-gray-500 col-span-full">No posts scheduled for this day.</div>`; }
+                        // ⚡ Bolt: Use DocumentFragment to batch DOM insertions
+                        const fragment = document.createDocumentFragment();
+                        if (filteredPosts.length > 0) {
+                            filteredPosts.forEach(post => fragment.appendChild(this.createPostCard(post)));
+                            grid.appendChild(fragment);
+                        } else {
+                            grid.innerHTML = `<div class="text-center text-gray-500 col-span-full">No posts scheduled for this day.</div>`;
+                        }
                     } else {
                         grid.classList.add('grid-cols-1', 'md:grid-cols-3', 'lg:grid-cols-5');
                         App.elements.mainViewTitle.textContent = 'Scheduled Post';
@@ -854,6 +863,18 @@
                         const monday = new Date(now);
                         monday.setDate(now.getDate() - (now.getDay() || 7) + 1);
 
+                        // ⚡ Bolt: Group posts by day in a single O(N) pass to prevent redundant O(5*N) iterations and Date instantiations
+                        const postsByDay = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+                        for (const p of filteredPosts) {
+                            const dayOfWeek = new Date(p.date + 'T00:00:00').getDay() || 7;
+                            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                                postsByDay[dayOfWeek].push(p);
+                            }
+                        }
+
+                        // ⚡ Bolt: Use DocumentFragment to batch DOM insertions and prevent layout thrashing
+                        const fragment = document.createDocumentFragment();
+
                         daysOfWeek.forEach((day, index) => {
                             const dayColumn = document.createElement('div');
                             dayColumn.className = 'space-y-4 day-column transition-all';
@@ -863,7 +884,7 @@
                             targetDate.setDate(monday.getDate() + index);
                             const targetDateStr = App.utils.formatDate(targetDate);
 
-                            const postsForDay = filteredPosts.filter(p => (new Date(p.date + 'T00:00:00').getDay() || 7) === index + 1);
+                            const postsForDay = postsByDay[index + 1];
                             
                             const dayHeader = document.createElement('div');
                             dayHeader.className = 'text-center';
@@ -892,8 +913,10 @@
                                 noPostsEl.textContent = 'No posts';
                                 dayColumn.appendChild(noPostsEl);
                             }
-                            grid.appendChild(dayColumn);
+                            fragment.appendChild(dayColumn);
                         });
+
+                        grid.appendChild(fragment);
                     }
                 },
                 renderCalendar() {
