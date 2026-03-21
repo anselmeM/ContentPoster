@@ -13,3 +13,7 @@
 ## 2024-06-21 - [Date Instantiations and Multi-pass Arrays in Stats]
 **Learning:** Found an anti-pattern in `renderPostStatsChart` where `.filter` and `.forEach` were used to traverse the same `posts` array multiple times, while repetitively instantiating `new Date()` within the loop (even instantiating `new Date()` twice per post). This resulted in redundant parsing overhead and higher time complexity.
 **Action:** Always calculate multiple metrics from a single source array using a single-pass `for...of` loop or `.reduce()`. Cache values that don't change per item (like `new Date()` for current time) outside the loop to minimize redundant object instantiations and parsing.
+
+## 2026-03-21 - [O(K*N) Complexity in Nested UI Filtering]
+**Learning:** Found an anti-pattern in `renderPosts` where `filteredPosts.filter()` was repeatedly called inside a `forEach` loop iterating over the days of the week, resulting in an O(K*N) time complexity and redundant parsing overhead for Date objects.
+**Action:** Always pre-group categorized data (such as items separated by day or type) into a hash map in a single O(N) pass rather than repeatedly calling array `.filter()` within a render loop, replacing the inner O(N) traversal with an O(1) hash map lookup.

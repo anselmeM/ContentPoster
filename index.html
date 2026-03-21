@@ -854,6 +854,16 @@
                         const monday = new Date(now);
                         monday.setDate(now.getDate() - (now.getDay() || 7) + 1);
 
+                        // ⚡ Bolt: Pre-group posts by day of week in a single O(N) pass to avoid O(K*N) complexity
+                        // and prevent redundant Date instantiations in the render loop below.
+                        const postsByDay = {};
+                        for (let i = 0; i < filteredPosts.length; i++) {
+                            const post = filteredPosts[i];
+                            const dayOfWeek = new Date(post.date + 'T00:00:00').getDay() || 7;
+                            if (!postsByDay[dayOfWeek]) postsByDay[dayOfWeek] = [];
+                            postsByDay[dayOfWeek].push(post);
+                        }
+
                         daysOfWeek.forEach((day, index) => {
                             const dayColumn = document.createElement('div');
                             dayColumn.className = 'space-y-4 day-column transition-all';
@@ -863,7 +873,7 @@
                             targetDate.setDate(monday.getDate() + index);
                             const targetDateStr = App.utils.formatDate(targetDate);
 
-                            const postsForDay = filteredPosts.filter(p => (new Date(p.date + 'T00:00:00').getDay() || 7) === index + 1);
+                            const postsForDay = postsByDay[index + 1] || [];
                             
                             const dayHeader = document.createElement('div');
                             dayHeader.className = 'text-center';
