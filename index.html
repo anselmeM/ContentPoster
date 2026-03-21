@@ -1200,7 +1200,7 @@
                                 </div>
                             </div>`;
                     } else {
-                        mockupHtml = `<div class="text-gray-400 text-sm animate-pulse">Preview for ${platform} coming soon...</div>`;
+                        mockupHtml = `<div class="text-gray-400 text-sm animate-pulse">Preview for ${App.utils.escapeHTML(platform)} coming soon...</div>`;
                     }
                     previewArea.innerHTML = mockupHtml;
                 },
