@@ -726,7 +726,13 @@
                 showFeedback(element, message, isError = false) {
                     element.textContent = message;
                     element.className = `text-sm ${isError ? 'text-red-600' : 'text-green-600'}`;
-                    setTimeout(() => element.textContent = '', 3000);
+                    if (element.dataset.feedbackTimeoutId) {
+                        clearTimeout(element.dataset.feedbackTimeoutId);
+                    }
+                    element.dataset.feedbackTimeoutId = setTimeout(() => {
+                        element.textContent = '';
+                        delete element.dataset.feedbackTimeoutId;
+                    }, 3000);
                 },
                 // ⚡ Bolt: Added debounce to reduce frequent function execution
                 debounce: (func, wait) => {
