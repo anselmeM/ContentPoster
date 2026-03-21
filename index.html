@@ -692,6 +692,7 @@
             },
             elements: {},
             utils: { 
+                _feedbackTimeouts: new WeakMap(),
                 sanitizeURL: (url) => {
                     if (!url) {
                         return 'https://placehold.co/200x100/cccccc/ffffff?text=Invalid+URL';
@@ -726,7 +727,14 @@
                 showFeedback(element, message, isError = false) {
                     element.textContent = message;
                     element.className = `text-sm ${isError ? 'text-red-600' : 'text-green-600'}`;
-                    setTimeout(() => element.textContent = '', 3000);
+                    if (this._feedbackTimeouts.has(element)) {
+                        clearTimeout(this._feedbackTimeouts.get(element));
+                    }
+                    const timeoutId = setTimeout(() => {
+                        element.textContent = '';
+                        element.className = '';
+                    }, 3000);
+                    this._feedbackTimeouts.set(element, timeoutId);
                 },
                 // ⚡ Bolt: Added debounce to reduce frequent function execution
                 debounce: (func, wait) => {
