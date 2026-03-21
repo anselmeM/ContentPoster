@@ -1,0 +1,9 @@
+{
+  "name": "content-cadence",
+  "version": "1.0.0",
+  "description": "Social Media Content Planner",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
