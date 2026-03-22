@@ -1341,11 +1341,10 @@
                 handleNotificationToggle() {
                     App.elements.notificationPanel.classList.toggle('open');
                 },
+                // ⚡ Bolt: Execute independent asynchronous notification updates concurrently with Promise.all() to eliminate O(N) sequential wait times
                 async handleClearNotifications() {
                     const unread = App.state.notifications.filter(n => !n.read);
-                    for (const n of unread) {
-                        await window.firestore.updateNotification(App.state.userId, n.id, { read: true });
-                    }
+                    await Promise.all(unread.map(n => window.firestore.updateNotification(App.state.userId, n.id, { read: true })));
                 },
                 runNotificationEngine() {
                     console.log("[Engine] Starting Notification Engine...");
