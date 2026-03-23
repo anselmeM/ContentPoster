@@ -363,7 +363,7 @@
                     <i class="fas fa-file-alt"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Templates</span>
                 </a>
-                <a href="#" id="collapse-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" id="collapse-btn" aria-label="Collapse Sidebar" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i id="collapse-icon" class="fas fa-chevron-left"></i>
                      <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Collapse</span>
                 </a>
@@ -371,7 +371,7 @@
                     <i class="fas fa-cog"></i>
                      <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Settings</span>
                 </a>
-                <a href="#" id="theme-toggle" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" id="theme-toggle" aria-label="Switch to dark mode" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i class="fas fa-moon"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Toggle Theme</span>
                 </a>
@@ -998,11 +998,13 @@
                         leftPanel.classList.replace('p-6', 'p-0');
                         leftPanelContent.classList.add('opacity-0');
                         collapseIcon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+                        App.elements.collapseBtn.setAttribute('aria-label', 'Expand Sidebar');
                     } else {
                         leftPanel.classList.replace('w-0', 'w-80');
                         leftPanel.classList.replace('p-0', 'p-6');
                         leftPanelContent.classList.remove('opacity-0');
                         collapseIcon.classList.replace('fa-chevron-right', 'fa-chevron-left');
+                        App.elements.collapseBtn.setAttribute('aria-label', 'Collapse Sidebar');
                     }
                 },
                 handleViewSwitch(e) {
@@ -1581,11 +1583,15 @@
                     document.body.classList.toggle('dark-mode');
                     const isDark = document.body.classList.contains('dark-mode');
                     themeToggle.querySelector('i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+                    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
                     localStorage.setItem('theme', isDark ? 'dark' : 'light');
                 });
                 if (localStorage.getItem('theme') === 'dark') {
                     document.body.classList.add('dark-mode');
                     themeToggle.querySelector('i').className = 'fas fa-sun';
+                    themeToggle.setAttribute('aria-label', 'Switch to light mode');
+                } else {
+                    themeToggle.setAttribute('aria-label', 'Switch to dark mode');
                 }
 
                 this.elements.savePreferencesBtn.addEventListener('click', this.handlers.handleSavePreferences.bind(this.handlers));
