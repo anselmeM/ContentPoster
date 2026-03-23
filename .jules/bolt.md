@@ -21,3 +21,11 @@
 ## 2026-03-22 - [O(N) Sequential Wait Times in Independent Asynchronous Loop]
 **Learning:** Found an anti-pattern in `handleClearNotifications` where a `for...of` loop sequentially `await`s individual `updateNotification` network requests for each unread notification. This forces the UI thread to wait for each request to complete before initiating the next one, resulting in O(N) wait times which scale linearly with the number of items.
 **Action:** When performing independent asynchronous operations within a loop (like database updates or API calls), map the operations into an array of Promises and execute them concurrently using `Promise.all()`. This allows the browser to dispatch the requests simultaneously and minimizes the total wait time to approximately O(1) in terms of overall latency.
+
+## 2026-03-22 - [Bypassing Utility Functions for Micro-optimizations]
+**Learning:** Attempted to optimize ~60 redundant `new Date()` instantiations per calendar render by replacing a central utility call (`App.utils.formatDate`) with inline string concatenation (`${year}-${monthStr}-${dayStr}`). This was rejected because breaking the Single Source of Truth for a utility function introduces significant technical debt and risks silent failures for unnoticeable fraction-of-a-millisecond performance gains.
+**Action:** Never bypass established utility functions for the sake of micro-optimizations. Only implement optimizations that provide measurable impact without sacrificing code maintainability or architecture.
+
+## 2026-03-22 - [Unoptimized Image Loading in Dynamic Lists]
+**Learning:** Found an anti-pattern in `createPostCard` and `updatePreview` where dynamic `<img>` tags (which can potentially render many items below the fold) lacked the `loading="lazy"` attribute, leading to eager loading of all images and unnecessary initial bandwidth and memory usage.
+**Action:** Always add native `loading="lazy"` attributes to `<img>` tags, especially those rendered dynamically in lists, feeds, or off-screen preview panels, to defer network requests and improve initial load performance.
