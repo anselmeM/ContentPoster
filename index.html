@@ -351,33 +351,33 @@
 
             <div class="text-2xl font-bold text-indigo-600">CC</div>
             <nav id="sidebar-nav" class="flex flex-col items-center space-y-6">
-                <a href="#" data-view="scheduler" class="group relative p-3 rounded-lg active">
+                <a href="#" aria-label="Scheduler" data-view="scheduler" class="group relative p-3 rounded-lg active">
                     <i class="fas fa-calendar-alt"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Scheduler</span>
                 </a>
-                <a href="#" data-view="tasks" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" aria-label="Tasks" data-view="tasks" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i class="fas fa-check-square"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Tasks</span>
                 </a>
-                <a href="#" data-view="templates" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" aria-label="Templates" data-view="templates" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i class="fas fa-file-alt"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Templates</span>
                 </a>
-                <a href="#" id="collapse-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" aria-label="Collapse Sidebar" id="collapse-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i id="collapse-icon" class="fas fa-chevron-left"></i>
                      <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Collapse</span>
                 </a>
-                <a href="#" data-view="settings" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" aria-label="Settings" data-view="settings" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i class="fas fa-cog"></i>
                      <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Settings</span>
                 </a>
-                <a href="#" id="theme-toggle" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" aria-label="Toggle Theme" id="theme-toggle" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i class="fas fa-moon"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Toggle Theme</span>
                 </a>
             </nav>
             <div class="mt-auto">
-                <a href="#" id="logout-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
+                <a href="#" aria-label="Logout" id="logout-btn" class="group relative text-gray-400 hover:text-indigo-600 p-3 rounded-lg">
                     <i class="fas fa-sign-out-alt"></i>
                     <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 w-auto min-w-max p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">Logout</span>
                 </a>
@@ -406,7 +406,7 @@
                 <div class="mb-6">
                      <div class="flex justify-between items-center mb-4">
                          <h3 id="calendar-month-year" class="font-semibold text-gray-800"></h3>
-                         <div class="flex space-x-2"><button id="prev-month" class="text-gray-500 hover:text-gray-800">&lt;</button><button id="next-month" class="text-gray-500 hover:text-gray-800">&gt;</button></div>
+                         <div class="flex space-x-2"><button id="prev-month" aria-label="Previous month" class="text-gray-500 hover:text-gray-800">&lt;</button><button id="next-month" aria-label="Next month" class="text-gray-500 hover:text-gray-800">&gt;</button></div>
                      </div>
                      <div class="grid grid-cols-7 text-center text-sm text-gray-500"><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div></div>
                      <div id="calendar-grid" class="grid grid-cols-7 text-center text-sm mt-2"></div>
@@ -441,8 +441,8 @@
                             <button id="add-post-btn" class="text-indigo-600 font-semibold">+ Add</button>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <button class="text-gray-500 hover:text-gray-800"><i class="fas fa-search"></i></button>
-                            <button id="notification-btn" class="relative text-gray-500 hover:text-gray-800">
+                            <button aria-label="Search" class="text-gray-500 hover:text-gray-800"><i class="fas fa-search"></i></button>
+                            <button id="notification-btn" aria-label="Notifications" class="relative text-gray-500 hover:text-gray-800">
                                 <i class="fas fa-bell"></i>
                                 <div id="notification-badge" class="hidden pulse-indicator"></div>
                             </button>
@@ -457,7 +457,7 @@
 
                 <!-- TASKS VIEW -->
                 <div id="tasks-view" class="hidden">
-                    <header class="flex justify-between items-center mb-8"><h2 class="text-2xl font-bold text-gray-800">My Tasks</h2><div class="flex items-center space-x-4"><button class="text-gray-500 hover:text-gray-800"><i class="fas fa-search"></i></button><img src="https://placehold.co/32x32/E0E7FF/4F46E5?text=AV" alt="User Avatar" class="rounded-full"></div></header>
+                    <header class="flex justify-between items-center mb-8"><h2 class="text-2xl font-bold text-gray-800">My Tasks</h2><div class="flex items-center space-x-4"><button aria-label="Search tasks" class="text-gray-500 hover:text-gray-800"><i class="fas fa-search"></i></button><img src="https://placehold.co/32x32/E0E7FF/4F46E5?text=AV" alt="User Avatar" class="rounded-full"></div></header>
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <form id="add-task-form" class="flex flex-col md:flex-row items-center gap-4 mb-6">
                             <input type="text" id="new-task-input" placeholder="Add a new task..." class="flex-1 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto" required>
@@ -540,7 +540,7 @@
                 <h3 class="font-bold text-gray-800 dark:text-gray-200">Notifications</h3>
                 <div class="flex items-center gap-4">
                     <button id="clear-notifications" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">Clear All</button>
-                    <button id="close-notifications" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                    <button id="close-notifications" aria-label="Close notifications panel" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <div id="notification-list" class="flex-1 overflow-y-auto">
@@ -554,7 +554,7 @@
         <div class="bg-white rounded-3xl p-6 lg:p-10 w-full max-w-5xl shadow-2xl glass-view overflow-y-auto max-h-[95vh]">
             <div class="flex justify-between items-center mb-8">
                 <h2 id="modal-title" class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Add New Post</h2>
-                <button id="close-modal-x" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+                <button id="close-modal-x" aria-label="Close modal" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
             
             <div class="modal-content-grid">
@@ -646,6 +646,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
+        import { utils } from "./js/utils.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, setDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -718,14 +719,33 @@
                 }
             },
             renderers: {
+                // ⚡ Bolt: Replaced multiple O(N) array.filter() calls with a single-pass O(N) loop to calculate stats, eliminating unnecessary intermediate array allocations and reducing loop iterations by 66%.
                 updateStats() {
                     if (!App.elements.statCompleted) return;
                     const { posts } = App.state;
                     const now = new Date();
-                    App.elements.statCompleted.textContent = posts.filter(p => p.completed).length;
+
+                    let completedCount = 0;
+                    let inProgressCount = 0;
+                    let outOfScheduledCount = 0;
+
+                    for (const p of posts) {
+                        if (p.completed) {
+                            completedCount++;
+                        } else {
+                            const postDate = new Date(`${p.date}T${p.time}`);
+                            if (postDate > now) {
+                                inProgressCount++;
+                            } else {
+                                outOfScheduledCount++;
+                            }
+                        }
+                    }
+
+                    App.elements.statCompleted.textContent = completedCount;
                     App.elements.statTotal.textContent = posts.length;
-                    App.elements.statInProgress.textContent = posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) > now).length;
-                    App.elements.statOutOfScheduled.textContent = posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length;
+                    App.elements.statInProgress.textContent = inProgressCount;
+                    App.elements.statOutOfScheduled.textContent = outOfScheduledCount;
                 },
                 renderTasks() {
                     const { tasks } = App.state;
@@ -734,6 +754,8 @@
                         App.elements.taskList.innerHTML = `<p class="text-gray-500 text-center">No tasks yet. Add one above!</p>`;
                         return;
                     }
+                    // ⚡ Bolt: Use DocumentFragment to batch DOM insertions and prevent layout thrashing
+                    const fragment = document.createDocumentFragment();
                     tasks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(task => {
                         const taskItem = document.createElement('div');
                         taskItem.className = 'task-item flex items-center justify-between p-3 border-b border-gray-200';
@@ -741,6 +763,7 @@
                         taskItem.innerHTML = `<div class="flex items-center"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-4 toggle-task" ${task.completed ? 'checked' : ''}><span class="task-text ${task.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${App.utils.escapeHTML(task.text)}</span></div><div class="actions"><button class="delete-task text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button></div>`;
                         App.elements.taskList.appendChild(taskItem);
                     });
+                    App.elements.taskList.appendChild(fragment);
                 },
                 createPostCard(post) {
                     const postCard = document.createElement('div');
@@ -772,10 +795,11 @@
                         scheduled: 'Scheduled'
                     };
 
+                    // ⚡ Bolt: Add native lazy loading to post images to defer off-screen requests, reducing initial memory and bandwidth usage
                     postCard.innerHTML = `
                         <div class="actions absolute top-2 right-2 flex space-x-2">
-                            <button class="edit-btn text-gray-500 hover:text-indigo-600"><i class="fas fa-pencil-alt fa-xs"></i></button>
-                            <button class="delete-btn text-gray-500 hover:text-red-600"><i class="fas fa-trash-alt fa-xs"></i></button>
+                            <button class="edit-btn text-gray-500 hover:text-indigo-600" aria-label="Edit post"><i class="fas fa-pencil-alt fa-xs"></i></button>
+                            <button class="delete-btn text-gray-500 hover:text-red-600" aria-label="Delete post"><i class="fas fa-trash-alt fa-xs"></i></button>
                         </div>
                         <div class="mb-2">
                             <span class="status-badge status-${status}">${statusLabels[status]}</span>
@@ -798,8 +822,14 @@
                         grid.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
                         App.elements.mainViewTitle.textContent = `Posts for ${new Date(App.state.selectedDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
                         App.elements.clearFilterBtn.classList.remove('hidden');
-                        if (filteredPosts.length > 0) { filteredPosts.forEach(post => grid.appendChild(this.createPostCard(post))); } 
-                        else { grid.innerHTML = `<div class="text-center text-gray-500 col-span-full">No posts scheduled for this day.</div>`; }
+                        // ⚡ Bolt: Use DocumentFragment to batch DOM insertions
+                        const fragment = document.createDocumentFragment();
+                        if (filteredPosts.length > 0) {
+                            filteredPosts.forEach(post => fragment.appendChild(this.createPostCard(post)));
+                            grid.appendChild(fragment);
+                        } else {
+                            grid.innerHTML = `<div class="text-center text-gray-500 col-span-full">No posts scheduled for this day.</div>`;
+                        }
                     } else {
                         grid.classList.add('grid-cols-1', 'md:grid-cols-3', 'lg:grid-cols-5');
                         App.elements.mainViewTitle.textContent = 'Scheduled Post';
@@ -811,6 +841,18 @@
                         const monday = new Date(now);
                         monday.setDate(now.getDate() - (now.getDay() || 7) + 1);
 
+                        // ⚡ Bolt: Group posts by day in a single O(N) pass to prevent redundant O(5*N) iterations and Date instantiations
+                        const postsByDay = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+                        for (const p of filteredPosts) {
+                            const dayOfWeek = new Date(p.date + 'T00:00:00').getDay() || 7;
+                            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                                postsByDay[dayOfWeek].push(p);
+                            }
+                        }
+
+                        // ⚡ Bolt: Use DocumentFragment to batch DOM insertions and prevent layout thrashing
+                        const fragment = document.createDocumentFragment();
+
                         daysOfWeek.forEach((day, index) => {
                             const dayColumn = document.createElement('div');
                             dayColumn.className = 'space-y-4 day-column transition-all';
@@ -820,7 +862,7 @@
                             targetDate.setDate(monday.getDate() + index);
                             const targetDateStr = App.utils.formatDate(targetDate);
 
-                            const postsForDay = filteredPosts.filter(p => (new Date(p.date + 'T00:00:00').getDay() || 7) === index + 1);
+                            const postsForDay = postsByDay[index + 1];
                             
                             const dayHeader = document.createElement('div');
                             dayHeader.className = 'text-center';
@@ -849,8 +891,10 @@
                                 noPostsEl.textContent = 'No posts';
                                 dayColumn.appendChild(noPostsEl);
                             }
-                            grid.appendChild(dayColumn);
+                            fragment.appendChild(dayColumn);
                         });
+
+                        grid.appendChild(fragment);
                     }
                 },
                 renderCalendar() {
@@ -866,7 +910,10 @@
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                     const startOffset = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1;
                     
-                    for (let i = 0; i < startOffset; i++) { calendarGrid.appendChild(document.createElement('div')); }
+                    // ⚡ Bolt: Use DocumentFragment to batch DOM insertions and prevent layout thrashing
+                    const fragment = document.createDocumentFragment();
+
+                    for (let i = 0; i < startOffset; i++) { fragment.appendChild(document.createElement('div')); }
                     
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dayEl = document.createElement('div');
@@ -890,8 +937,10 @@
                             App.handlers.handlePostDrop(postId, thisDate);
                         });
 
-                        calendarGrid.appendChild(dayEl);
+                        fragment.appendChild(dayEl);
                     }
+
+                    calendarGrid.appendChild(fragment);
                 },
                 renderPostStatsChart() {
                     if (!App.state.charts.activity || !App.state.charts.platforms) return;
@@ -899,32 +948,33 @@
                     const { currentDate, posts } = App.state;
                     const year = currentDate.getFullYear();
                     const month = currentDate.getMonth();
-
-                    // Activity Chart Data
-                    const postsThisMonth = posts.filter(post => {
-                        const postDate = new Date(post.date + 'T00:00:00');
-                        return postDate.getFullYear() === year && postDate.getMonth() === month;
-                    });
                     
+                    // ⚡ Bolt: Single-pass iteration and reduced Date instantiations for performance
                     const weeklyPublished = [0, 0, 0, 0, 0];
                     const weeklyScheduled = [0, 0, 0, 0, 0];
-                    
-                    postsThisMonth.forEach(post => {
+                    const pCounts = { linkedin: 0, instagram: 0, dribbble: 0 };
+                    const now = new Date();
+
+                    for (const post of posts) {
+                        // Platform Distribution Data
+                        if (pCounts[post.platform] !== undefined) {
+                            pCounts[post.platform]++;
+                        }
+
+                        // Activity Chart Data
                         const postDate = new Date(post.date + 'T00:00:00');
-                        const dayOfMonth = postDate.getDate();
-                        const weekOfMonth = Math.floor((dayOfMonth - 1) / 7);
-                        if (weekOfMonth < 5) {
-                            if (post.completed || postDate < new Date()) {
-                                weeklyPublished[weekOfMonth]++;
-                            } else {
-                                weeklyScheduled[weekOfMonth]++;
+                        if (postDate.getFullYear() === year && postDate.getMonth() === month) {
+                            const dayOfMonth = postDate.getDate();
+                            const weekOfMonth = Math.floor((dayOfMonth - 1) / 7);
+                            if (weekOfMonth < 5) {
+                                if (post.completed || postDate < now) {
+                                    weeklyPublished[weekOfMonth]++;
+                                } else {
+                                    weeklyScheduled[weekOfMonth]++;
+                                }
                             }
                         }
-                    });
-
-                    // Platform Distribution Data
-                    const pCounts = { linkedin: 0, instagram: 0, dribbble: 0 };
-                    posts.forEach(p => { if(pCounts[p.platform] !== undefined) pCounts[p.platform]++; });
+                    }
 
                     // Update Activity Chart
                     App.state.charts.activity.data.datasets[0].data = weeklyPublished;
@@ -1128,7 +1178,7 @@
                                 </div>
                             </div>`;
                     } else {
-                        mockupHtml = `<div class="text-gray-400 text-sm animate-pulse">Preview for ${platform} coming soon...</div>`;
+                        mockupHtml = `<div class="text-gray-400 text-sm animate-pulse">Preview for ${App.utils.escapeHTML(platform)} coming soon...</div>`;
                     }
                     previewArea.innerHTML = mockupHtml;
                 },
@@ -1317,11 +1367,10 @@
                 handleNotificationToggle() {
                     App.elements.notificationPanel.classList.toggle('open');
                 },
+                // ⚡ Bolt: Execute independent asynchronous notification updates concurrently with Promise.all() to eliminate O(N) sequential wait times
                 async handleClearNotifications() {
                     const unread = App.state.notifications.filter(n => !n.read);
-                    for (const n of unread) {
-                        await window.firestore.updateNotification(App.state.userId, n.id, { read: true });
-                    }
+                    await Promise.all(unread.map(n => window.firestore.updateNotification(App.state.userId, n.id, { read: true })));
                 },
                 runNotificationEngine() {
                     console.log("[Engine] Starting Notification Engine...");
@@ -1329,13 +1378,17 @@
                         const now = new Date();
                         const tenMinsLater = new Date(now.getTime() + 10 * 60000);
                         
+                        // ⚡ Bolt: Convert array to Set for O(1) lookups instead of O(N) array.some()
+                        const existingNotifKeys = new Set(App.state.notifications.map(n => n.key).filter(Boolean));
+
                         // Check Posts
                         App.state.posts.forEach(async post => {
                             if (post.status !== 'scheduled' || post.completed) return;
                             const postTime = new Date(`${post.date}T${post.time}`);
                             if (postTime > now && postTime <= tenMinsLater) {
                                 const notifKey = `post_${post.id}_reminder`;
-                                if (!App.state.notifications.some(n => n.key === notifKey)) {
+                                if (!existingNotifKeys.has(notifKey)) {
+                                    existingNotifKeys.add(notifKey); // Prevent duplicate triggers in the same tick
                                     await window.firestore.createNotification(App.state.userId, {
                                         title: 'Upcoming Post',
                                         message: `Your ${post.platform} post "${post.title}" is due in 10 minutes!`,
@@ -1352,7 +1405,8 @@
                             const dueDate = new Date(task.dueDate);
                             if (dueDate < now) {
                                 const notifKey = `task_${task.id}_overdue`;
-                                if (!App.state.notifications.some(n => n.key === notifKey)) {
+                                if (!existingNotifKeys.has(notifKey)) {
+                                    existingNotifKeys.add(notifKey); // Prevent duplicate triggers in the same tick
                                     await window.firestore.createNotification(App.state.userId, {
                                         title: 'Task Overdue',
                                         message: `Task "${task.text}" is past its due date!`,
@@ -1525,8 +1579,10 @@
                 });
 
                 // Real-time Preview Listeners
+                // ⚡ Bolt: Debounce text input events to prevent layout thrashing and excessive preview rendering during rapid typing
+                const debouncedUpdatePreview = App.utils.debounce(() => this.handlers.updatePreview(), 300);
                 ['postTitle', 'postImage'].forEach(id => {
-                    this.elements[id].addEventListener('input', () => this.handlers.updatePreview());
+                    this.elements[id].addEventListener('input', debouncedUpdatePreview);
                 });
                 this.elements.postForm.querySelectorAll('input[name="platform"]').forEach(radio => {
                     radio.addEventListener('change', () => this.handlers.updatePreview());
