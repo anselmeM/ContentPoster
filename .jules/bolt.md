@@ -29,3 +29,7 @@
 ## 2026-03-22 - [Unoptimized Image Loading in Dynamic Lists]
 **Learning:** Found an anti-pattern in `createPostCard` and `updatePreview` where dynamic `<img>` tags (which can potentially render many items below the fold) lacked the `loading="lazy"` attribute, leading to eager loading of all images and unnecessary initial bandwidth and memory usage.
 **Action:** Always add native `loading="lazy"` attributes to `<img>` tags, especially those rendered dynamically in lists, feeds, or off-screen preview panels, to defer network requests and improve initial load performance.
+
+## 2026-03-22 - [Intermediate Array Allocations from Chained Methods]
+**Learning:** Found multiple instances where chained array methods (e.g., `.filter().length`, `.filter().map()`, `.map().filter()`) were used in high-frequency notification logic. This pattern creates unnecessary intermediate arrays that are immediately discarded, leading to memory overhead and triggering frequent garbage collection, especially within `setInterval` loops and render cycles.
+**Action:** Always replace chained array methods with a single-pass `for...of` loop or `.reduce()` when performing multiple operations on the same data. This eliminates intermediate object allocations and reduces the time complexity overhead from multiple iterations.

@@ -963,7 +963,9 @@
                 renderNotifications() {
                     const { notifications } = App.state;
                     const { notificationList, notificationBadge } = App.elements;
-                    const unreadCount = notifications.filter(n => !n.read).length;
+
+                    // ⚡ Bolt: Use a single loop to count unread notifications instead of creating a temporary array with .filter()
+                    const unreadCount = notifications.reduce((count, n) => n.read ? count : count + 1, 0);
                     
                     if (unreadCount > 0) {
                         notificationBadge.classList.remove('hidden');
@@ -1344,8 +1346,15 @@
                 },
                 // ⚡ Bolt: Execute independent asynchronous notification updates concurrently with Promise.all() to eliminate O(N) sequential wait times
                 async handleClearNotifications() {
-                    const unread = App.state.notifications.filter(n => !n.read);
-                    await Promise.all(unread.map(n => window.firestore.updateNotification(App.state.userId, n.id, { read: true })));
+                    // ⚡ Bolt: Single-pass loop to collect promises avoids creating multiple intermediate arrays from chained .filter().map()
+                    const updatePromises = [];
+                    for (let i = 0; i < App.state.notifications.length; i++) {
+                        const n = App.state.notifications[i];
+                        if (!n.read) {
+                            updatePromises.push(window.firestore.updateNotification(App.state.userId, n.id, { read: true }));
+                        }
+                    }
+                    await Promise.all(updatePromises);
                 },
                 runNotificationEngine() {
                     console.log("[Engine] Starting Notification Engine...");
@@ -1354,7 +1363,12 @@
                         const tenMinsLater = new Date(now.getTime() + 10 * 60000);
                         
                         // ⚡ Bolt: Convert array to Set for O(1) lookups instead of O(N) array.some()
-                        const existingNotifKeys = new Set(App.state.notifications.map(n => n.key).filter(Boolean));
+                        // ⚡ Bolt: Single-pass iteration to populate the Set avoids creating intermediate arrays from chained .map().filter()
+                        const existingNotifKeys = new Set();
+                        for (let i = 0; i < App.state.notifications.length; i++) {
+                            const key = App.state.notifications[i].key;
+                            if (key) existingNotifKeys.add(key);
+                        }
 
                         // Check Posts
                         App.state.posts.forEach(async post => {
