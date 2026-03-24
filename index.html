@@ -1347,13 +1347,12 @@
                 // ⚡ Bolt: Execute independent asynchronous notification updates concurrently with Promise.all() to eliminate O(N) sequential wait times
                 async handleClearNotifications() {
                     // ⚡ Bolt: Single-pass loop to collect promises avoids creating multiple intermediate arrays from chained .filter().map()
-                    const updatePromises = [];
-                    for (let i = 0; i < App.state.notifications.length; i++) {
-                        const n = App.state.notifications[i];
+                    const updatePromises = App.state.notifications.reduce((acc, n) => {
                         if (!n.read) {
-                            updatePromises.push(window.firestore.updateNotification(App.state.userId, n.id, { read: true }));
+                            acc.push(window.firestore.updateNotification(App.state.userId, n.id, { read: true }));
                         }
-                    }
+                        return acc;
+                    }, []);
                     await Promise.all(updatePromises);
                 },
                 runNotificationEngine() {
@@ -1364,11 +1363,10 @@
                         
                         // ⚡ Bolt: Convert array to Set for O(1) lookups instead of O(N) array.some()
                         // ⚡ Bolt: Single-pass iteration to populate the Set avoids creating intermediate arrays from chained .map().filter()
-                        const existingNotifKeys = new Set();
-                        for (let i = 0; i < App.state.notifications.length; i++) {
-                            const key = App.state.notifications[i].key;
-                            if (key) existingNotifKeys.add(key);
-                        }
+                        const existingNotifKeys = App.state.notifications.reduce((set, n) => {
+                            if (n.key) set.add(n.key);
+                            return set;
+                        }, new Set());
 
                         // Check Posts
                         App.state.posts.forEach(async post => {
