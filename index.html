@@ -965,12 +965,7 @@
                     const { notificationList, notificationBadge } = App.elements;
 
                     // ⚡ Bolt: Use a single loop to count unread notifications instead of creating a temporary array with .filter()
-                    let unreadCount = 0;
-                    for (let i = 0; i < notifications.length; i++) {
-                        if (!notifications[i].read) {
-                            unreadCount++;
-                        }
-                    }
+                    const unreadCount = notifications.reduce((count, n) => n.read ? count : count + 1, 0);
                     
                     if (unreadCount > 0) {
                         notificationBadge.classList.remove('hidden');
