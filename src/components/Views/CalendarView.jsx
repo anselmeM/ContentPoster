@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { postsService } from '../../services/firebase';
 import { getPlatformConfig } from '../../config/platforms';
+import { getLocalTimezone } from '../../utils/timezoneUtils';
+import TimeZoneGrid from '../UI/TimeZoneGrid';
 import clsx from 'clsx';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -12,6 +14,8 @@ const CalendarView = ({ onSelectDate, onEditPost, onDragStart }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [posts, setPosts] = useState([]);
   const [view, setView] = useState('month'); // 'month', 'week'
+  const [gridView, setGridView] = useState('calendar'); // 'calendar' or 'timezone'
+  const userTimezone = getLocalTimezone();
   
   // Load posts
   useEffect(() => {
@@ -165,19 +169,44 @@ const CalendarView = ({ onSelectDate, onEditPost, onDragStart }) => {
               Week
             </button>
           </div>
+          
+          <button
+            onClick={() => setGridView(gridView === 'calendar' ? 'timezone' : 'calendar')}
+            className={clsx(
+              'ml-2 px-3 py-1 text-sm rounded-lg border-2 transition-all',
+              gridView === 'timezone' 
+                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                : 'border-gray-200 dark:border-gray-600 text-gray-500 hover:border-gray-300'
+            )}
+            title="Toggle Time Zone Grid"
+          >
+            <i className="fas fa-globe mr-1" />
+            {gridView === 'calendar' ? 'Grid' : 'Calendar'}
+          </button>
         </div>
       </div>
       
-      {/* Day Headers */}
-      <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
-        {DAYS.map(day => (
-          <div key={day} className="py-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-            {day}
+      {/* Time Zone Grid View */}
+      {gridView === 'timezone' ? (
+        <div className="flex-1 p-4 overflow-auto">
+          <TimeZoneGrid
+            posts={posts}
+            userTimezone={userTimezone}
+            selectedDate={currentDate.toISOString().split('T')[0]}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Day Headers */}
+          <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
+            {DAYS.map(day => (
+              <div key={day} className="py-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                {day}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      
-      {/* Calendar Grid */}
+          
+          {/* Calendar Grid */}
       <div className="flex-1 grid grid-cols-7 auto-rows-fr">
         {days.map((day, index) => {
           const dayPosts = getPostsForDay(day.date);
@@ -245,6 +274,8 @@ const CalendarView = ({ onSelectDate, onEditPost, onDragStart }) => {
         <span><i className="fas fa-circle text-gray-400 mr-1" /> Pending</span>
         <span className="text-xs">(Drag posts to reschedule)</span>
       </div>
+      </>
+      )}
     </div>
   );
 };

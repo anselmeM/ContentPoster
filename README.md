@@ -34,6 +34,11 @@ ContentPoster is a full-stack web application built with React that enables user
 *   **Search & Filter:** Filter posts by platform, date, or search query
 *   **Sortable Posts:** Drag-and-drop reordering of post cards
 *   **Timezone Support:** Configurable timezone settings for post scheduling
+*   **Recurring Posts:** Schedule automated repeating posts with daily, weekly, monthly, or yearly intervals
+*   **Best Time Suggestions:** AI-powered optimal posting time recommendations based on platform engagement patterns
+*   **Conflict Detection:** Real-time alerts for overlapping or conflicting scheduled posts on the same platform
+*   **Time Zone Grid:** Visual display of posting times across multiple timezones for global audience targeting
+*   **Draft Scheduling:** Save and queue draft posts with conditional triggers for auto-publishing
 
 ### Technical Features
 

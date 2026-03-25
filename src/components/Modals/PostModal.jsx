@@ -4,6 +4,7 @@ import { postsService, settingsService } from '../../services/firebase';
 import { PLATFORMS, PLATFORM_LIST } from '../../config/platforms';
 import { getOptimalTimes, getNextOptimalSlot, getRelativeTime } from '../../utils/timezoneUtils';
 import { getHashtagSuggestions, validateHashtagCount, generateOptimalHashtags } from '../../utils/hashtagUtils';
+import { TRIGGER_TYPES, CONDITION_FIELDS, CONDITION_OPERATORS, TRIGGER_ACTIONS, formatCondition } from '../../utils/triggerEngine';
 import clsx from 'clsx';
 
 // Helper functions for best time suggestions
@@ -92,6 +93,7 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
     status: 'draft',
     timezone: 'America/New_York',
     recurring: null,
+    triggers: null, // NEW: conditional triggers for draft scheduling
     engagement: {
       likes: 0,
       comments: 0,
@@ -124,6 +126,7 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
         status: post.status || 'draft',
         timezone: post.timezone || 'America/New_York',
         recurring: post.recurring || null,
+        triggers: post.triggers || null, // NEW: load triggers
         engagement: post.engagement || { likes: 0, comments: 0, shares: 0, views: 0 }
       });
     }
@@ -756,6 +759,255 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
               {formData.hashtags.length} / {hashtagValidation.max} hashtags used
               {!hashtagValidation.valid && ` (${hashtagValidation.remaining} remaining)`}
             </p>
+          </div>
+          
+          {/* Draft Scheduling / Triggers */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <i className="fas fa-bolt mr-2 text-amber-600" />
+                Draft Scheduling
+              </label>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Auto-publish based on triggers
+              </span>
+            </div>
+            
+            {/* Trigger Type Selector */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                { value: TRIGGER_TYPES.MANUAL, label: 'Manual', icon: 'fa-hand-pointer' },
+                { value: TRIGGER_TYPES.DATE_BASED, label: 'Date Based', icon: 'fa-calendar' },
+                { value: TRIGGER_TYPES.CONDITIONAL, label: 'Conditional', icon: 'fa-code-branch' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ 
+                    ...prev, 
+                    triggers: option.value === TRIGGER_TYPES.MANUAL 
+                      ? null 
+                      : { 
+                          type: option.value,
+                          conditions: option.value === TRIGGER_TYPES.CONDITIONAL ? [] : undefined,
+                          scheduledDate: '',
+                          scheduledTime: '',
+                          action: TRIGGER_ACTIONS.PUBLISH
+                        }
+                  }))}
+                  className={clsx(
+                    'flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all',
+                    (formData.triggers?.type || TRIGGER_TYPES.MANUAL) === option.value
+                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                  )}
+                >
+                  <i className={`fas ${option.icon} text-lg mb-1 ${(formData.triggers?.type || TRIGGER_TYPES.MANUAL) === option.value ? 'text-amber-600' : 'text-gray-400'}`} />
+                  <span className={clsx(
+                    'text-xs font-medium',
+                    (formData.triggers?.type || TRIGGER_TYPES.MANUAL) === option.value ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'
+                  )}>
+                    {option.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+            
+            {/* Date-Based Trigger Options */}
+            {formData.triggers?.type === TRIGGER_TYPES.DATE_BASED && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Publish Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.triggers.scheduledDate || ''}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        triggers: { ...prev.triggers, scheduledDate: e.target.value }
+                      }))}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Publish Time
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.triggers.scheduledTime || ''}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        triggers: { ...prev.triggers, scheduledTime: e.target.value }
+                      }))}
+                      className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <i className="fas fa-info-circle mr-1" />
+                  This draft will be automatically published at the specified date and time.
+                </div>
+              </div>
+            )}
+            
+            {/* Conditional Trigger Options */}
+            {formData.triggers?.type === TRIGGER_TYPES.CONDITIONAL && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Conditions</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      triggers: { 
+                        ...prev.triggers, 
+                        conditions: [...(prev.triggers.conditions || []), { field: 'time_since_draft_hours', operator: 'greater_than', value: 24 }]
+                      }
+                    }))}
+                    className="text-xs text-indigo-600 hover:text-indigo-700"
+                  >
+                    <i className="fas fa-plus mr-1" />
+                    Add Condition
+                  </button>
+                </div>
+                
+                {/* Conditions List */}
+                {formData.triggers.conditions?.length > 0 && (
+                  <div className="space-y-2">
+                    {formData.triggers.conditions.map((condition, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded">
+                        <select
+                          value={condition.field}
+                          onChange={(e) => {
+                            const newConditions = [...formData.triggers.conditions];
+                            newConditions[idx] = { ...condition, field: e.target.value };
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              triggers: { ...prev.triggers, conditions: newConditions }
+                            }));
+                          }}
+                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-white"
+                        >
+                          <option value={CONDITION_FIELDS.TIME_SINCE_DRAFT_HOURS}>Time since draft (hours)</option>
+                          <option value={CONDITION_FIELDS.DAY_OF_WEEK}>Day of week</option>
+                          <option value={CONDITION_FIELDS.TIME_OF_DAY}>Time of day</option>
+                          <option value={CONDITION_FIELDS.ENGAGEMENT_LIKES}>Likes</option>
+                          <option value={CONDITION_FIELDS.ENGAGEMENT_COMMENTS}>Comments</option>
+                        </select>
+                        
+                        <select
+                          value={condition.operator}
+                          onChange={(e) => {
+                            const newConditions = [...formData.triggers.conditions];
+                            newConditions[idx] = { ...condition, operator: e.target.value };
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              triggers: { ...prev.triggers, conditions: newConditions }
+                            }));
+                          }}
+                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-white"
+                        >
+                          <option value={CONDITION_OPERATORS.GREATER_THAN}>greater than</option>
+                          <option value={CONDITION_OPERATORS.LESS_THAN}>less than</option>
+                          <option value={CONDITION_OPERATORS.EQUALS}>equals</option>
+                        </select>
+                        
+                        <input
+                          type="number"
+                          value={condition.value}
+                          onChange={(e) => {
+                            const newConditions = [...formData.triggers.conditions];
+                            newConditions[idx] = { ...condition, value: parseInt(e.target.value) || 0 };
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              triggers: { ...prev.triggers, conditions: newConditions }
+                            }));
+                          }}
+                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 bg-white dark:bg-gray-700 dark:text-white"
+                        />
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newConditions = formData.triggers.conditions.filter((_, i) => i !== idx);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              triggers: { ...prev.triggers, conditions: newConditions }
+                            }));
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <i className="fas fa-times" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Logic Toggle */}
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Match:</span>
+                  <div className="flex bg-gray-200 dark:bg-gray-600 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        triggers: { ...prev.triggers, logic: 'all' }
+                      }))}
+                      className={clsx(
+                        'px-3 py-1 text-xs rounded-md',
+                        (formData.triggers.logic || 'all') === 'all' 
+                          ? 'bg-white dark:bg-gray-500 shadow' 
+                          : 'text-gray-600 dark:text-gray-300'
+                      )}
+                    >
+                      All conditions
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        triggers: { ...prev.triggers, logic: 'any' }
+                      }))}
+                      className={clsx(
+                        'px-3 py-1 text-xs rounded-md',
+                        formData.triggers.logic === 'any' 
+                          ? 'bg-white dark:bg-gray-500 shadow' 
+                          : 'text-gray-600 dark:text-gray-300'
+                      )}
+                    >
+                      Any condition
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Action Selector */}
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Action:</span>
+                  <select
+                    value={formData.triggers.action || TRIGGER_ACTIONS.PUBLISH}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      triggers: { ...prev.triggers, action: e.target.value }
+                    }))}
+                    className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value={TRIGGER_ACTIONS.PUBLISH}>Auto-publish</option>
+                    <option value={TRIGGER_ACTIONS.NOTIFY}>Send notification</option>
+                    <option value={TRIGGER_ACTIONS.ESCALATE}>Mark for review</option>
+                  </select>
+                </div>
+                
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <i className="fas fa-info-circle mr-1" />
+                  This draft will trigger the selected action when all/any conditions are met.
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Actions */}

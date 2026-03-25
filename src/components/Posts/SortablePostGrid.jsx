@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import {
   DndContext,
   rectIntersection,
@@ -19,7 +19,7 @@ import { postsService } from '../../services/firebase';
 import SortablePostCard from './SortablePostCard';
 import clsx from 'clsx';
 
-// Platform-specific colors for drag preview
+// Platform-specific colors for drag preview with smooth animations
 const platformColors = {
   instagram: 'from-yellow-400 via-red-500 to-purple-500',
   twitter: 'bg-black',
@@ -27,6 +27,13 @@ const platformColors = {
   linkedin: 'bg-blue-700',
   tiktok: 'bg-black',
   dribbble: 'bg-pink-500'
+};
+
+// Spring animation configuration for drag operations
+const springConfig = {
+  damping: 20,
+  stiffness: 300,
+  mass: 0.5
 };
 
 // Custom drag preview component
@@ -127,6 +134,43 @@ const SortablePostGrid = ({ posts, onOpenModal, isLoading = false }) => {
   const [activeId, setActiveId] = useState(null);
   const [announcement, setAnnouncement] = useState('');
 
+  // Debounce ref for Firebase updates during drag operations
+  const pendingUpdates = useRef(new Map());
+  const updateTimeoutRef = useRef(null);
+
+  // Debounced Firebase update function
+  const debouncedUpdate = useCallback((postId, updates) => {
+    pendingUpdates.current.set(postId, updates);
+    
+    // Clear any existing timeout
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    
+    // Batch updates after 500ms of no new updates
+    updateTimeoutRef.current = setTimeout(async () => {
+      const updatesToApply = new Map(pendingUpdates.current);
+      pendingUpdates.current.clear();
+      
+      for (const [postId, updates] of updatesToApply) {
+        try {
+          await postsService.update(user.uid, postId, updates);
+        } catch (error) {
+          console.error('Failed to update post:', error);
+        }
+      }
+    }, 500);
+  }, [user]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -135,8 +179,47 @@ const SortablePostGrid = ({ posts, onOpenModal, isLoading = false }) => {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      // Require a small delay before keyboard drag activates
+      // This prevents accidental drags when using Tab
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
     })
   );
+
+  // Handle keyboard navigation for accessibility
+  const handleKeyboardDrag = useCallback((event) => {
+    const { active, over } = event;
+    
+    if (!active || !over) return;
+    
+    const activePost = posts.find(p => p.id === active.id);
+    if (!activePost) return;
+    
+    // Determine which day column we're over based on keyboard navigation
+    let targetDay = null;
+    
+    if (dayToDateMap[over.id]) {
+      targetDay = over.id;
+    } else {
+      const overPost = posts.find(p => p.id === over.id);
+      if (overPost) {
+        const postDate = new Date(overPost.date + 'T00:00:00');
+        const dayOfWeek = postDate.getUTCDay() || 7;
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        targetDay = dayNames[dayOfWeek];
+      }
+    }
+    
+    if (targetDay && dayToDateMap[targetDay]) {
+      const newDate = getDateForDay(targetDay);
+      if (newDate && newDate !== activePost.date) {
+        debouncedUpdate(activePost.id, { date: newDate });
+        setAnnouncement(`Moved ${activePost.title || 'post'} to ${targetDay} using keyboard.`);
+      }
+    }
+  }, [posts, debouncedUpdate]);
 
   const handleDelete = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
@@ -189,7 +272,8 @@ const SortablePostGrid = ({ posts, onOpenModal, isLoading = false }) => {
       console.log('Dropping post:', activePost.id, 'from', activePost.date, 'to', newDate, 'targetDay:', targetDay);
       if (newDate && newDate !== activePost.date) {
         try {
-          await postsService.update(user.uid, activePost.id, { date: newDate });
+          // Use debounced update instead of direct Firebase call
+          debouncedUpdate(activePost.id, { date: newDate });
           setAnnouncement(`Moved ${activePost.title || 'post'} to ${targetDay}.`);
         } catch (error) {
           console.error('Failed to update post date:', error);

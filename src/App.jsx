@@ -6,6 +6,7 @@ import SignupForm from './components/Auth/SignupForm';
 import Dashboard from './components/Dashboard/Dashboard';
 import LoadingSpinner from './components/UI/LoadingSpinner';
 import ToastContainer from './components/UI/ToastContainer';
+import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import { initNotifications } from './services/notifications';
 
 function App() {
@@ -51,13 +52,15 @@ function App() {
 
   // Main app - wrap with TeamProvider for collaboration features
   return (
-    <>
-      {skipLink}
-      <ToastContainer />
-      <TeamProvider>
-        <Dashboard />
-      </TeamProvider>
-    </>
+    <ErrorBoundary fallbackMessage="An unexpected error occurred in the application">
+      <>
+        {skipLink}
+        <ToastContainer />
+        <TeamProvider>
+          <Dashboard />
+        </TeamProvider>
+      </>
+    </ErrorBoundary>
   );
 }
 

@@ -20,6 +20,16 @@ import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import clsx from 'clsx';
 
+// Import new Analytics components
+import EngagementTimelineChart from '../Analytics/EngagementTimelineChart';
+import PlatformPerformanceChart from '../Analytics/PlatformPerformanceChart';
+import ContentTypeChart from '../Analytics/ContentTypeChart';
+import EngagementHeatmap from '../Analytics/EngagementHeatmap';
+import AudienceGrowthChart from '../Analytics/AudienceGrowthChart';
+import PlatformComparison from '../Analytics/PlatformComparison';
+import ABTestDashboard from '../Testing/ABTestDashboard';
+import ABTestCreator from '../Testing/ABTestCreator';
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -37,6 +47,8 @@ const AnalyticsView = ({ posts }) => {
   const [dateRange, setDateRange] = useState('30'); // days
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAbTestPanel, setShowAbTestPanel] = useState(false);
+  const [showAbTestCreator, setShowAbTestCreator] = useState(false);
+  const [abTests, setAbTests] = useState([]);
 
   // Filter posts by date range
   const filteredPosts = useMemo(() => {
@@ -776,107 +788,71 @@ const AnalyticsView = ({ posts }) => {
         </div>
       </div>
 
-      {/* Engagement Trends Over Time */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-          <i className="fas fa-chart-line mr-2 text-indigo-600" />
-          Engagement Trends Over Time
-        </h3>
-        <div className="h-64">
-          <Line data={engagementTrendsData} options={chartOptions} />
-        </div>
-      </div>
+      {/* NEW: Engagement Timeline Chart with per-post metrics */}
+      <EngagementTimelineChart 
+        posts={filteredPosts}
+        dateRange={dateRange}
+        showLikes={true}
+        showComments={true}
+        showShares={true}
+        showViews={true}
+        smoothingEnabled={false}
+        comparisonEnabled={false}
+      />
 
-      {/* Platform Comparison */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-          <i className="fas fa-chart-bar mr-2 text-indigo-600" />
-          Platform Comparison
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Platform</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Posts</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Likes</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Comments</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Shares</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Avg Likes</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Avg Engagement</th>
-              </tr>
-            </thead>
-            <tbody>
-              {platformComparisonData.length > 0 ? platformComparisonData.map((platform, idx) => (
-                <tr key={idx} className="border-b border-gray-100 dark:border-gray-700">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2" 
-                        style={{ backgroundColor: platform.color }}
-                      />
-                      <span className="font-medium text-gray-800 dark:text-white">{platform.platform}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.posts}</td>
-                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.likes}</td>
-                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.comments}</td>
-                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.shares}</td>
-                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.avgLikes}</td>
-                  <td className="py-3 px-4 text-right">
-                    <span className={clsx(
-                      'px-2 py-1 rounded text-xs font-medium',
-                      platform.avgEngagement > 50 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                      platform.avgEngagement > 20 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                      'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                    )}>
-                      {platform.avgEngagement}
-                    </span>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400">
-                    No platform data available
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* NEW: Platform Performance Comparison with full UI */}
+      <PlatformPerformanceChart 
+        posts={filteredPosts}
+        sortBy="totalEngagement"
+      />
+
+      {/* NEW: Content Type Effectiveness Chart */}
+      <ContentTypeChart 
+        posts={filteredPosts}
+        chartType="doughnut"
+        showMetrics={true}
+      />
+
+      {/* NEW: Engagement Heatmap */}
+      <EngagementHeatmap 
+        posts={filteredPosts}
+        showByDay={true}
+        showByWeek={false}
+      />
+
+      {/* NEW: Audience Growth Chart */}
+      <AudienceGrowthChart 
+        posts={filteredPosts}
+        timeRange={90}
+        showPlatformBreakdown={true}
+      />
+
+      {/* NEW: Platform Comparison - Full Side-by-Side UI */}
+      <PlatformComparison 
+        posts={filteredPosts}
+        viewMode="table"
+      />
 
       {/* A/B Testing & Predictive Analytics Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* A/B Testing */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-            <i className="fas fa-flask mr-2 text-purple-600" />
-            Content Performance (A/B Analysis)
-          </h3>
-          <div className="h-64">
-            <Bar 
-              data={{
-                labels: abTestData.map(d => d.type),
-                datasets: [{
-                  label: 'Avg Likes',
-                  data: abTestData.map(d => d.avgLikes),
-                  backgroundColor: 'rgba(139, 92, 246, 0.7)',
-                  borderRadius: 4
-                }, {
-                  label: 'Avg Comments',
-                  data: abTestData.map(d => d.avgComments),
-                  backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                  borderRadius: 4
-                }]
-              }} 
-              options={chartOptions} 
-            />
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Based on content length: Short (&lt;100 chars), Medium (100-300), Long (&gt;300)
-          </p>
-        </div>
+        {/* A/B Testing - Full Dashboard */}
+        <ABTestDashboard 
+          tests={abTests}
+          posts={filteredPosts}
+          onCreateTest={() => setShowAbTestCreator(true)}
+        />
+        
+        {/* AB Test Creator Modal */}
+        {showAbTestCreator && (
+          <ABTestCreator 
+            posts={filteredPosts}
+            onClose={() => setShowAbTestCreator(false)}
+            onSave={(test) => {
+              setAbTests(prev => [...prev, { ...test, id: Date.now() }]);
+              setShowAbTestCreator(false);
+            }}
+          />
+        )}
 
         {/* Predictive Analytics */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">

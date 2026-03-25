@@ -32,6 +32,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Export db for other services
+export { db };
+
 // Get app ID from environment or use default
 const appId = import.meta.env.VITE_APP_ID || 'default-app-id';
 
