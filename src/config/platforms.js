@@ -89,6 +89,71 @@ export const PLATFORMS = {
       weekday: ['10:00', '14:00', '17:00'],
       weekend: ['11:00', '15:00']
     }
+  },
+  pinterest: {
+    id: 'pinterest',
+    name: 'Pinterest',
+    icon: 'fa-pinterest-p',
+    color: 'bg-red-600',
+    bgColor: '#BD081C',
+    maxCaptionLength: 500,
+    maxHashtags: 20,
+    supportsVideo: false,
+    supportsImages: true,
+    optimalTimes: {
+      weekday: ['14:00', '16:00', '20:00'],
+      weekend: ['10:00', '14:00', '19:00']
+    },
+    requiresApi: true
+  },
+  youtube: {
+    id: 'youtube',
+    name: 'YouTube',
+    icon: 'fa-youtube',
+    color: 'bg-red-600',
+    bgColor: '#FF0000',
+    maxCaptionLength: 5000,
+    maxHashtags: 15,
+    supportsVideo: true,
+    supportsImages: false,
+    supportsThumbnails: true,
+    optimalTimes: {
+      weekday: ['14:00', '16:00', '19:00'],
+      weekend: ['11:00', '13:00', '16:00']
+    },
+    requiresApi: true
+  },
+  snapchat: {
+    id: 'snapchat',
+    name: 'Snapchat',
+    icon: 'fa-snapchat',
+    color: 'bg-yellow-500',
+    bgColor: '#FFFC00',
+    maxCaptionLength: 2500,
+    maxHashtags: 20,
+    supportsVideo: true,
+    supportsImages: true,
+    optimalTimes: {
+      weekday: ['12:00', '16:00', '20:00'],
+      weekend: ['10:00', '15:00', '21:00']
+    },
+    requiresApi: true
+  },
+  reddit: {
+    id: 'reddit',
+    name: 'Reddit',
+    icon: 'fa-reddit-alien',
+    color: 'bg-orange-500',
+    bgColor: '#FF4500',
+    maxCaptionLength: 40000,
+    maxHashtags: 10,
+    supportsVideo: true,
+    supportsImages: true,
+    optimalTimes: {
+      weekday: ['7:00', '12:00', '17:00'],
+      weekend: ['9:00', '14:00', '19:00']
+    },
+    requiresApi: true
   }
 };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { settingsService, postsService, exportToCSV } from '../../services/firebase';
+import SocialConnections from '../Social/SocialConnections';
 import clsx from 'clsx';
 
 const SettingsView = () => {
@@ -179,6 +180,15 @@ const SettingsView = () => {
             Export All Posts to CSV
           </button>
         </div>
+      </div>
+
+      {/* Social Media API Connections */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <i className="fab fa-connectdevelop mr-2 text-indigo-600" />
+          Social Media Connections
+        </h3>
+        <SocialConnections />
       </div>
     </div>
   );
