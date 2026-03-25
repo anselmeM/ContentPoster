@@ -5,10 +5,17 @@ import LoginForm from './components/Auth/LoginForm';
 import SignupForm from './components/Auth/SignupForm';
 import Dashboard from './components/Dashboard/Dashboard';
 import LoadingSpinner from './components/UI/LoadingSpinner';
+import ToastContainer from './components/UI/ToastContainer';
+import { initNotifications } from './services/notifications';
 
 function App() {
   const { user, loading } = useAuth();
   const [showSignup, setShowSignup] = useState(false);
+
+  // Initialize notifications
+  useEffect(() => {
+    initNotifications();
+  }, []);
 
   // Skip link for accessibility
   const skipLink = (
@@ -46,6 +53,7 @@ function App() {
   return (
     <>
       {skipLink}
+      <ToastContainer />
       <TeamProvider>
         <Dashboard />
       </TeamProvider>
