@@ -1,18 +1,23 @@
+import { memo } from 'react';
 import clsx from 'clsx';
 
+// Memoized platform icons to prevent recreation on every render
 const platformIcons = {
   linkedin: { icon: 'fa-linkedin-in', class: 'bg-blue-600' },
   instagram: { icon: 'fa-instagram', class: 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500' },
   dribbble: { icon: 'fa-dribbble', class: 'bg-pink-500' },
-  facebook: { icon: 'fa-facebook-f', class: 'bg-blue-700' }
+  facebook: { icon: 'fa-facebook-f', class: 'bg-blue-700' },
+  twitter: { icon: 'fa-x-twitter', class: 'bg-black' },
+  tiktok: { icon: 'fa-tiktok', class: 'bg-black' }
 };
 
-const PostCard = ({ post, onEdit, onDelete, onToggleComplete }) => {
+// Memoized image error handler
+const handleImageError = (e) => {
+  e.target.src = 'https://placehold.co/200x100/cccccc/ffffff?text=Error';
+};
+
+const PostCard = memo(({ post, onEdit, onDelete, onToggleComplete }) => {
   const platform = platformIcons[post.platform] || platformIcons.instagram;
-  
-  const handleImageError = (e) => {
-    e.target.src = 'https://placehold.co/200x100/cccccc/ffffff?text=Error';
-  };
 
   return (
     <div 
@@ -88,6 +93,6 @@ const PostCard = ({ post, onEdit, onDelete, onToggleComplete }) => {
       </div>
     </div>
   );
-};
+});
 
 export default PostCard;

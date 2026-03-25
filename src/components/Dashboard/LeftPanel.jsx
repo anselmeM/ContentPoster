@@ -26,7 +26,7 @@ ChartJS.register(
   Filler
 );
 
-const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost }) => {
+const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost, isCollapsed }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [draggedPost, setDraggedPost] = useState(null);
   const [viewMode, setViewMode] = useState('month'); // month, week
@@ -41,6 +41,14 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost }) =
       overdue: posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length,
       scheduled: posts.filter(p => !p.completed).length
     };
+  }, [posts]);
+
+  // Get completed posts for display
+  const completedPosts = useMemo(() => {
+    return posts
+      .filter(p => p.completed)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
   }, [posts]);
 
   // Get posts for a specific date
@@ -217,7 +225,13 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost }) =
   const monthName = currentDate.toLocaleString('default', { month: 'long' });
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
+    <div className={clsx(
+      'bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto transition-all duration-300 ease-in-out',
+      isCollapsed ? 'w-16' : 'w-80'
+    )}>
+      {/* Expanded Content */}
+      {!isCollapsed && (
+        <>
       {/* User greeting */}
       <div className="flex items-center space-x-3 mb-6">
         <img
@@ -316,6 +330,52 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost }) =
           <Line data={chartData} options={chartOptions} />
         </div>
       </div>
+
+      {/* Completed Posts Section */}
+      <div className="mt-6">
+        <h3 className="font-semibold text-gray-800 dark:text-white text-sm mb-3">
+          <i className="fas fa-check-circle mr-2 text-green-500" />
+          Recent Completed Posts
+        </h3>
+        {completedPosts.length > 0 ? (
+          <div className="space-y-2">
+            {completedPosts.map((post) => (
+              <div
+                key={post.id}
+                className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 overflow-hidden">
+                    <span className={clsx(
+                      'w-5 h-5 rounded-full flex items-center justify-center text-white text-xs',
+                      post.platform === 'instagram' && 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500',
+                      post.platform === 'twitter' && 'bg-black',
+                      post.platform === 'linkedin' && 'bg-blue-700',
+                      post.platform === 'facebook' && 'bg-blue-600',
+                      post.platform === 'tiktok' && 'bg-black',
+                      post.platform === 'dribbble' && 'bg-pink-500'
+                    )}>
+                      <i className={`fab fa-${post.platform}`} />
+                    </span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                      {post.title || post.content?.substring(0, 15) || 'Post'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-green-600 dark:text-green-400">
+                    {post.engagement?.likes || 0} <i className="fas fa-heart text-xs" />
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span>{post.date}</span>
+                  <span>{post.engagement?.comments || 0} comments</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500 dark:text-gray-400">No completed posts yet</p>
+        )}
+      </div>
       
       {/* Tip */}
       <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -324,6 +384,8 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost }) =
           Tip: Drag and drop posts on the calendar to reschedule them.
         </p>
       </div>
+        </>
+      )}
     </div>
   );
 };

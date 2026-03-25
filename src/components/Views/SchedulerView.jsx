@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { postsService } from '../../services/firebase';
-import PostGrid from '../Posts/PostGrid';
-import LeftPanel from '../Dashboard/LeftPanel';
+import SortablePostGrid from '../Posts/SortablePostGrid';
 import clsx from 'clsx';
 
 const platforms = [
@@ -63,13 +62,6 @@ const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, se
 
   return (
     <div className="flex h-full">
-      {/* Left panel with calendar and stats */}
-      <LeftPanel
-        posts={posts}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-      />
-      
       {/* Main content */}
       <div className="flex-1 p-6 overflow-y-auto">
         {/* Platform filter */}
@@ -117,16 +109,11 @@ const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, se
         )}
         
         {/* Post grid */}
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-          </div>
-        ) : (
-          <PostGrid
-            posts={filteredPosts}
-            onOpenModal={onOpenModal}
-          />
-        )}
+        <SortablePostGrid
+          posts={filteredPosts}
+          onOpenModal={onOpenModal}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

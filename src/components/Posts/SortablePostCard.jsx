@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 import clsx from 'clsx';
 
 const platformIcons = {
@@ -123,4 +124,4 @@ const SortablePostCard = ({ post, onEdit, onDelete, onToggleComplete }) => {
   );
 };
 
-export default SortablePostCard;
+export default memo(SortablePostCard);

@@ -1,22 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import Sidebar from './Sidebar';
+import LeftPanel from './LeftPanel';
 import Header from './Header';
-import SchedulerView from '../Views/SchedulerView';
-import TasksView from '../Views/TasksView';
-import TemplatesView from '../Views/TemplatesView';
-import SettingsView from '../Views/SettingsView';
-import AnalyticsView from '../Views/AnalyticsView';
-import MediaLibrary from '../Views/MediaLibrary';
 import PostModal from '../Modals/PostModal';
 import { postsService } from '../../services/firebase';
+import LoadingSpinner from '../UI/LoadingSpinner';
+
+// Lazy load view components for code splitting and faster initial load
+const SchedulerView = lazy(() => import('../Views/SchedulerView'));
+const TasksView = lazy(() => import('../Views/TasksView'));
+const TemplatesView = lazy(() => import('../Views/TemplatesView'));
+const SettingsView = lazy(() => import('../Views/SettingsView'));
+const AnalyticsView = lazy(() => import('../Views/AnalyticsView'));
+const MediaLibrary = lazy(() => import('../Views/MediaLibrary'));
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [currentView, setCurrentView] = useState('scheduler');
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [selectedPlatform, setSelectedPlatform] = useState('All');
   const [selectedDate, setSelectedDate] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +31,11 @@ const Dashboard = () => {
   const [editingPost, setEditingPost] = useState(null);
   const [posts, setPosts] = useState([]);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+
+  // Persist collapse state to localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(isPanelCollapsed));
+  }, [isPanelCollapsed]);
 
   // Load posts for analytics
   useEffect(() => {
@@ -58,17 +70,23 @@ const Dashboard = () => {
 
   const views = {
     scheduler: (
-      <SchedulerView
-        selectedPlatform={selectedPlatform}
-        setSelectedPlatform={setSelectedPlatform}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        searchQuery={searchQuery}
-        onOpenModal={openModal}
-        onOpenMediaLibrary={() => setShowMediaLibrary(true)}
-      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <SchedulerView
+          selectedPlatform={selectedPlatform}
+          setSelectedPlatform={setSelectedPlatform}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          searchQuery={searchQuery}
+          onOpenModal={openModal}
+          onOpenMediaLibrary={() => setShowMediaLibrary(true)}
+        />
+      </Suspense>
     ),
-    analytics: <AnalyticsView posts={posts} />,
+    analytics: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <AnalyticsView posts={posts} />
+      </Suspense>
+    ),
     media: (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
@@ -83,9 +101,21 @@ const Dashboard = () => {
         </div>
       </div>
     ),
-    tasks: <TasksView searchQuery={searchQuery} />,
-    templates: <TemplatesView onOpenModal={openModal} />,
-    settings: <SettingsView />
+    tasks: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <TasksView searchQuery={searchQuery} />
+      </Suspense>
+    ),
+    templates: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <TemplatesView onOpenModal={openModal} />
+      </Suspense>
+    ),
+    settings: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <SettingsView />
+      </Suspense>
+    )
   };
 
   return (
@@ -97,6 +127,17 @@ const Dashboard = () => {
         isPanelCollapsed={isPanelCollapsed}
         togglePanel={togglePanel}
         onLogout={handleLogout}
+      />
+
+      {/* Left Panel - Collapsible */}
+      <LeftPanel
+        posts={posts}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        isCollapsed={isPanelCollapsed}
+        onReschedulePost={async (postId, newDate, newTime) => {
+          await postsService.update(user.uid, postId, { date: newDate, time: newTime });
+        }}
       />
       
       {/* Main content area */}
@@ -127,6 +168,7 @@ const Dashboard = () => {
         <PostModal
           post={editingPost}
           onClose={closeModal}
+          existingPosts={posts}
         />
       )}
       

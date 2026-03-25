@@ -57,7 +57,7 @@ const Sidebar = ({ currentView, setCurrentView, isPanelCollapsed, togglePanel, o
           </button>
         ))}
       </nav>
-      
+
       {/* Collapse button */}
       <button
         onClick={togglePanel}
@@ -75,7 +75,7 @@ const Sidebar = ({ currentView, setCurrentView, isPanelCollapsed, togglePanel, o
           {isPanelCollapsed ? 'Expand' : 'Collapse'}
         </span>
       </button>
-      
+
       {/* Logout */}
       <div className="mt-auto">
         <button

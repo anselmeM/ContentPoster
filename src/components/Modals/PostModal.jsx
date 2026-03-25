@@ -6,7 +6,80 @@ import { getOptimalTimes, getNextOptimalSlot, getRelativeTime } from '../../util
 import { getHashtagSuggestions, validateHashtagCount, generateOptimalHashtags } from '../../utils/hashtagUtils';
 import clsx from 'clsx';
 
-const PostModal = ({ post, onClose }) => {
+// Helper functions for best time suggestions
+const getSecondOptimalTime = (platform) => {
+  const times = {
+    instagram: ['18:00', '12:00', '21:00'],
+    twitter: ['09:00', '15:00', '12:00'],
+    facebook: ['13:00', '16:00', '09:00'],
+    linkedin: ['10:00', '08:00', '12:00'],
+    tiktok: ['20:00', '16:00', '14:00'],
+    dribbble: ['15:00', '11:00', '09:00']
+  };
+  return times[platform]?.[1] || '12:00';
+};
+
+const getThirdOptimalTime = (platform) => {
+  const times = {
+    instagram: ['21:00', '09:00', '15:00'],
+    twitter: ['12:00', '18:00', '21:00'],
+    facebook: ['09:00', '20:00', '11:00'],
+    linkedin: ['12:00', '14:00', '16:00'],
+    tiktok: ['14:00', '10:00', '18:00'],
+    dribbble: ['09:00', '13:00', '17:00']
+  };
+  return times[platform]?.[2] || '15:00';
+};
+
+const getSecondOptimalDate = (platform, firstDate) => {
+  const date = new Date(firstDate);
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().split('T')[0];
+};
+
+const getThirdOptimalDate = (platform, firstDate) => {
+  const date = new Date(firstDate);
+  date.setDate(date.getDate() + 2);
+  return date.toISOString().split('T')[0];
+};
+
+const getBestDayOfWeek = (platform) => {
+  const days = {
+    instagram: 'Wednesday',
+    twitter: 'Wednesday',
+    facebook: 'Wednesday',
+    linkedin: 'Wednesday',
+    tiktok: 'Friday',
+    dribbble: 'Tuesday'
+  };
+  return days[platform] || 'Wednesday';
+};
+
+// Conflict detection helper
+const checkConflict = (newDate, newTime, existingPosts, currentPostId) => {
+  if (!newDate || !newTime) return null;
+  
+  const newDateTime = new Date(`${newDate}T${newTime}`);
+  const conflictWindow = 30 * 60 * 1000; // 30 minutes
+  
+  for (const existingPost of existingPosts) {
+    if (existingPost.id === currentPostId) continue;
+    if (!existingPost.date || !existingPost.time) continue;
+    
+    const existingDateTime = new Date(`${existingPost.date}T${existingPost.time}`);
+    const diff = Math.abs(newDateTime.getTime() - existingDateTime.getTime());
+    
+    if (diff < conflictWindow && existingPost.platform === formData.platform) {
+      return {
+        post: existingPost,
+        time: existingDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+    }
+  }
+  return null;
+};
+
+const PostModal = ({ post, onClose, existingPosts = [] }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
@@ -30,6 +103,7 @@ const PostModal = ({ post, onClose }) => {
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [optimalTime, setOptimalTime] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [conflictWarning, setConflictWarning] = useState(null);
   const modalRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -81,6 +155,16 @@ const PostModal = ({ post, onClose }) => {
       });
     }
   }, [formData.platform]);
+
+  // Detect scheduling conflicts
+  useEffect(() => {
+    if (formData.date && formData.time && existingPosts.length > 0) {
+      const conflict = checkConflict(formData.date, formData.time, existingPosts, post?.id);
+      setConflictWarning(conflict);
+    } else {
+      setConflictWarning(null);
+    }
+  }, [formData.date, formData.time, existingPosts, post?.id]);
 
   // Focus trap and escape key handling
   useEffect(() => {
@@ -166,6 +250,22 @@ const PostModal = ({ post, onClose }) => {
     setIsSubmitting(true);
     
     try {
+      // Validate content length
+      const maxLength = platformConfig?.maxCaptionLength || 2200;
+      if (formData.content.length > maxLength) {
+        alert(`Content exceeds maximum length of ${maxLength} characters for ${platformConfig?.name}`);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Validate hashtag count
+      const hashtagValidation = validateHashtagCount(formData.platform, formData.hashtags.length);
+      if (!hashtagValidation.valid) {
+        alert(hashtagValidation.message);
+        setIsSubmitting(false);
+        return;
+      }
+      
       const postData = {
         ...formData,
         engagement: {
@@ -197,10 +297,11 @@ const PostModal = ({ post, onClose }) => {
   };
 
   const hashtagValidation = validateHashtagCount(formData.platform, formData.hashtags.length);
+  const isContentOverLimit = formData.content.length > (platformConfig?.maxCaptionLength || 2200);
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
@@ -208,7 +309,7 @@ const PostModal = ({ post, onClose }) => {
     >
       <div
         ref={modalRef}
-        className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6"
         tabIndex={-1}
       >
         {/* Header */}
@@ -301,7 +402,14 @@ const PostModal = ({ post, onClose }) => {
               required
             />
             <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-500">
+              <span className={clsx(
+                'text-xs',
+                formData.content.length >= (platformConfig?.maxCaptionLength || 2200) * 0.9
+                  ? formData.content.length >= (platformConfig?.maxCaptionLength || 2200)
+                    ? 'text-red-600 font-semibold'
+                    : 'text-yellow-600 font-semibold'
+                  : 'text-gray-500'
+              )}>
                 {formData.content.length} / {platformConfig?.maxCaptionLength || 2200}
               </span>
               {platformConfig?.supportsVideo && (
@@ -389,18 +497,41 @@ const PostModal = ({ post, onClose }) => {
               />
             </div>
           </div>
+
+          {/* Conflict Warning */}
+          {conflictWarning && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3 flex items-start gap-3">
+              <i className="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-500 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-yellow-800 dark:text-yellow-300">
+                  Scheduling Conflict Detected
+                </p>
+                <p className="text-yellow-700 dark:text-yellow-400 text-xs mt-1">
+                  Another post "{conflictWarning.post?.title}" is scheduled at {conflictWarning.time} on the same platform within 30 minutes.
+                  Consider adjusting your schedule to avoid overlapping posts.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setConflictWarning(null)}
+                  className="text-xs text-yellow-600 dark:text-yellow-400 underline mt-2"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
           
-          {/* Optimal Time Suggestion */}
+          {/* Optimal Time Suggestion - Enhanced */}
           {optimalTime && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4">
-              <div className="flex items-center justify-between">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
                     <i className="fas fa-clock mr-2" />
-                    Optimal posting time for {platformConfig?.name}
+                    Best Times to Post on {platformConfig?.name}
                   </p>
                   <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
-                    {optimalTime.date} at {optimalTime.time}
+                    Based on engagement analytics for your audience
                   </p>
                 </div>
                 <button
@@ -408,8 +539,42 @@ const PostModal = ({ post, onClose }) => {
                   onClick={applyOptimalTime}
                   className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
                 >
-                  Apply
+                  Apply Top Time
                 </button>
+              </div>
+              
+              {/* Time Slots Grid */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {[
+                  { time: optimalTime.time, date: optimalTime.date, score: 95, label: 'Best' },
+                  { time: getSecondOptimalTime(formData.platform), date: getSecondOptimalDate(formData.platform, optimalTime.date), score: 80, label: 'Good' },
+                  { time: getThirdOptimalTime(formData.platform), date: getThirdOptimalDate(formData.platform, optimalTime.date), score: 65, label: 'Fair' }
+                ].map((slot, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, date: slot.date, time: slot.time }));
+                    }}
+                    className={clsx(
+                      'flex flex-col items-center p-2 rounded-lg border transition-all',
+                      idx === 0 
+                        ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-800/50' 
+                        : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300'
+                    )}
+                  >
+                    <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">{slot.label}</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{slot.time}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{slot.date}</span>
+                    <span className="text-xs text-green-600 mt-1">{slot.score}% engagement</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Day of Week Recommendation */}
+              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                <i className="fas fa-calendar-day text-indigo-500" />
+                <span>Best day this week: <strong className="text-indigo-700 dark:text-indigo-300">{getBestDayOfWeek(formData.platform)}</strong></span>
               </div>
             </div>
           )}
@@ -434,6 +599,104 @@ const PostModal = ({ post, onClose }) => {
               <option value="Europe/Paris">Central European Time</option>
               <option value="Asia/Tokyo">Japan Standard Time</option>
             </select>
+          </div>
+
+          {/* Recurring Posts */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <i className="fas fa-sync-alt mr-2 text-indigo-600" />
+                Recurring Post
+              </label>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Repeat this post automatically
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-5 gap-2 mb-4">
+              {[
+                { value: null, label: 'None', icon: 'fa-ban' },
+                { value: 'daily', label: 'Daily', icon: 'fa-calendar-day' },
+                { value: 'weekly', label: 'Weekly', icon: 'fa-calendar-week' },
+                { value: 'monthly', label: 'Monthly', icon: 'fa-calendar-alt' },
+                { value: 'yearly', label: 'Yearly', icon: 'fa-calendar' }
+              ].map((option) => (
+                <button
+                  key={option.value || 'none'}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, recurring: option.value ? { type: option.value, interval: 1, endDate: '' } : null }))}
+                  className={clsx(
+                    'flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all',
+                    (formData.recurring?.type || null) === option.value
+                      ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                  )}
+                >
+                  <i className={`fas ${option.icon} text-lg mb-1 ${(formData.recurring?.type || null) === option.value ? 'text-indigo-600' : 'text-gray-400'}`} />
+                  <span className={clsx(
+                    'text-xs font-medium',
+                    (formData.recurring?.type || null) === option.value ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'
+                  )}>
+                    {option.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Recurring Options */}
+            {formData.recurring && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="recurring-interval" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Every
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        id="recurring-interval"
+                        type="number"
+                        min="1"
+                        max="365"
+                        value={formData.recurring.interval || 1}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          recurring: { ...prev.recurring, interval: parseInt(e.target.value) || 1 }
+                        }))}
+                        className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white w-20"
+                      />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                        {formData.recurring.type === 'daily' ? 'day(s)' : 
+                         formData.recurring.type === 'weekly' ? 'week(s)' :
+                         formData.recurring.type === 'monthly' ? 'month(s)' : 'year(s)'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="recurring-end" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      End Date <span className="text-gray-400">(optional)</span>
+                    </label>
+                    <input
+                      id="recurring-end"
+                      type="date"
+                      value={formData.recurring.endDate || ''}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        recurring: { ...prev.recurring, endDate: e.target.value }
+                      }))}
+                      className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      min={formData.date}
+                    />
+                  </div>
+                </div>
+                
+                {/* Preview of next occurrences */}
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <i className="fas fa-info-circle mr-1" />
+                  This post will repeat {formData.recurring.interval === 1 ? 'every' : `every ${formData.recurring.interval}`} {formData.recurring.type}
+                  {formData.recurring.endDate && ` until ${formData.recurring.endDate}`}
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Hashtags */}
@@ -506,7 +769,7 @@ const PostModal = ({ post, onClose }) => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isContentOverLimit || !hashtagValidation.valid}
               className="btn-primary flex items-center"
             >
               {isSubmitting ? (

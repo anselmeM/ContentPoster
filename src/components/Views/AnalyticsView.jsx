@@ -14,8 +14,11 @@ import {
   Filler
 } from 'chart.js';
 import { exportToCSV } from '../../services/firebase';
-import clsx from 'clsx';
 import { PLATFORMS } from '../../config/platforms';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import clsx from 'clsx';
 
 ChartJS.register(
   CategoryScale,
@@ -33,6 +36,7 @@ ChartJS.register(
 const AnalyticsView = ({ posts }) => {
   const [dateRange, setDateRange] = useState('30'); // days
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showAbTestPanel, setShowAbTestPanel] = useState(false);
 
   // Filter posts by date range
   const filteredPosts = useMemo(() => {
@@ -110,6 +114,172 @@ const AnalyticsView = ({ posts }) => {
     tiktok: '#000000',
     dribbble: '#EA4C89'
   };
+
+  // Engagement trends over time - Weekly data for line chart
+  const engagementTrendsData = useMemo(() => {
+    const weeks = [];
+    const now = new Date();
+    
+    for (let i = 11; i >= 0; i--) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - (i * 7));
+      weeks.push(weekStart.toISOString().split('T')[0]);
+    }
+
+    const likesData = weeks.map(weekStart => {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      return filteredPosts
+        .filter(p => {
+          const postDate = new Date(p.date);
+          return postDate >= new Date(weekStart) && postDate < weekEnd;
+        })
+        .reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
+    });
+
+    const commentsData = weeks.map(weekStart => {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      return filteredPosts
+        .filter(p => {
+          const postDate = new Date(p.date);
+          return postDate >= new Date(weekStart) && postDate < weekEnd;
+        })
+        .reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
+    });
+
+    const sharesData = weeks.map(weekStart => {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      return filteredPosts
+        .filter(p => {
+          const postDate = new Date(p.date);
+          return postDate >= new Date(weekStart) && postDate < weekEnd;
+        })
+        .reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
+    });
+
+    return {
+      labels: weeks.map(w => `Week ${12 - weeks.indexOf(w)}`),
+      datasets: [
+        {
+          label: 'Likes',
+          data: likesData,
+          borderColor: 'rgba(239, 68, 68, 1)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Comments',
+          data: commentsData,
+          borderColor: 'rgba(59, 130, 246, 1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Shares',
+          data: sharesData,
+          borderColor: 'rgba(16, 185, 129, 1)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    };
+  }, [filteredPosts]);
+
+  // Platform comparison data
+  const platformComparisonData = useMemo(() => {
+    const platforms = Object.keys(analytics.byPlatform);
+    
+    return platforms.map(platform => {
+      const platformPosts = filteredPosts.filter(p => p.platform === platform);
+      const totalLikes = platformPosts.reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
+      const totalComments = platformPosts.reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
+      const totalShares = platformPosts.reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
+      const totalViews = platformPosts.reduce((sum, p) => sum + (p.engagement?.views || 0), 0);
+      const postCount = platformPosts.length;
+      
+      return {
+        platform: PLATFORMS[platform]?.name || platform,
+        color: platformColors[platform],
+        posts: postCount,
+        likes: totalLikes,
+        comments: totalComments,
+        shares: totalShares,
+        views: totalViews,
+        avgLikes: postCount > 0 ? Math.round(totalLikes / postCount) : 0,
+        avgEngagement: postCount > 0 ? Math.round((totalLikes + totalComments + totalShares) / postCount) : 0
+      };
+    });
+  }, [filteredPosts, analytics.byPlatform]);
+
+  // Predictive analytics - simple linear regression forecast
+  const predictedEngagement = useMemo(() => {
+    if (filteredPosts.length < 3) return null;
+    
+    // Calculate trend based on recent data
+    const recentPosts = [...filteredPosts].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-10);
+    
+    if (recentPosts.length < 2) return null;
+    
+    const firstEngagement = recentPosts[0].engagement?.likes || 0 + recentPosts[0].engagement?.comments || 0;
+    const lastEngagement = recentPosts[recentPosts.length - 1].engagement?.likes || 0 + recentPosts[recentPosts.length - 1].engagement?.comments || 0;
+    
+    const avgEngagement = recentPosts.reduce((sum, p) => 
+      sum + (p.engagement?.likes || 0) + (p.engagement?.comments || 0), 0) / recentPosts.length;
+    
+    // Simple linear trend
+    const trend = (lastEngagement - firstEngagement) / recentPosts.length;
+    
+    // Forecast next 30 days
+    const forecast = [];
+    for (let i = 1; i <= 4; i++) {
+      const predictedValue = Math.max(0, Math.round(avgEngagement + (trend * i * 7)));
+      forecast.push({
+        week: `Week ${i}`,
+        predicted: predictedValue,
+        confidence: Math.max(50, 100 - (i * 10))
+      });
+    }
+    
+    return {
+      trend: trend > 0 ? 'up' : trend < 0 ? 'down' : 'stable',
+      avgEngagement: Math.round(avgEngagement),
+      forecast
+    };
+  }, [filteredPosts]);
+
+  // A/B Testing data - group posts by content similarity
+  const abTestData = useMemo(() => {
+    // Group posts by similar content length ranges
+    const groups = {
+      short: filteredPosts.filter(p => (p.content?.length || 0) < 100),
+      medium: filteredPosts.filter(p => (p.content?.length || 0) >= 100 && (p.content?.length || 0) < 300),
+      long: filteredPosts.filter(p => (p.content?.length || 0) >= 300)
+    };
+    
+    const results = Object.entries(groups).map(([type, posts]) => {
+      const avgLikes = posts.length > 0 
+        ? Math.round(posts.reduce((s, p) => s + (p.engagement?.likes || 0), 0) / posts.length)
+        : 0;
+      const avgComments = posts.length > 0
+        ? Math.round(posts.reduce((s, p) => s + (p.engagement?.comments || 0), 0) / posts.length)
+        : 0;
+      
+      return {
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        count: posts.length,
+        avgLikes,
+        avgComments,
+        avgEngagement: Math.round(avgLikes + avgComments)
+      };
+    });
+    
+    return results.filter(r => r.count > 0);
+  }, [filteredPosts]);
 
   const platformChartData = {
     labels: Object.keys(analytics.byPlatform).map(p => PLATFORMS[p]?.name || p.charAt(0).toUpperCase() + p.slice(1)),
@@ -211,8 +381,147 @@ const AnalyticsView = ({ posts }) => {
   };
 
   const handleExportPDF = () => {
-    // In production, this would generate a proper PDF
-    alert('PDF export would be available with a PDF generation library');
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString();
+    
+    // Header with branding
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 0, 210, 25, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.text('ContentPoster Analytics Report', 14, 17);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${dateStr}`, 14, 23);
+    
+    // Summary section
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.text('Performance Summary', 14, 35);
+    
+    doc.setFontSize(10);
+    doc.text(`Total Posts: ${analytics.totalPosts}`, 14, 43);
+    doc.text(`Published: ${analytics.completedPosts}`, 14, 49);
+    doc.text(`Scheduled: ${analytics.scheduledPosts}`, 14, 55);
+    doc.text(`Completion Rate: ${analytics.completionRate}%`, 14, 61);
+    
+    // Platform breakdown
+    doc.setFontSize(14);
+    doc.text('Platform Performance', 14, 75);
+    
+    const platformRows = platformComparisonData.map(p => [
+      p.platform,
+      p.posts,
+      p.likes,
+      p.comments,
+      p.shares,
+      p.avgLikes
+    ]);
+    
+    doc.autoTable({
+      startY: 80,
+      head: [['Platform', 'Posts', 'Likes', 'Comments', 'Shares', 'Avg Likes']],
+      body: platformRows,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+    
+    // Top performing posts
+    const currentY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text('Top Performing Content', 14, currentY);
+    
+    const postRows = topPosts.map(p => [
+      p.title?.substring(0, 25) || 'Untitled',
+      p.platform,
+      p.engagement?.likes || 0,
+      p.engagement?.comments || 0,
+      p.engagement?.shares || 0
+    ]);
+    
+    doc.autoTable({
+      startY: currentY + 5,
+      head: [['Post', 'Platform', 'Likes', 'Comments', 'Shares']],
+      body: postRows,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+    
+    // Footer
+    const footerY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Generated by ContentPoster - Social Media Management Platform', 14, footerY);
+    
+    doc.save(`analytics_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    setShowExportMenu(false);
+  };
+
+  const handleExportExcel = () => {
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Summary sheet
+    const summaryData = [
+      ['ContentPoster Analytics Report'],
+      [`Generated: ${new Date().toLocaleDateString()}`],
+      [],
+      ['Performance Summary'],
+      ['Total Posts', analytics.totalPosts],
+      ['Published', analytics.completedPosts],
+      ['Scheduled', analytics.scheduledPosts],
+      ['Completion Rate', `${analytics.completionRate}%`],
+      [],
+      ['Engagement Metrics'],
+      ['Total Likes', analytics.totalEngagement.likes],
+      ['Total Comments', analytics.totalEngagement.comments],
+      ['Total Shares', analytics.totalEngagement.shares],
+      ['Total Views', analytics.totalEngagement.views]
+    ];
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+    
+    // Platform comparison sheet
+    const platformData = [['Platform', 'Posts', 'Likes', 'Comments', 'Shares', 'Views', 'Avg Likes', 'Avg Engagement']];
+    platformComparisonData.forEach(p => {
+      platformData.push([p.platform, p.posts, p.likes, p.comments, p.shares, p.views, p.avgLikes, p.avgEngagement]);
+    });
+    const platformSheet = XLSX.utils.aoa_to_sheet(platformData);
+    XLSX.utils.book_append_sheet(wb, platformSheet, 'Platform Comparison');
+    
+    // Posts sheet
+    const postsData = [['Title', 'Platform', 'Date', 'Status', 'Likes', 'Comments', 'Shares', 'Views']];
+    filteredPosts.forEach(p => {
+      postsData.push([
+        p.title || 'Untitled',
+        p.platform,
+        p.date,
+        p.status || 'draft',
+        p.engagement?.likes || 0,
+        p.engagement?.comments || 0,
+        p.engagement?.shares || 0,
+        p.engagement?.views || 0
+      ]);
+    });
+    const postsSheet = XLSX.utils.aoa_to_sheet(postsData);
+    XLSX.utils.book_append_sheet(wb, postsSheet, 'All Posts');
+    
+    // Engagement trends sheet
+    if (engagementTrendsData.labels.length > 0) {
+      const trendsData = [['Week', 'Likes', 'Comments', 'Shares']];
+      engagementTrendsData.labels.forEach((label, i) => {
+        trendsData.push([
+          label,
+          engagementTrendsData.datasets[0].data[i] || 0,
+          engagementTrendsData.datasets[1].data[i] || 0,
+          engagementTrendsData.datasets[2].data[i] || 0
+        ]);
+      });
+      const trendsSheet = XLSX.utils.aoa_to_sheet(trendsData);
+      XLSX.utils.book_append_sheet(wb, trendsSheet, 'Engagement Trends');
+    }
+    
+    // Write file
+    XLSX.writeFile(wb, `analytics_export_${new Date().toISOString().split('T')[0]}.xlsx`);
     setShowExportMenu(false);
   };
 
@@ -283,10 +592,17 @@ const AnalyticsView = ({ posts }) => {
                   Export as CSV
                 </button>
                 <button
+                  onClick={handleExportExcel}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <i className="fas fa-file-excel mr-2 text-green-600" />
+                  Export as Excel
+                </button>
+                <button
                   onClick={handleExportPDF}
                   className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
                 >
-                  <i className="fas fa-file-pdf mr-2" />
+                  <i className="fas fa-file-pdf mr-2 text-red-600" />
                   Export as PDF
                 </button>
                 <button
@@ -457,6 +773,153 @@ const AnalyticsView = ({ posts }) => {
               <p className="text-gray-500 dark:text-gray-400">No data available</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Engagement Trends Over Time */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+          <i className="fas fa-chart-line mr-2 text-indigo-600" />
+          Engagement Trends Over Time
+        </h3>
+        <div className="h-64">
+          <Line data={engagementTrendsData} options={chartOptions} />
+        </div>
+      </div>
+
+      {/* Platform Comparison */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+          <i className="fas fa-chart-bar mr-2 text-indigo-600" />
+          Platform Comparison
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Platform</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Posts</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Likes</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Comments</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Shares</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Avg Likes</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Avg Engagement</th>
+              </tr>
+            </thead>
+            <tbody>
+              {platformComparisonData.length > 0 ? platformComparisonData.map((platform, idx) => (
+                <tr key={idx} className="border-b border-gray-100 dark:border-gray-700">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center">
+                      <div 
+                        className="w-3 h-3 rounded-full mr-2" 
+                        style={{ backgroundColor: platform.color }}
+                      />
+                      <span className="font-medium text-gray-800 dark:text-white">{platform.platform}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.posts}</td>
+                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.likes}</td>
+                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.comments}</td>
+                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.shares}</td>
+                  <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{platform.avgLikes}</td>
+                  <td className="py-3 px-4 text-right">
+                    <span className={clsx(
+                      'px-2 py-1 rounded text-xs font-medium',
+                      platform.avgEngagement > 50 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                      platform.avgEngagement > 20 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                      'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    )}>
+                      {platform.avgEngagement}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                    No platform data available
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* A/B Testing & Predictive Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* A/B Testing */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+            <i className="fas fa-flask mr-2 text-purple-600" />
+            Content Performance (A/B Analysis)
+          </h3>
+          <div className="h-64">
+            <Bar 
+              data={{
+                labels: abTestData.map(d => d.type),
+                datasets: [{
+                  label: 'Avg Likes',
+                  data: abTestData.map(d => d.avgLikes),
+                  backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                  borderRadius: 4
+                }, {
+                  label: 'Avg Comments',
+                  data: abTestData.map(d => d.avgComments),
+                  backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                  borderRadius: 4
+                }]
+              }} 
+              options={chartOptions} 
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Based on content length: Short (&lt;100 chars), Medium (100-300), Long (&gt;300)
+          </p>
+        </div>
+
+        {/* Predictive Analytics */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+            <i className="fas fa-crystal-ball mr-2 text-blue-600" />
+            Predictive Analytics
+          </h3>
+          {predictedEngagement ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Engagement Trend</p>
+                  <p className="text-lg font-semibold text-gray-800 dark:text-white capitalize">{predictedEngagement.trend}</p>
+                </div>
+                <i className={clsx(
+                  'fas text-2xl',
+                  predictedEngagement.trend === 'up' ? 'fa-arrow-trend-up text-green-500' :
+                  predictedEngagement.trend === 'down' ? 'fa-arrow-trend-down text-red-500' :
+                  'fa-minus text-gray-500'
+                )} />
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Average Engagement</p>
+                <p className="text-2xl font-bold text-gray-800 dark:text-white">{predictedEngagement.avgEngagement}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">4-Week Forecast</p>
+                <div className="space-y-2">
+                  {predictedEngagement.forecast.map((week, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">{week.week}</span>
+                      <span className="font-medium text-gray-800 dark:text-white">{week.predicted} predicted</span>
+                      <span className="text-xs text-gray-500">{week.confidence}% confidence</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">
+              <p>Not enough data for predictions</p>
+            </div>
+          )}
         </div>
       </div>
 
