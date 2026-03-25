@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
+import { TeamProvider } from './context/TeamContext';
 import LoginForm from './components/Auth/LoginForm';
 import SignupForm from './components/Auth/SignupForm';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -41,11 +42,13 @@ function App() {
     );
   }
 
-  // Main app
+  // Main app - wrap with TeamProvider for collaboration features
   return (
     <>
       {skipLink}
-      <Dashboard />
+      <TeamProvider>
+        <Dashboard />
+      </TeamProvider>
     </>
   );
 }

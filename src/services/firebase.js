@@ -18,6 +18,7 @@ import {
   updateDoc, 
   deleteDoc, 
   setDoc,
+  getDoc,
   query,
   orderBy,
   limit,
@@ -321,5 +322,257 @@ export const exportToCSV = (posts, filename = 'content_cadence_posts.csv') => {
   document.body.removeChild(link);
 };
 
-export { auth, db };
-export default app;
+// Team workspaces collection
+const getWorkspacesRef = () => 
+  collection(db, 'artifacts', appId, 'workspaces');
+
+const getWorkspaceMembersRef = (workspaceId) => 
+  collection(db, 'artifacts', appId, 'workspaces', workspaceId, 'members');
+
+const getWorkspacePostsRef = (workspaceId) => 
+  collection(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts');
+
+// Role constants
+export const TEAM_ROLES = {
+  OWNER: 'owner',
+  ADMIN: 'admin',
+  EDITOR: 'editor',
+  VIEWER: 'viewer'
+};
+
+// Post status for approval workflow
+export const POST_STATUS = {
+  DRAFT: 'draft',
+  PENDING_REVIEW: 'pending_review',
+  APPROVED: 'approved',
+  REJECTED: 'rejected'
+};
+
+export const teamService = {
+  // Create a new workspace
+  createWorkspace: async (userId, workspaceData) => {
+    const workspacesRef = getWorkspacesRef();
+    const docRef = await addDoc(workspacesRef, {
+      ...workspaceData,
+      ownerId: userId,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    
+    // Add owner as member with owner role
+    const membersRef = getWorkspaceMembersRef(docRef.id);
+    await addDoc(membersRef, {
+      userId,
+      role: TEAM_ROLES.OWNER,
+      joinedAt: Date.now()
+    });
+    
+    return docRef.id;
+  },
+
+  // Get workspaces where user is a member
+  subscribeToUserWorkspaces: (userId, callback) => {
+    const membersRef = collection(db, 'artifacts', appId, 'members', userId, 'workspaces');
+    return onSnapshot(membersRef, async (snapshot) => {
+      if (snapshot.empty) {
+        callback([]);
+        return;
+      }
+      
+      const workspaceIds = snapshot.docs.map(doc => doc.id);
+      const workspaces = [];
+      
+      for (const wsId of workspaceIds) {
+        const wsDoc = await getDoc(doc(db, 'artifacts', appId, 'workspaces', wsId));
+        if (wsDoc.exists()) {
+          const wsData = wsDoc.data();
+          const memberDoc = await getDoc(doc(db, 'artifacts', appId, 'members', userId, 'workspaces', wsId));
+          workspaces.push({
+            id: wsId,
+            ...wsData,
+            userRole: memberDoc.exists() ? memberDoc.data().role : null
+          });
+        }
+      }
+      
+      callback(workspaces);
+    });
+  },
+
+  // Get single workspace details
+  getWorkspace: async (workspaceId) => {
+    const wsDoc = await getDoc(doc(db, 'artifacts', appId, 'workspaces', workspaceId));
+    return wsDoc.exists() ? { id: wsDoc.id, ...wsDoc.data() } : null;
+  },
+
+  // Update workspace
+  updateWorkspace: async (workspaceId, workspaceData) => {
+    const wsRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId);
+    await updateDoc(wsRef, {
+      ...workspaceData,
+      updatedAt: Date.now()
+    });
+  },
+
+  // Add member to workspace
+  addMember: async (workspaceId, memberData) => {
+    const memberId = memberData.userId;
+    
+    // Add to workspace members
+    const membersRef = getWorkspaceMembersRef(workspaceId);
+    await setDoc(doc(membersRef, memberId), {
+      ...memberData,
+      joinedAt: Date.now()
+    });
+    
+    // Add workspace to user's workspace list
+    const userWorkspacesRef = collection(db, 'artifacts', appId, 'members', memberId, 'workspaces');
+    await setDoc(doc(userWorkspacesRef, workspaceId), {
+      role: memberData.role,
+      joinedAt: Date.now()
+    });
+  },
+
+  // Remove member from workspace
+  removeMember: async (workspaceId, memberId) => {
+    const membersRef = getWorkspaceMembersRef(workspaceId);
+    await deleteDoc(doc(membersRef, memberId));
+    
+    const userWorkspacesRef = collection(db, 'artifacts', appId, 'members', memberId, 'workspaces');
+    await deleteDoc(doc(userWorkspacesRef, workspaceId));
+  },
+
+  // Update member role
+  updateMemberRole: async (workspaceId, memberId, newRole) => {
+    const membersRef = getWorkspaceMembersRef(workspaceId);
+    await updateDoc(doc(membersRef, memberId), { role: newRole });
+    
+    const userWorkspacesRef = collection(db, 'artifacts', appId, 'members', memberId, 'workspaces');
+    await updateDoc(doc(userWorkspacesRef, workspaceId), { role: newRole });
+  },
+
+  // Get workspace members
+  subscribeToWorkspaceMembers: (workspaceId, callback) => {
+    const membersRef = getWorkspaceMembersRef(workspaceId);
+    return onSnapshot(membersRef, (snapshot) => {
+      const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(members);
+    });
+  },
+
+  // Get user's role in workspace
+  getUserRole: async (workspaceId, userId) => {
+    const memberDoc = await getDoc(doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'members', userId));
+    return memberDoc.exists() ? memberDoc.data().role : null;
+  },
+
+  // Check if user can perform action based on role
+  canEdit: (role) => {
+    return role === TEAM_ROLES.OWNER || role === TEAM_ROLES.ADMIN || role === TEAM_ROLES.EDITOR;
+  },
+
+  canManageMembers: (role) => {
+    return role === TEAM_ROLES.OWNER || role === TEAM_ROLES.ADMIN;
+  },
+
+  canDelete: (role) => {
+    return role === TEAM_ROLES.OWNER || role === TEAM_ROLES.ADMIN;
+  },
+
+  // Workspace posts (shared posts)
+  subscribeToWorkspacePosts: (workspaceId, callback) => {
+    const postsRef = getWorkspacePostsRef(workspaceId);
+    const q = query(postsRef, orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(posts);
+    });
+  },
+
+  createWorkspacePost: async (workspaceId, userId, postData) => {
+    const postsRef = getWorkspacePostsRef(workspaceId);
+    const docRef = await addDoc(postsRef, {
+      ...postData,
+      status: postData.status || POST_STATUS.DRAFT,
+      createdBy: userId,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    return docRef.id;
+  },
+
+  updateWorkspacePost: async (workspaceId, postId, postData) => {
+    const postRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts', postId);
+    await updateDoc(postRef, {
+      ...postData,
+      updatedAt: Date.now()
+    });
+  },
+
+  deleteWorkspacePost: async (workspaceId, postId) => {
+    const postRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts', postId);
+    await deleteDoc(postRef);
+  },
+
+  // Update post status (approval workflow)
+  updatePostStatus: async (workspaceId, postId, newStatus, userId) => {
+    const postRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts', postId);
+    await updateDoc(postRef, {
+      status: newStatus,
+      statusUpdatedBy: userId,
+      statusUpdatedAt: Date.now(),
+      updatedAt: Date.now()
+    });
+  },
+
+  // Comments on posts
+  subscribeToPostComments: (workspaceId, postId, callback) => {
+    const commentsRef = collection(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts', postId, 'comments');
+    const q = query(commentsRef, orderBy('createdAt', 'asc'));
+    return onSnapshot(q, (snapshot) => {
+      const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(comments);
+    });
+  },
+
+  addComment: async (workspaceId, postId, userId, commentData) => {
+    const commentsRef = collection(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts', postId, 'comments');
+    const docRef = await addDoc(commentsRef, {
+      ...commentData,
+      userId,
+      createdAt: Date.now()
+    });
+    return docRef.id;
+  },
+
+  deleteComment: async (workspaceId, postId, commentId) => {
+    const commentRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'posts', postId, 'comments', commentId);
+    await deleteDoc(commentRef);
+  },
+
+  // Real-time presence/cursors
+  subscribeToActiveUsers: (workspaceId, callback) => {
+    const presenceRef = collection(db, 'artifacts', appId, 'workspaces', workspaceId, 'presence');
+    return onSnapshot(presenceRef, (snapshot) => {
+      const activeUsers = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(user => user.lastActive > Date.now() - 30000); // Filter out stale presence (30s)
+      callback(activeUsers);
+    });
+  },
+
+  // Update user presence
+  updatePresence: async (workspaceId, userId, userData) => {
+    const presenceRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'presence', userId);
+    await setDoc(presenceRef, {
+      ...userData,
+      lastActive: Date.now()
+    }, { merge: true });
+  },
+
+  // Remove presence on logout/disconnect
+  removePresence: async (workspaceId, userId) => {
+    const presenceRef = doc(db, 'artifacts', appId, 'workspaces', workspaceId, 'presence', userId);
+    await deleteDoc(presenceRef);
+  }
+};
