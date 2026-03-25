@@ -787,13 +787,18 @@
                     return postCard;
                 },
                 renderPosts() {
-                    let filteredPosts = [...App.state.posts];
-                    if (App.state.selectedPlatform !== 'All') { filteredPosts = filteredPosts.filter(p => p.platform === App.state.selectedPlatform); }
+                    // ⚡ Bolt: Single-pass iteration to filter posts avoids creating multiple intermediate arrays from chained array copies and .filter() calls
+                    const filteredPosts = [];
+                    for (const p of App.state.posts) {
+                        if (App.state.selectedPlatform !== 'All' && p.platform !== App.state.selectedPlatform) continue;
+                        if (App.state.selectedDate && p.date !== App.state.selectedDate) continue;
+                        filteredPosts.push(p);
+                    }
+
                     const grid = App.elements.postsGrid;
                     grid.innerHTML = '';
                     grid.className = 'grid gap-6';
                     if (App.state.selectedDate) {
-                        filteredPosts = filteredPosts.filter(p => p.date === App.state.selectedDate);
                         grid.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
                         App.elements.mainViewTitle.textContent = `Posts for ${new Date(App.state.selectedDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
                         App.elements.clearFilterBtn.classList.remove('hidden');

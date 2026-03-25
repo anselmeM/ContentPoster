@@ -33,3 +33,7 @@
 ## 2026-03-22 - [Intermediate Array Allocations from Chained Methods]
 **Learning:** Found multiple instances where chained array methods (e.g., `.filter().length`, `.filter().map()`, `.map().filter()`) were used in high-frequency notification logic. This pattern creates unnecessary intermediate arrays that are immediately discarded, leading to memory overhead and triggering frequent garbage collection, especially within `setInterval` loops and render cycles.
 **Action:** Always replace chained array methods with a single-pass `for...of` loop or `.reduce()` when performing multiple operations on the same data. This eliminates intermediate object allocations and reduces the time complexity overhead from multiple iterations.
+
+## 2026-03-25 - [Intermediate Array Allocations from Array Spreads and Filters]
+**Learning:** Found an anti-pattern in `renderPosts` where an array is first shallow-copied using the spread operator (`[...arr]`) and then filtered up to two times sequentially (`.filter()` calls). This creates up to three intermediate arrays per render cycle, causing memory overhead and frequent garbage collection, especially on large arrays.
+**Action:** When deriving a filtered subset from an array based on multiple conditions, combine them into a single-pass `for...of` loop instead of chaining copies and `.filter()` methods. This eliminates intermediate allocations and reduces the time complexity from O(3N) to O(N).
