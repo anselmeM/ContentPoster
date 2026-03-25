@@ -102,7 +102,7 @@ The ContentPoster project is a well-architected React application for social med
 
 ---
 
-## Phase 4: Analytics & Advanced Features ✅ 70% (2026-03-25)
+## Phase 4: Analytics & Advanced Features ✅ 80% (2026-03-25)
 
 ### Features Implemented
 
@@ -118,14 +118,14 @@ The ContentPoster project is a well-architected React application for social med
 | Export (PDF) | High | ✅ Complete | AnalyticsView (lines 395-469) |
 | Export (Excel) | High | ✅ Complete | AnalyticsView (lines 471-538) |
 | Export (JSON) | High | ✅ Complete | AnalyticsView (lines 540-548) |
+| Export (PNG) | High | ✅ Complete | AnalyticsView (lines 745-751) |
 | Platform Comparison | Medium | ✅ Complete | [`src/components/Analytics/PlatformComparison.jsx`](src/components/Analytics/PlatformComparison.jsx:1) |
-| A/B Testing UI | Medium | ⚠️ Partial | [`src/components/Testing/ABTestDashboard.jsx`](src/components/Testing/ABTestDashboard.jsx:1), [`ABTestCreator.jsx`](src/components/Testing/ABTestCreator.jsx:1) |
-| Predictive Analytics | Low | ⚠️ Partial | AnalyticsView (lines 232-265) |
+| **A/B Testing UI + Service** | Medium | ✅ Complete | [`src/services/abTestService.js`](src/services/abTestService.js:1), [`ABTestDashboard.jsx`](src/components/Testing/ABTestDashboard.jsx:1) |
+| **Predictive Analytics + Best Times** | Low | ✅ Complete | [`AnalyticsView.jsx`](src/components/Views/AnalyticsView.jsx:381) (bestPostingTimes) |
+| **Scheduled Export Service** | Medium | ✅ Complete | [`src/services/scheduledExportService.js`](src/services/scheduledExportService.js:1) |
 
 ### Remaining Tasks
-- [ ] A/B test traffic routing backend (Firebase Cloud Functions)
-- [ ] Scheduled exports (cron job)
-- [ ] Enhanced predictive models
+- [ ] A/B test traffic routing backend (Firebase Cloud Functions) - Optional enhancement
 
 ---
 
@@ -159,13 +159,11 @@ A detailed implementation plan has been created at [`PHASE4_COMPLETION_PLAN.md`]
 | Item | Status | Risk | Action Required |
 |------|--------|------|-----------------|
 | Trigger Engine Execution | ⚠️ Partial | Low | Implement setInterval in App.jsx |
-| A/B Test Routing | ⚠️ Partial | Medium | Add Firebase Cloud Functions |
 
 ### Medium Priority
 
 | Item | Status | Risk | Action Required |
 |------|--------|------|-----------------|
-| Scheduled Exports | Not Started | Low | Add scheduled functions |
 | Trigger Logging | Not Started | Low | Add debug logging |
 
 ---
@@ -179,8 +177,9 @@ Auth (Foundation)
   └── Analytics (Depends on Posts)
        ├── Engagement Charts (Complete)
        ├── Platform Comparison (Complete)
-       ├── A/B Testing (UI Complete - needs backend)
-       └── Predictive Analytics (Basic - needs enhancement)
+       ├── A/B Testing (Complete - Firestore integrated)
+       ├── Predictive Analytics (Complete - with best times)
+       └── Scheduled Exports (Complete - UI + Service)
 ```
 
 ---
@@ -192,17 +191,19 @@ Auth (Foundation)
 - Post Management (CRUD + scheduling)
 - Calendar View with drag-drop
 - Analytics Dashboard with 6+ chart types
-- Export functionality (CSV, PDF, Excel, JSON)
+- Export functionality (CSV, PDF, Excel, JSON, PNG)
 - Theme support (dark/light)
 - Media Library
 - Time Zone Grid
 - Recurring posts
 - Best time suggestions
 - Conflict detection
+- A/B Testing (UI + Firestore CRUD)
+- Predictive Analytics with best posting times
+- Scheduled Export functionality
 
 ### ⚠️ Not Blockers (Enhancements)
 - Trigger auto-execution (UI ready)
-- A/B test traffic routing (UI ready)
 
 ---
 
@@ -214,15 +215,12 @@ Auth (Foundation)
 |------|--------|----------|
 | Implement trigger evaluation scheduler | 8 hrs | High |
 | Add trigger logging for debugging | 4 hrs | Medium |
-| Fix JSON export encoding | 2 hrs | Low |
 
 ### Medium-Term (1-2 months)
 
 | Task | Effort | Priority |
 |------|--------|----------|
-| A/B test traffic routing backend | 24 hrs | High |
-| Enhanced predictive models | 40 hrs | High |
-| Scheduled exports | 16 hrs | Medium |
+| A/B test traffic routing backend | 24 hrs | Low | (Optional enhancement)
 
 ---
 
@@ -317,9 +315,7 @@ ContentPoster/
 ## Next Steps
 
 1. Implement trigger evaluation scheduler
-2. Add Firebase Cloud Functions for A/B testing
-3. Enhance predictive analytics with more data
-4. Add scheduled exports
+2. (Optional) Add Firebase Cloud Functions for A/B test traffic routing
 
 ---
 
