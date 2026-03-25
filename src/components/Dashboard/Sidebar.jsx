@@ -3,6 +3,8 @@ import clsx from 'clsx';
 
 const navItems = [
   { id: 'scheduler', label: 'Scheduler', icon: 'fa-calendar-alt' },
+  { id: 'analytics', label: 'Analytics', icon: 'fa-chart-line' },
+  { id: 'media', label: 'Media Library', icon: 'fa-images' },
   { id: 'tasks', label: 'Tasks', icon: 'fa-check-square' },
   { id: 'templates', label: 'Templates', icon: 'fa-file-alt' },
   { id: 'settings', label: 'Settings', icon: 'fa-cog' }

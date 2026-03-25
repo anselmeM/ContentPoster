@@ -1,74 +1,145 @@
 # ContentPoster: Social Media Content Planner
 
-A web-based social media scheduling and task management application designed for content creators and marketers to plan their social media posts and manage related tasks.
-
-## Live Demo
-
-You can view a live demo of the application here: [https://anselmem.github.io/ContentPoster/](https://anselmem.github.io/ContentPoster/)
+A modern React-based social media scheduling and task management application designed for content creators and marketers to plan their social media posts and manage related tasks.
 
 ## Table of Contents
 
 *   [About The Project](#about-the-project)
 *   [Features](#features)
 *   [Technology Stack](#technology-stack)
-*   [Future Roadmap](#future-roadmap)
 *   [Getting Started](#getting-started)
-*   [Contributing](#contributing)
+*   [Project Structure](#project-structure)
 *   [License](#license)
 
 ## About The Project
 
-ContentPoster started as a UI clone and is being progressively enhanced with full-stack functionality. Its primary goal is to provide a clean, intuitive, and dynamic interface for planning social media content. The long-term vision is to develop this into a commercial SaaS product.
+ContentPoster is a full-stack web application built with React that enables users to schedule, manage, and analyze their social media content. The application provides a clean, intuitive interface for planning posts across multiple platforms with real-time analytics and media management capabilities.
 
 ## Features
 
-The application currently operates as a single-page, client-side tool with the following features:
+### Core Functionality
 
-*   **Full Post Management (CRUD):** Create, Update, and Delete social media posts via a reusable modal form. Post data includes title, image URL, date, time, platform, and a completion status.
-*   **Dynamic Calendar & Filtering:** An interactive calendar allows filtering posts by a specific day. Top navigation filters posts by social media platform (Instagram, LinkedIn, etc.).
-*   **Task Management (CRUD):** A separate view for creating, reading, updating (marking as complete), and deleting tasks.
-*   **Dynamic Statistics Panel:** Stats widgets (Completed, Total Post, In Progress, Out of Scheduled) are calculated in real-time based on the current date and post status.
-*   **View Switching:** Users can toggle between the main "Scheduler" view and the "Tasks" view.
+*   **User Authentication:** Secure sign up and login with Firebase Authentication (email/password)
+*   **Post Management (CRUD):** Create, read, update, and delete social media posts via a modal form
+*   **Multi-Platform Support:** Schedule posts for Twitter/X, Instagram, LinkedIn, TikTok, Dribbble, and Facebook
+*   **Calendar View:** Interactive calendar for visualizing and filtering posts by date
+*   **Task Management:** Separate task view for creating and tracking content-related tasks
+*   **Templates:** Save and reuse post templates for quick content creation
+
+### Advanced Features
+
+*   **Media Library:** Upload and manage images/videos for posts using Firebase Storage
+*   **Analytics Dashboard:** Real-time statistics showing completed, scheduled, and in-progress posts
+*   **Dark/Light Theme:** Toggle between light and dark modes for comfortable viewing
+*   **Search & Filter:** Filter posts by platform, date, or search query
+*   **Sortable Posts:** Drag-and-drop reordering of post cards
+*   **Timezone Support:** Configurable timezone settings for post scheduling
+
+### Technical Features
+
+*   **Real-time Sync:** Firestore integration for real-time data synchronization
+*   **Responsive Design:** Fully responsive UI with Tailwind CSS
+*   **Accessibility:** Skip links and ARIA labels for screen reader support
+*   **PWA Support:** Progressive Web App capabilities with service workers
 
 ## Technology Stack
 
-*   **Frontend:** HTML5, Tailwind CSS, vanilla JavaScript (ES6+)
-*   **Charts:** Chart.js for the "Post Stats" graph
-*   **Icons:** Font Awesome
-*   **Planned Backend:** Firebase (Firestore for database, Firebase Auth for users, Firebase Storage for uploads)
-
-## Future Roadmap
-
-The immediate next steps involve transforming this from a client-side prototype into a full-stack application.
-
-*   **Backend & Database Integration (Priority 1):** Replace local JavaScript arrays with data fetched from Firestore. Implement user authentication for persistent and private user data.
-*   **Advanced SaaS Features (Phase 2):** Analytics Dashboard, Media Library, Direct API Publishing.
-*   **Team & Collaboration Features (Phase 3):** Workspaces, user roles, and approval workflows.
+*   **Frontend:** React 18, React Router DOM, Vite
+*   **Styling:** Tailwind CSS 4, PostCSS
+*   **Authentication:** Firebase Auth
+*   **Database:** Firebase Firestore
+*   **Storage:** Firebase Storage
+*   **Charts:** Chart.js, react-chartjs-2
+*   **Drag & Drop:** @dnd-kit/core, @dnd-kit/sortable
+*   **Testing:** Vitest, React Testing Library, Cypress (E2E)
+*   **Icons:** Font Awesome (via CDN)
 
 ## Getting Started
 
-To get a local copy up and running, simply open the `index.html` file in your web browser.
+### Prerequisites
 
+*   Node.js 18+ 
+*   npm or yarn
+*   Firebase project (for auth, firestore, and storage)
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/anselmem/ContentPoster.git
+    cd ContentPoster
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Configure Firebase**
+    
+    Create a `.env` file in the project root with your Firebase configuration:
+    ```env
+    VITE_FIREBASE_API_KEY=your_api_key
+    VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+    VITE_FIREBASE_PROJECT_ID=your_project_id
+    VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+    VITE_FIREBASE_APP_ID=your_app_id
+    ```
+    
+    Or copy from `.env.example` and fill in your values.
+
+4.  **Start development server**
+    ```bash
+    npm run dev
+    ```
+
+5.  **Build for production**
+    ```bash
+    npm run build
+    ```
+
+### Testing
+
+Run unit tests:
 ```bash
-# Clone the repository
-git clone https://github.com/anselmem/ContentPoster.git
-
-# Navigate to the project directory
-cd ContentPoster
-
-# Open index.html in your browser
-# (e.g., by double-clicking the file or using a command like 'start index.html' on Windows)
+npm run test
 ```
 
-## Contributing
+Run E2E tests:
+```bash
+npm run test:e2e
+```
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Open Cypress test runner:
+```bash
+npm run test:e2e:open
+```
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+## Project Structure
+
+```
+ContentPoster/
+├── src/
+│   ├── components/
+│   │   ├── Auth/           # Login and Signup forms
+│   │   ├── Dashboard/      # Main dashboard layout
+│   │   ├── Modals/         # Post and upload modals
+│   │   ├── Posts/          # Post card and grid components
+│   │   ├── UI/             # Reusable UI components
+│   │   └── Views/          # Main view pages
+│   ├── config/             # Platform configuration
+│   ├── context/            # React contexts (Auth, Theme)
+│   ├── services/           # Firebase services
+│   ├── utils/              # Utility functions
+│   └── test/               # Test setup and utilities
+├── public/                 # Static assets
+├── api/                    # Server-side API (if applicable)
+├── components/             # Legacy components
+├── pages/                 # Legacy pages
+├── tests/                 # Additional tests
+└── package.json
+```
 
 ## License
 

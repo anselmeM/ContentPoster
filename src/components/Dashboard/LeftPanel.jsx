@@ -11,6 +11,8 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import { getOptimalTimes } from '../../utils/timezoneUtils';
+import clsx from 'clsx';
 
 // Register Chart.js components
 ChartJS.register(
@@ -24,8 +26,10 @@ ChartJS.register(
   Filler
 );
 
-const LeftPanel = ({ posts, selectedDate, setSelectedDate }) => {
+const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [draggedPost, setDraggedPost] = useState(null);
+  const [viewMode, setViewMode] = useState('month'); // month, week
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -34,9 +38,15 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate }) => {
       completed: posts.filter(p => p.completed).length,
       total: posts.length,
       inProgress: posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) > now).length,
-      outOfScheduled: posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length
+      overdue: posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length,
+      scheduled: posts.filter(p => !p.completed).length
     };
   }, [posts]);
+
+  // Get posts for a specific date
+  const getPostsForDate = (dateStr) => {
+    return posts.filter(p => p.date === dateStr);
+  };
 
   // Calendar logic
   const getDaysInMonth = (date) => {
@@ -57,38 +67,104 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate }) => {
     const startOffset = firstDay === 0 ? 6 : firstDay - 1;
     
     const days = [];
+    const today = new Date().toISOString().split('T')[0];
     
     // Empty cells for days before the first of the month
     for (let i = 0; i < startOffset; i++) {
-      days.push(<div key={`empty-${i}`} className="py-2" />);
+      days.push(
+        <div 
+          key={`empty-${i}`} 
+          className="py-2 min-h-[80px] border border-gray-100 dark:border-gray-700/50"
+        />
+      );
     }
     
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const hasPosts = posts.some(p => p.date === dateStr);
+      const dayPosts = getPostsForDate(dateStr);
       const isSelected = selectedDate === dateStr;
+      const isToday = dateStr === today;
+      const isPast = dateStr < today;
       
       days.push(
-        <button
+        <div
           key={day}
-          onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-          className={`py-2 calendar-day relative ${
-            isSelected ? 'selected' : ''
-          } ${hasPosts ? 'font-bold' : ''}`}
-          aria-label={hasPosts ? `${day} has posts` : `${day}`}
+          className={clsx(
+            'min-h-[80px] border border-gray-100 dark:border-gray-700/50 p-1 transition-colors',
+            isSelected && 'bg-indigo-50 dark:bg-indigo-900/20',
+            isToday && 'bg-yellow-50 dark:bg-yellow-900/20'
+          )}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => handleDrop(dateStr)}
         >
-          {day}
-          {hasPosts && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-600 rounded-full" />}
-        </button>
+          <button
+            onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+            className={clsx(
+              'w-full text-left p-1 text-sm rounded',
+              isToday && 'font-bold text-yellow-600 dark:text-yellow-400',
+              isPast && !isToday && 'text-gray-400 dark:text-gray-500',
+              !isPast && !isToday && 'text-gray-700 dark:text-gray-300'
+            )}
+          >
+            {day}
+          </button>
+          
+          {/* Post indicators */}
+          <div className="space-y-1 mt-1">
+            {dayPosts.slice(0, 2).map((post, idx) => (
+              <div
+                key={post.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, post)}
+                className={clsx(
+                  'text-xs px-1 py-0.5 rounded truncate cursor-move',
+                  post.platform === 'instagram' && 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300',
+                  post.platform === 'twitter' && 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+                  post.platform === 'linkedin' && 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                  post.platform === 'facebook' && 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                  post.platform === 'tiktok' && 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+                  post.platform === 'dribbble' && 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300'
+                )}
+                title={post.title}
+              >
+                {post.time} {post.title?.substring(0, 10)}
+              </div>
+            ))}
+            {dayPosts.length > 2 && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                +{dayPosts.length - 2} more
+              </div>
+            )}
+          </div>
+        </div>
       );
     }
     
     return days;
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e, post) => {
+    setDraggedPost(post);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDrop = async (newDate) => {
+    if (draggedPost && onReschedulePost) {
+      await onReschedulePost(draggedPost.id, newDate, draggedPost.time);
+    }
+    setDraggedPost(null);
+  };
+
   const navigateMonth = (direction) => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1));
+  };
+
+  // Jump to today
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date().toISOString().split('T')[0]);
   };
 
   // Chart data
@@ -141,9 +217,9 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate }) => {
   const monthName = currentDate.toLocaleString('default', { month: 'long' });
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-6 overflow-y-auto">
+    <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
       {/* User greeting */}
-      <div className="flex items-center space-x-3 mb-8">
+      <div className="flex items-center space-x-3 mb-6">
         <img
           src="https://ui-avatars.com/api/?name=User&background=E0E7FF&color=4F46E5"
           alt="User Avatar"
@@ -156,49 +232,67 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate }) => {
       </div>
       
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 p-4 rounded-lg">
-          <p className="text-3xl font-bold">{stats.completed}</p>
-          <p className="text-sm">Completed</p>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 p-3 rounded-lg">
+          <p className="text-2xl font-bold">{stats.completed}</p>
+          <p className="text-xs">Completed</p>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 p-4 rounded-lg">
-          <p className="text-3xl font-bold">{stats.total}</p>
-          <p className="text-sm">Total Post</p>
+        <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 p-3 rounded-lg">
+          <p className="text-2xl font-bold">{stats.total}</p>
+          <p className="text-xs">Total Posts</p>
         </div>
-        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-4 rounded-lg">
-          <p className="text-3xl font-bold">{stats.inProgress}</p>
-          <p className="text-sm">In progress</p>
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 rounded-lg">
+          <p className="text-2xl font-bold">{stats.scheduled}</p>
+          <p className="text-xs">Scheduled</p>
         </div>
-        <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-4 rounded-lg">
-          <p className="text-3xl font-bold">{stats.outOfScheduled}</p>
-          <p className="text-sm">Out of scheduled</p>
+        <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-lg">
+          <p className="text-2xl font-bold">{stats.overdue}</p>
+          <p className="text-xs">Overdue</p>
         </div>
+      </div>
+      
+      {/* Quick Actions */}
+      <div className="flex space-x-2 mb-6">
+        <button
+          onClick={goToToday}
+          className="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          Today
+        </button>
+        <select
+          value={viewMode}
+          onChange={(e) => setViewMode(e.target.value)}
+          className="px-2 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+        >
+          <option value="month">Month</option>
+          <option value="week">Week</option>
+        </select>
       </div>
       
       {/* Calendar */}
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-gray-800 dark:text-white">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-semibold text-gray-800 dark:text-white text-sm">
             {monthName} {currentDate.getFullYear()}
           </h3>
-          <div className="flex space-x-2">
+          <div className="flex space-x-1">
             <button
               onClick={() => navigateMonth(-1)}
-              className="text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              className="text-gray-500 hover:text-gray-800 dark:hover:text-white p-1"
               aria-label="Previous month"
             >
-              <span aria-hidden="true">&lt;</span>
+              <i className="fas fa-chevron-left text-xs" />
             </button>
             <button
               onClick={() => navigateMonth(1)}
-              className="text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              className="text-gray-500 hover:text-gray-800 dark:hover:text-white p-1"
               aria-label="Next month"
             >
-              <span aria-hidden="true">&gt;</span>
+              <i className="fas fa-chevron-right text-xs" />
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-7 text-center text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <div className="grid grid-cols-7 text-center text-xs text-gray-500 dark:text-gray-400 mb-1">
           <div>Mo</div>
           <div>Tu</div>
           <div>We</div>
@@ -207,20 +301,28 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate }) => {
           <div>Sa</div>
           <div>Su</div>
         </div>
-        <div className="grid grid-cols-7 text-center text-sm">
+        <div className="grid grid-cols-7 text-center text-xs">
           {renderCalendar()}
         </div>
       </div>
       
       {/* Post Stats Chart */}
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-gray-800 dark:text-white">Post Stats</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{monthName}</p>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-semibold text-gray-800 dark:text-white text-sm">Post Stats</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{monthName}</p>
         </div>
-        <div className="h-40">
+        <div className="h-32">
           <Line data={chartData} options={chartOptions} />
         </div>
+      </div>
+      
+      {/* Tip */}
+      <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          <i className="fas fa-lightbulb mr-1" />
+          Tip: Drag and drop posts on the calendar to reschedule them.
+        </p>
       </div>
     </div>
   );

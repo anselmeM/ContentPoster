@@ -7,13 +7,15 @@ import clsx from 'clsx';
 
 const platforms = [
   { id: 'All', label: 'All' },
+  { id: 'twitter', label: 'X (Twitter)' },
   { id: 'instagram', label: 'Instagram' },
   { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'tiktok', label: 'TikTok' },
   { id: 'dribbble', label: 'Dribbble' },
   { id: 'facebook', label: 'Facebook' }
 ];
 
-const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, setSelectedDate, searchQuery, onOpenModal }) => {
+const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, setSelectedDate, searchQuery, onOpenModal, onOpenMediaLibrary }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,9 +91,18 @@ const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, se
           
           <button
             onClick={() => onOpenModal()}
-            className="ml-auto text-indigo-600 font-semibold hover:text-indigo-700 dark:text-indigo-400"
+            className="text-indigo-600 font-semibold hover:text-indigo-700 dark:text-indigo-400"
           >
             + Add
+          </button>
+          
+          <button
+            onClick={onOpenMediaLibrary}
+            className="text-gray-500 font-semibold hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+            title="Open Media Library"
+          >
+            <i className="fas fa-images mr-1" />
+            Media
           </button>
         </div>
         
