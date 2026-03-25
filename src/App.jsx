@@ -4,6 +4,7 @@ import { TeamProvider } from './context/TeamContext';
 import LoginForm from './components/Auth/LoginForm';
 import SignupForm from './components/Auth/SignupForm';
 import Dashboard from './components/Dashboard/Dashboard';
+import LandingPage from './components/Landing/LandingPage';
 import LoadingSpinner from './components/UI/LoadingSpinner';
 import ToastContainer from './components/UI/ToastContainer';
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
@@ -13,6 +14,7 @@ import { triggerScheduler } from './services/triggerScheduler';
 function App() {
   const { user, loading } = useAuth();
   const [showSignup, setShowSignup] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
 
   // Initialize notifications
   useEffect(() => {
@@ -48,8 +50,19 @@ function App() {
     );
   }
 
-  // Auth views
+  // Auth views - show landing page first for new visitors
   if (!user) {
+    // If user was already on the app (coming back), show auth forms directly
+    // Otherwise show landing page for marketing
+    if (showLanding) {
+      return (
+        <>
+          {skipLink}
+          <LandingPage onNavigateToApp={() => setShowLanding(false)} />
+        </>
+      );
+    }
+    
     return (
       <>
         {skipLink}
