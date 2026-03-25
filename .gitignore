@@ -1,0 +1,106 @@
+# ==========================================
+# Dependencies
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# Build Outputs
+# ==========================================
+dist/
+dist-ssr/
+*.local
+
+# ==========================================
+# Environment Variables (Keep .env.example)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==========================================
+# IDE & Editor Settings
+# ==========================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ==========================================
+# Testing
+# ==========================================
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# ==========================================
+# Vite / React
+# ==========================================
+.vite/
+.eslintcache
+
+# ==========================================
+# Firebase (local emulators)
+# ==========================================
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+database-debug.log
+
+# ==========================================
+# Logs
+# ==========================================
+logs/
+*.log
+
+# ==========================================
+# Misc
+# ==========================================
+*.tgz
+.cache/
+parcel-cache/
+.turbo/
+.eslintcache
+.npm
+.eslintcache
+.pnp
+.pnp.js
+
+# ==========================================
+# Windows
+# ==========================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==========================================
+# macOS
+# ==========================================
+.DS_Store
+AppleDouble
+.LSOverride
+Icon
+._*
+.Trashes
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==========================================
+# Linux
+# ==========================================
+*~
+.DS_Store
+.Trash
