@@ -8,6 +8,7 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 import ToastContainer from './components/UI/ToastContainer';
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import { initNotifications } from './services/notifications';
+import { triggerScheduler } from './services/triggerScheduler';
 
 function App() {
   const { user, loading } = useAuth();
@@ -17,6 +18,19 @@ function App() {
   useEffect(() => {
     initNotifications();
   }, []);
+
+  // Start trigger scheduler when user logs in
+  useEffect(() => {
+    if (user) {
+      // Start the trigger scheduler with 60 second interval
+      triggerScheduler.start(user.uid, 60000);
+      
+      // Cleanup on unmount or user change
+      return () => {
+        triggerScheduler.stop();
+      };
+    }
+  }, [user]);
 
   // Skip link for accessibility
   const skipLink = (
