@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Line, Bar, Doughnut, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,6 +14,9 @@ import {
   Filler
 } from 'chart.js';
 import { exportToCSV } from '../../services/firebase';
+import { abTestService } from '../../services/abTestService';
+import { scheduledExportService, EXPORT_FREQUENCY, EXPORT_FORMAT } from '../../services/scheduledExportService';
+import { useAuth } from '../../context/AuthContext';
 import { PLATFORMS } from '../../config/platforms';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -44,11 +47,105 @@ ChartJS.register(
 );
 
 const AnalyticsView = ({ posts }) => {
+  const { user } = useAuth();
   const [dateRange, setDateRange] = useState('30'); // days
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAbTestPanel, setShowAbTestPanel] = useState(false);
   const [showAbTestCreator, setShowAbTestCreator] = useState(false);
+  const [showScheduledExportModal, setShowScheduledExportModal] = useState(false);
   const [abTests, setAbTests] = useState([]);
+  const [scheduledExports, setScheduledExports] = useState([]);
+  const chartRefs = useRef({});
+
+  // Subscribe to A/B tests from Firestore
+  useEffect(() => {
+    if (!user) return;
+    
+    const unsubscribe = abTestService.subscribe(user.uid, (tests) => {
+      setAbTests(tests);
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
+
+  // Subscribe to scheduled exports from Firestore
+  useEffect(() => {
+    if (!user) return;
+    
+    const unsubscribe = scheduledExportService.subscribe(user.uid, (schedules) => {
+      setScheduledExports(schedules);
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
+
+  // Handler for creating A/B tests
+  const handleCreateAbTest = async (testData) => {
+    if (!user) return;
+    
+    try {
+      const newTest = await abTestService.create(user.uid, testData);
+      setShowAbTestCreator(false);
+    } catch (error) {
+      console.error('Error creating A/B test:', error);
+    }
+  };
+
+  // Handler for updating test status
+  const handleUpdateTestStatus = async (testId, status) => {
+    if (!user) return;
+    
+    try {
+      await abTestService.updateStatus(user.uid, testId, status);
+    } catch (error) {
+      console.error('Error updating test status:', error);
+    }
+  };
+
+  // Handler for deleting a test
+  const handleDeleteTest = async (testId) => {
+    if (!user) return;
+    
+    try {
+      await abTestService.delete(user.uid, testId);
+    } catch (error) {
+      console.error('Error deleting test:', error);
+    }
+  };
+
+  // Handler for creating scheduled exports
+  const handleCreateScheduledExport = async (scheduleData) => {
+    if (!user) return;
+    
+    try {
+      await scheduledExportService.create(user.uid, scheduleData);
+      setShowScheduledExportModal(false);
+    } catch (error) {
+      console.error('Error creating scheduled export:', error);
+    }
+  };
+
+  // Handler for toggling scheduled export
+  const handleToggleScheduledExport = async (scheduleId, enabled) => {
+    if (!user) return;
+    
+    try {
+      await scheduledExportService.toggle(user.uid, scheduleId, enabled);
+    } catch (error) {
+      console.error('Error toggling scheduled export:', error);
+    }
+  };
+
+  // Handler for deleting scheduled export
+  const handleDeleteScheduledExport = async (scheduleId) => {
+    if (!user) return;
+    
+    try {
+      await scheduledExportService.delete(user.uid, scheduleId);
+    } catch (error) {
+      console.error('Error deleting scheduled export:', error);
+    }
+  };
 
   // Filter posts by date range
   const filteredPosts = useMemo(() => {
@@ -261,6 +358,41 @@ const AnalyticsView = ({ posts }) => {
       trend: trend > 0 ? 'up' : trend < 0 ? 'down' : 'stable',
       avgEngagement: Math.round(avgEngagement),
       forecast
+    };
+  }, [filteredPosts]);
+
+  // Calculate best posting times from historical data
+  const bestPostingTimes = useMemo(() => {
+    if (filteredPosts.length < 5) return null;
+    
+    const dayPerformance = {};
+    const timePerformance = {};
+    
+    filteredPosts.forEach(post => {
+      const day = new Date(post.date).getDay();
+      const hour = new Date(post.date).getHours();
+      const engagement = (post.engagement?.likes || 0) + (post.engagement?.comments || 0);
+      
+      if (!dayPerformance[day]) dayPerformance[day] = { total: 0, count: 0 };
+      dayPerformance[day].total += engagement;
+      dayPerformance[day].count += 1;
+      
+      const timeSlot = Math.floor(hour / 4) * 4;
+      if (!timePerformance[timeSlot]) timePerformance[timeSlot] = { total: 0, count: 0 };
+      timePerformance[timeSlot].total += engagement;
+      timePerformance[timeSlot].count += 1;
+    });
+    
+    const bestDay = Object.entries(dayPerformance)
+      .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
+    const bestTime = Object.entries(timePerformance)
+      .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
+    
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    return {
+      day: bestDay ? dayNames[parseInt(bestDay[0])] : null,
+      time: bestTime ? `${bestTime[0]}:00` : null
     };
   }, [filteredPosts]);
 
@@ -547,6 +679,23 @@ const AnalyticsView = ({ posts }) => {
     setShowExportMenu(false);
   };
 
+  // Export chart as PNG image
+  const handleExportPNG = (chartKey) => {
+    // Find canvas elements in the analytics view
+    const canvases = document.querySelectorAll('.analytics-chart-container canvas');
+    if (canvases.length === 0) return;
+    
+    // Get the first canvas (main engagement chart)
+    const canvas = canvases[0];
+    if (!canvas) return;
+    
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `analytics_chart_${new Date().toISOString().split('T')[0]}.png`;
+    link.click();
+    setShowExportMenu(false);
+  };
+
   // Get top performing posts
   const topPosts = useMemo(() => {
     return [...filteredPosts]
@@ -623,6 +772,22 @@ const AnalyticsView = ({ posts }) => {
                 >
                   <i className="fas fa-code mr-2" />
                   Export as JSON
+                </button>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
+                <button
+                  onClick={() => handleExportPNG('engagement')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <i className="fas fa-image mr-2 text-purple-600" />
+                  Export Charts as PNG
+                </button>
+                <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
+                <button
+                  onClick={() => setShowScheduledExportModal(true)}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <i className="fas fa-clock mr-2 text-blue-600" />
+                  Schedule Recurring Export
                 </button>
               </div>
             )}
@@ -840,6 +1005,8 @@ const AnalyticsView = ({ posts }) => {
           tests={abTests}
           posts={filteredPosts}
           onCreateTest={() => setShowAbTestCreator(true)}
+          onTestStatusChange={handleUpdateTestStatus}
+          onTestDelete={handleDeleteTest}
         />
         
         {/* AB Test Creator Modal */}
@@ -847,11 +1014,145 @@ const AnalyticsView = ({ posts }) => {
           <ABTestCreator 
             posts={filteredPosts}
             onClose={() => setShowAbTestCreator(false)}
-            onSave={(test) => {
-              setAbTests(prev => [...prev, { ...test, id: Date.now() }]);
-              setShowAbTestCreator(false);
-            }}
+            onSave={handleCreateAbTest}
           />
+        )}
+
+        {/* Scheduled Export Modal */}
+        {showScheduledExportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <i className="fas fa-clock mr-2 text-blue-600" />
+                  Schedule Recurring Export
+                </h3>
+                <button 
+                  onClick={() => setShowScheduledExportModal(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <i className="fas fa-times" />
+                </button>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                handleCreateScheduledExport({
+                  name: formData.get('name'),
+                  format: formData.get('format'),
+                  frequency: formData.get('frequency'),
+                  time: formData.get('time')
+                });
+              }}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Export Name
+                    </label>
+                    <input 
+                      type="text" 
+                      name="name" 
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                      placeholder="Weekly Analytics Report"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Export Format
+                    </label>
+                    <select 
+                      name="format"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    >
+                      <option value="csv">CSV</option>
+                      <option value="excel">Excel</option>
+                      <option value="pdf">PDF</option>
+                      <option value="json">JSON</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Frequency
+                    </label>
+                    <select 
+                      name="frequency"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Time
+                    </label>
+                    <input 
+                      type="time" 
+                      name="time"
+                      defaultValue="09:00"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setShowScheduledExportModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Schedule
+                  </button>
+                </div>
+              </form>
+              
+              {scheduledExports.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Active Schedules
+                  </h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {scheduledExports.map(schedule => (
+                      <div key={schedule.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm">
+                        <span className="text-gray-800 dark:text-white">{schedule.name}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleScheduledExport(schedule.id, !schedule.enabled)}
+                            className={clsx(
+                              'px-2 py-1 rounded text-xs',
+                              schedule.enabled 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-gray-200 text-gray-600'
+                            )}
+                          >
+                            {schedule.enabled ? 'Active' : 'Paused'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteScheduledExport(schedule.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <i className="fas fa-trash" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Predictive Analytics */}
@@ -890,6 +1191,17 @@ const AnalyticsView = ({ posts }) => {
                   ))}
                 </div>
               </div>
+              {bestPostingTimes && (
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <i className="fas fa-clock mr-1 text-green-600" />
+                    Best Posting Time
+                  </p>
+                  <p className="text-sm text-gray-800 dark:text-white">
+                    {bestPostingTimes.day} at {bestPostingTimes.time}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">

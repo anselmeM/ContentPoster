@@ -115,6 +115,8 @@ const ABTestDashboard = ({
   tests = [], 
   onTestSelect,
   onTestCreate,
+  onTestStatusChange,
+  onTestDelete,
   showCreateButton = true
 }) => {
   const [filter, setFilter] = useState('all');
@@ -311,7 +313,7 @@ const ABTestDashboard = ({
               </button>
               {test.status === TEST_STATUS.RUNNING && (
                 <button
-                  onClick={() => {}}
+                  onClick={() => onTestStatusChange && onTestStatusChange(test.id, TEST_STATUS.PAUSED)}
                   className="px-3 py-1.5 text-sm bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
                 >
                   <i className="fas fa-pause mr-1" />
@@ -320,7 +322,7 @@ const ABTestDashboard = ({
               )}
               {test.status === TEST_STATUS.PAUSED && (
                 <button
-                  onClick={() => {}}
+                  onClick={() => onTestStatusChange && onTestStatusChange(test.id, TEST_STATUS.RUNNING)}
                   className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
                 >
                   <i className="fas fa-play mr-1" />
@@ -329,11 +331,24 @@ const ABTestDashboard = ({
               )}
               {test.status === TEST_STATUS.RUNNING && (
                 <button
-                  onClick={() => {}}
+                  onClick={() => onTestStatusChange && onTestStatusChange(test.id, TEST_STATUS.COMPLETED)}
                   className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
                 >
                   <i className="fas fa-flag mr-1" />
                   End Test
+                </button>
+              )}
+              {(test.status === TEST_STATUS.COMPLETED || test.status === TEST_STATUS.DRAFT) && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this A/B test?')) {
+                      onTestDelete && onTestDelete(test.id);
+                    }
+                  }}
+                  className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                >
+                  <i className="fas fa-trash mr-1" />
+                  Delete
                 </button>
               )}
             </div>
