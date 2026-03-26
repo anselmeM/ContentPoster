@@ -34,13 +34,26 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost, isC
   // Calculate stats
   const stats = useMemo(() => {
     const now = new Date();
-    return {
-      completed: posts.filter(p => p.completed).length,
-      total: posts.length,
-      inProgress: posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) > now).length,
-      overdue: posts.filter(p => !p.completed && new Date(`${p.date}T${p.time}`) < now).length,
-      scheduled: posts.filter(p => !p.completed).length
-    };
+
+    // Bolt Optimization: Replaced O(4N) chained filters with a single O(N) pass
+    // to prevent intermediate array garbage collection and redundant Date instantiations.
+    return posts.reduce(
+      (acc, p) => {
+        if (p.completed) {
+          acc.completed++;
+        } else {
+          acc.scheduled++;
+          const postDate = new Date(`${p.date}T${p.time}`);
+          if (postDate > now) {
+            acc.inProgress++;
+          } else if (postDate < now) {
+            acc.overdue++;
+          }
+        }
+        return acc;
+      },
+      { completed: 0, total: posts.length, inProgress: 0, overdue: 0, scheduled: 0 }
+    );
   }, [posts]);
 
   // Get completed posts for display

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
 // Mock Firebase
-jest.mock('../config/firebase', () => ({
+vi.mock('../config/firebase', () => ({
   __esModule: true,
   default: {
     apiKey: 'test-api-key',
@@ -14,38 +14,38 @@ jest.mock('../config/firebase', () => ({
 }));
 
 // Mock Firebase services
-jest.mock('firebase/auth', () => ({
-  getAuth: jest.fn(() => ({})),
-  onAuthStateChanged: jest.fn(),
-  createUserWithEmailAndPassword: jest.fn(),
-  signInWithEmailAndPassword: jest.fn(),
-  signOut: jest.fn(),
-  updatePassword: jest.fn(),
-  EmailAuthProvider: { credential: jest.fn() },
-  reauthenticateWithCredential: jest.fn()
+vi.mock('firebase/auth', () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  updatePassword: vi.fn(),
+  EmailAuthProvider: { credential: vi.fn() },
+  reauthenticateWithCredential: vi.fn()
 }));
 
-jest.mock('firebase/firestore', () => ({
-  getFirestore: jest.fn(() => ({})),
-  collection: jest.fn(),
-  onSnapshot: jest.fn(),
-  addDoc: jest.fn(),
-  doc: jest.fn(),
-  updateDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  setDoc: jest.fn(),
-  query: jest.fn(),
-  orderBy: jest.fn()
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(() => ({})),
+  collection: vi.fn(),
+  onSnapshot: vi.fn(),
+  addDoc: vi.fn(),
+  doc: vi.fn(),
+  updateDoc: vi.fn(),
+  deleteDoc: vi.fn(),
+  setDoc: vi.fn(),
+  query: vi.fn(),
+  orderBy: vi.fn()
 }));
 
 // Mock localStorage
 const localStorageMock = (() => {
   let store = {};
   return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => { store[key] = value; }),
-    removeItem: jest.fn((key) => { delete store[key]; }),
-    clear: jest.fn(() => { store = {}; })
+    getItem: vi.fn((key) => store[key] || null),
+    setItem: vi.fn((key, value) => { store[key] = value; }),
+    removeItem: vi.fn((key) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; })
   };
 })();
 
@@ -54,15 +54,15 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 

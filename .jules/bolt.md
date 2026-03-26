@@ -33,3 +33,7 @@
 ## 2026-03-22 - [Intermediate Array Allocations from Chained Methods]
 **Learning:** Found multiple instances where chained array methods (e.g., `.filter().length`, `.filter().map()`, `.map().filter()`) were used in high-frequency notification logic. This pattern creates unnecessary intermediate arrays that are immediately discarded, leading to memory overhead and triggering frequent garbage collection, especially within `setInterval` loops and render cycles.
 **Action:** Always replace chained array methods with a single-pass `for...of` loop or `.reduce()` when performing multiple operations on the same data. This eliminates intermediate object allocations and reduces the time complexity overhead from multiple iterations.
+
+## 2026-03-22 - [O(4N) chained filters and Redundant Date Instantiations in Dashboard Stats]
+**Learning:** Found an anti-pattern in `LeftPanel.jsx` where `.filter().length` was chained four times on the same `posts` array to derive various metrics (completed, inProgress, overdue, scheduled). This resulted in O(4N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
+**Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop (like `.reduce()`). This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
