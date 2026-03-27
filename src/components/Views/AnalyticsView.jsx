@@ -232,48 +232,35 @@ const AnalyticsView = ({ posts }) => {
     for (let i = 11; i >= 0; i--) {
       const weekStart = new Date(now);
       weekStart.setDate(now.getDate() - (i * 7));
-      weeks.push(weekStart.toISOString().split('T')[0]);
+      weeks.push({
+        start: weekStart,
+        end: new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000),
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        label: `Week ${12 - (11 - i)}`
+      });
     }
 
-    const likesData = weeks.map(weekStart => {
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-      return filteredPosts
-        .filter(p => {
-          const postDate = new Date(p.date);
-          return postDate >= new Date(weekStart) && postDate < weekEnd;
-        })
-        .reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
-    });
-
-    const commentsData = weeks.map(weekStart => {
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-      return filteredPosts
-        .filter(p => {
-          const postDate = new Date(p.date);
-          return postDate >= new Date(weekStart) && postDate < weekEnd;
-        })
-        .reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
-    });
-
-    const sharesData = weeks.map(weekStart => {
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-      return filteredPosts
-        .filter(p => {
-          const postDate = new Date(p.date);
-          return postDate >= new Date(weekStart) && postDate < weekEnd;
-        })
-        .reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
+    // Single pass over posts to calculate weekly metrics (O(N) instead of O(W*N*M))
+    filteredPosts.forEach(post => {
+      const postDate = new Date(post.date);
+      for (let i = 0; i < weeks.length; i++) {
+        if (postDate >= weeks[i].start && postDate < weeks[i].end) {
+          weeks[i].likes += post.engagement?.likes || 0;
+          weeks[i].comments += post.engagement?.comments || 0;
+          weeks[i].shares += post.engagement?.shares || 0;
+          break; // Post belongs to only one week
+        }
+      }
     });
 
     return {
-      labels: weeks.map(w => `Week ${12 - weeks.indexOf(w)}`),
+      labels: weeks.map(w => w.label),
       datasets: [
         {
           label: 'Likes',
-          data: likesData,
+          data: weeks.map(w => w.likes),
           borderColor: 'rgba(239, 68, 68, 1)',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           fill: true,
@@ -281,7 +268,7 @@ const AnalyticsView = ({ posts }) => {
         },
         {
           label: 'Comments',
-          data: commentsData,
+          data: weeks.map(w => w.comments),
           borderColor: 'rgba(59, 130, 246, 1)',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           fill: true,
@@ -289,7 +276,7 @@ const AnalyticsView = ({ posts }) => {
         },
         {
           label: 'Shares',
-          data: sharesData,
+          data: weeks.map(w => w.shares),
           borderColor: 'rgba(16, 185, 129, 1)',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           fill: true,
