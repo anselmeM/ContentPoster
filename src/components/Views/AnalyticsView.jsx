@@ -232,16 +232,9 @@ const AnalyticsView = ({ posts }) => {
     for (let i = 11; i >= 0; i--) {
       const weekStart = new Date(now);
       weekStart.setDate(now.getDate() - (i * 7));
-      // Normalize to UTC midnight like the original string-based logic to avoid DST & time-of-day shifts
-      const startStr = weekStart.toISOString().split('T')[0];
-      const startNormalized = new Date(startStr);
-
-      const weekEnd = new Date(startNormalized);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-
       weeks.push({
-        start: startNormalized,
-        end: weekEnd,
+        start: weekStart,
+        end: new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000),
         likes: 0,
         comments: 0,
         shares: 0,

@@ -41,7 +41,3 @@
 ## 2024-03-27 - Optimized engagementTrendsData O(W*N) to O(N)
 **Learning:** In AnalyticsView.jsx, calculating aggregate weekly data points over multiple weeks and metrics resulted in highly repetitive operations using `.filter()` followed by `.reduce()` inside of array maps. The operation performed was effectively O(W * M * N) where W is weeks (12), M is metrics (3), and N is posts.
 **Action:** Replace multiple passes with a single pass grouping logic. When aggregating timeseries data for charts over numerous categories or weeks, pre-compute the bins/buckets and use a single O(N) `forEach` pass over the primary dataset to distribute values into all bins.
-
-## 2024-03-27 - Date Normalization for Time Series
-**Learning:** When generating date buckets for timeseries charts based on rolling intervals (e.g. past 12 weeks), calculating `Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)` ignores Daylight Saving Time transitions, leading to subtle bugs in data bucketing. Furthermore, failing to normalize to midnight UTC retains the precise time-of-day the dashboard is loaded, creating rolling offset windows instead of clean daily buckets.
-**Action:** When creating date interval arrays for dashboards, always utilize reliable normalization techniques (like `setDate` to manipulate days or `toISOString().split('T')[0]`) to ensure UTC boundary consistency and avoid time-of-day offset issues.
