@@ -38,6 +38,6 @@
 **Learning:** Found an anti-pattern in `LeftPanel.jsx` where `.filter().length` was chained four times on the same `posts` array to derive various metrics (completed, inProgress, overdue, scheduled). This resulted in O(4N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop (like `.reduce()`). This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
 
-## 2024-03-27 - Optimized engagementTrendsData O(W*N) to O(N)
-**Learning:** In AnalyticsView.jsx, calculating aggregate weekly data points over multiple weeks and metrics resulted in highly repetitive operations using `.filter()` followed by `.reduce()` inside of array maps. The operation performed was effectively O(W * M * N) where W is weeks (12), M is metrics (3), and N is posts.
+## 2026-03-27 - Optimized engagementTrendsData O(W*N) to O(N)
+**Learning:** In AnalyticsView.jsx, calculating aggregate weekly data points over multiple weeks and metrics resulted in highly repetitive operations using `.filter()` followed by `.reduce()` inside of array maps. The operation performed was effectively `O(W * M * N)` where W is weeks (12), M is metrics (3), and N is posts.
 **Action:** Replace multiple passes with a single pass grouping logic. When aggregating timeseries data for charts over numerous categories or weeks, pre-compute the bins/buckets and use a single O(N) `forEach` pass over the primary dataset to distribute values into all bins.
