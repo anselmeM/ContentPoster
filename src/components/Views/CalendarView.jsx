@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { postsService } from '../../services/firebase';
 import { getPlatformConfig } from '../../config/platforms';
@@ -17,6 +17,18 @@ const CalendarView = ({ onSelectDate, onEditPost, onDragStart }) => {
   const [gridView, setGridView] = useState('calendar'); // 'calendar' or 'timezone'
   const userTimezone = getLocalTimezone();
   
+  // Pre-group posts by date to turn O(n²) rendering loop into O(n) mapping + O(1) lookups
+  const postsByDate = useMemo(() => {
+    const map = {};
+    for (const post of (posts || [])) {
+      if (!map[post.date]) {
+        map[post.date] = [];
+      }
+      map[post.date].push(post);
+    }
+    return map;
+  }, [posts]);
+
   // Load posts
   useEffect(() => {
     if (!user) return;
@@ -71,7 +83,7 @@ const CalendarView = ({ onSelectDate, onEditPost, onDragStart }) => {
   // Get posts for a specific day
   const getPostsForDay = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return posts.filter(post => post.date === dateStr);
+    return postsByDate[dateStr] || [];
   };
   
   // Navigation
@@ -111,10 +123,12 @@ const CalendarView = ({ onSelectDate, onEditPost, onDragStart }) => {
     }
   };
   
+  // Cache the string representation of today for this render cycle to avoid new Date() on every render loop iteration
+  const todayString = new Date().toDateString();
+
   // Today check
   const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+    return date.toDateString() === todayString;
   };
   
   const days = getDaysInMonth(currentDate);
