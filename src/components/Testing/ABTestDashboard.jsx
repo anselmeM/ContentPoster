@@ -129,13 +129,21 @@ const ABTestDashboard = ({
   }, [tests, filter]);
 
   // Stats summary
-  const stats = useMemo(() => ({
-    total: tests.length,
-    running: tests.filter(t => t.status === TEST_STATUS.RUNNING).length,
-    completed: tests.filter(t => t.status === TEST_STATUS.COMPLETED).length,
-    draft: tests.filter(t => t.status === TEST_STATUS.DRAFT).length,
-    paused: tests.filter(t => t.status === TEST_STATUS.PAUSED).length
-  }), [tests]);
+  // Optimized: Single pass to count all statuses, avoiding O(4N) complexity
+  // and multiple intermediate array allocations.
+  const stats = useMemo(() => {
+    const counts = tests.reduce(
+      (acc, t) => {
+        if (t.status === TEST_STATUS.RUNNING) acc.running++;
+        else if (t.status === TEST_STATUS.COMPLETED) acc.completed++;
+        else if (t.status === TEST_STATUS.DRAFT) acc.draft++;
+        else if (t.status === TEST_STATUS.PAUSED) acc.paused++;
+        return acc;
+      },
+      { running: 0, completed: 0, draft: 0, paused: 0 }
+    );
+    return { total: tests.length, ...counts };
+  }, [tests]);
 
   // Format date
   const formatDate = (date) => {
