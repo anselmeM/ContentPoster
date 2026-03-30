@@ -41,3 +41,7 @@
 ## 2026-03-27 - Optimized engagementTrendsData O(W*N) to O(N)
 **Learning:** In AnalyticsView.jsx, calculating aggregate weekly data points over multiple weeks and metrics resulted in highly repetitive operations using `.filter()` followed by `.reduce()` inside of array maps. The operation performed was effectively `O(W * M * N)` where W is weeks (12), M is metrics (3), and N is posts.
 **Action:** Replace multiple passes with a single pass grouping logic. When aggregating timeseries data for charts over numerous categories or weeks, pre-compute the bins/buckets and use a single O(N) `forEach` pass over the primary dataset to distribute values into all bins.
+
+## 2026-03-27 - [Nested Filters in Analytics Components]
+**Learning:** Found nested loops in multiple Analytics components where inner loops filtered and reduced the entire posts array (e.g. `days.map` containing `posts.filter(p => p.date === date).reduce()`). This leads to severe O(N*M) complexity where N is categories (days/platforms) and M is posts.
+**Action:** Whenever an array needs to be filtered or aggregated by a categorical property (like date or platform) within an outer loop, always pre-group the entire array into a hash map dictionary (e.g., `postsByPlatformDate`) using a single O(N) pass. The inner loop can then perform O(1) hash map lookups.

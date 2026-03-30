@@ -165,15 +165,23 @@ const PlatformPerformanceChart = ({
       labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
     }
 
+    // Bolt Optimization: Pre-group posts by platform and date into a hash map
+    // to change O(Platform*TimeRange*Posts) nested loop to O(Posts) + O(Platform*TimeRange)
+    const postsByPlatformDate = posts.reduce((acc, post) => {
+      if (!post.platform || !post.date) return acc;
+      if (!acc[post.platform]) acc[post.platform] = {};
+      if (!acc[post.platform][post.date]) acc[post.platform][post.date] = [];
+      acc[post.platform][post.date].push(post);
+      return acc;
+    }, {});
+
     const datasets = platforms.map(platformId => {
-      const platformPosts = posts.filter(p => p.platform === platformId);
       const data = labels.map((_, idx) => {
         const date = new Date(now);
         date.setDate(now.getDate() - (days - 1 - idx));
         const dateStr = date.toISOString().split('T')[0];
-        return platformPosts
-          .filter(p => p.date === dateStr)
-          .reduce((sum, p) => sum + ((p.engagement?.likes || 0) + (p.engagement?.comments || 0)), 0);
+        const dayPosts = (postsByPlatformDate[platformId] && postsByPlatformDate[platformId][dateStr]) || [];
+        return dayPosts.reduce((sum, p) => sum + ((p.engagement?.likes || 0) + (p.engagement?.comments || 0)), 0);
       });
 
       return {
