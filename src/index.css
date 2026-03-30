@@ -30,12 +30,170 @@
   }
 }
 
+/* Task Management System Animations */
+@keyframes task-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes task-slide-down {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes checkbox-bounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes priority-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animation utility classes */
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
 
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
+}
+
+/* Task-specific animation classes */
+.animate-task-slide-up {
+  animation: task-slide-up 0.4s ease-out forwards;
+}
+
+.animate-task-slide-down {
+  animation: task-slide-down 0.4s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-checkbox-bounce {
+  animation: checkbox-bounce 0.3s ease-out;
+}
+
+.animate-priority-pulse {
+  animation: priority-pulse 2s infinite;
+}
+
+.animate-progress-fill {
+  animation: progress-fill 0.5s ease-out forwards;
+}
+
+.animate-badge-pop {
+  animation: badge-pop 0.3s ease-out forwards;
+}
+
+/* Staggered animations for task lists */
+.task-item-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.task-item-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.task-item-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.task-item-exit-active {
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Micro-interactions */
+.btn-primary {
+  @apply px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 :root {
@@ -171,4 +329,96 @@ body {
 
 .skip-link:focus {
   @apply top-0;
+}
+
+/* ============================================================================
+   Task Management System - Completion & Interaction Animations
+   ============================================================================ */
+
+/* Checkbox completion animation */
+@keyframes checkbox-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.checkbox-pop { animation: checkbox-pop 0.2s ease-out; }
+
+/* Strikethrough animation for completed tasks */
+@keyframes strikethrough {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.task-completed .task-text { position: relative; }
+.task-completed .task-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 2px;
+  background-color: currentColor;
+  animation: strikethrough 0.3s ease-out forwards;
+}
+
+/* Task item hover elevation */
+.task-item { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
+.task-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px -2px rgba(0,0,0,0.1); }
+.dark .task-item:hover { box-shadow: 0 4px 12px -2px rgba(0,0,0,0.3); }
+
+/* Task completion scale animation */
+@keyframes task-complete-pop {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.task-completing { animation: task-complete-pop 0.3s ease-out; }
+
+/* Task deletion slide out */
+@keyframes task-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; height: 0; padding: 0; margin: 0; }
+}
+.task-deleting { animation: task-slide-out 0.3s ease-out forwards; }
+
+/* Confetti celebration for milestones */
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+.confetti-particle { position: fixed; width: 10px; height: 10px; top: 0; animation: confetti-fall 3s ease-out forwards; }
+
+/* Milestone celebration overlay */
+@keyframes celebration-zoom {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.milestone-celebration { animation: celebration-zoom 0.5s ease-out; }
+
+/* Filter tab transitions */
+.filter-tab { transition: all 0.2s ease-out; }
+.filter-tab:hover { background-color: rgba(99,102,241,0.1); }
+.filter-tab.active { background-color: rgba(99,102,241,0.2); color: #4f46e5; }
+
+/* Bulk action bar slide in */
+@keyframes bulk-bar-slide-in {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.bulk-action-bar { animation: bulk-bar-slide-in 0.2s ease-out; }
+
+/* Touch-friendly tap targets for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .task-item button, .task-item [role="checkbox"] { min-height: 44px; min-width: 44px; }
+}
+
+/* Focus ring for keyboard navigation */
+.task-item:focus-within { outline: 2px solid rgba(79,70,229,0.5); outline-offset: 2px; }
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .checkbox-pop, .task-complete-pop, .task-deleting, .confetti-particle,
+  .animate-checkbox-bounce, .animate-task-slide-up, .animate-scale-in,
+  .animate-slide-in, .animate-fade-in { animation: none !important; transition: none !important; }
 }

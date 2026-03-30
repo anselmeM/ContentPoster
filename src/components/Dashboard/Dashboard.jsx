@@ -10,7 +10,7 @@ import LoadingSpinner from '../UI/LoadingSpinner';
 
 // Lazy load view components for code splitting and faster initial load
 const SchedulerView = lazy(() => import('../Views/SchedulerView'));
-const TasksView = lazy(() => import('../Views/TasksView'));
+const TasksView = lazy(() => import('../Views/TasksView.tsx'));
 const TemplatesView = lazy(() => import('../Views/TemplatesView'));
 const SettingsView = lazy(() => import('../Views/SettingsView'));
 const AnalyticsView = lazy(() => import('../Views/AnalyticsView'));
