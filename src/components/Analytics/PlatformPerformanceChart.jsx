@@ -158,22 +158,32 @@ const PlatformPerformanceChart = ({
     const now = new Date();
     const days = 30;
     const labels = [];
+    const dateStrs = [];
     
+    // Pre-calculate date strings and labels
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(now.getDate() - i);
       labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      dateStrs.push(date.toISOString().split('T')[0]);
+    }
+
+    // Pre-calculate engagement data grouped by platform and date using a single O(N) pass
+    const engagementMap = {};
+    for (const post of posts) {
+      if (!post.platform || !post.date) continue;
+      if (!engagementMap[post.platform]) {
+        engagementMap[post.platform] = {};
+      }
+      if (!engagementMap[post.platform][post.date]) {
+        engagementMap[post.platform][post.date] = 0;
+      }
+      engagementMap[post.platform][post.date] += (post.engagement?.likes || 0) + (post.engagement?.comments || 0);
     }
 
     const datasets = platforms.map(platformId => {
-      const platformPosts = posts.filter(p => p.platform === platformId);
-      const data = labels.map((_, idx) => {
-        const date = new Date(now);
-        date.setDate(now.getDate() - (days - 1 - idx));
-        const dateStr = date.toISOString().split('T')[0];
-        return platformPosts
-          .filter(p => p.date === dateStr)
-          .reduce((sum, p) => sum + ((p.engagement?.likes || 0) + (p.engagement?.comments || 0)), 0);
+      const data = dateStrs.map(dateStr => {
+        return engagementMap[platformId]?.[dateStr] || 0;
       });
 
       return {

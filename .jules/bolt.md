@@ -41,3 +41,7 @@
 ## 2026-03-27 - Optimized engagementTrendsData O(W*N) to O(N)
 **Learning:** In AnalyticsView.jsx, calculating aggregate weekly data points over multiple weeks and metrics resulted in highly repetitive operations using `.filter()` followed by `.reduce()` inside of array maps. The operation performed was effectively `O(W * M * N)` where W is weeks (12), M is metrics (3), and N is posts.
 **Action:** Replace multiple passes with a single pass grouping logic. When aggregating timeseries data for charts over numerous categories or weeks, pre-compute the bins/buckets and use a single O(N) `forEach` pass over the primary dataset to distribute values into all bins.
+
+## 2026-03-27 - O(P * D * N) Loop and redundant Object creation in PlatformPerformanceChart
+**Learning:** In `PlatformPerformanceChart.jsx`, calculating timeline analytics mapping required calling `.filter` over the `posts` array for each platform label iteration for each day. This was an `O(P * D * N)` operation where `P` is the number of platforms and `D` is the number of days, nested closely with multiple redundant `new Date()` allocations inside the loop block.
+**Action:** Reduce multi-dimensional array processing loops to a single `O(N)` initial dictionary mapping (`{platform: {date: metric}}`), and pre-compute repetitive components like loop date string evaluations into standalone arrays. Lookups from precomputed maps run in `O(1)`, achieving an aggregate `O(N) + O(P*D)` execution time.
