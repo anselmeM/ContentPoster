@@ -54,12 +54,16 @@ const EngagementTimelineChart = ({
     const startDate = new Date(now.getDate() - parseInt(dateRange));
     const days = [];
     
+    // Bolt Optimization: Pre-group days in a hash map to avoid O(D*P) complexity
+    // where D is number of days and P is number of posts.
+    const daysMap = {};
+
     // Generate all dates in range
     for (let i = 0; i <= parseInt(dateRange); i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
-      days.push({
+      const dayData = {
         date: dateStr,
         displayDate: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         likes: 0,
@@ -67,26 +71,28 @@ const EngagementTimelineChart = ({
         shares: 0,
         views: 0,
         posts: []
-      });
+      };
+      days.push(dayData);
+      daysMap[dateStr] = dayData;
     }
 
     // Aggregate engagement by day with post-level details
     posts.forEach(post => {
       if (!post.date || !post.engagement) return;
       
-      const dayIndex = days.findIndex(d => d.date === post.date);
-      if (dayIndex === -1) return;
+      const dayData = daysMap[post.date];
+      if (!dayData) return;
       
       const likes = post.engagement.likes || 0;
       const comments = post.engagement.comments || 0;
       const shares = post.engagement.shares || 0;
       const views = post.engagement.views || 0;
       
-      days[dayIndex].likes += likes;
-      days[dayIndex].comments += comments;
-      days[dayIndex].shares += shares;
-      days[dayIndex].views += views;
-      days[dayIndex].posts.push({
+      dayData.likes += likes;
+      dayData.comments += comments;
+      dayData.shares += shares;
+      dayData.views += views;
+      dayData.posts.push({
         id: post.id,
         title: post.title || post.content?.slice(0, 30) || 'Untitled',
         platform: post.platform,
