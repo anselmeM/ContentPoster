@@ -53,6 +53,16 @@ const AudienceGrowthChart = ({
     const now = new Date();
     const data = {};
     
+    // Bolt Optimization: Pre-group posts by platform and date into a hash map
+    // to change O(Platform*TimeRange*Posts) nested loop to O(Posts) + O(Platform*TimeRange)
+    const postsByPlatformDate = posts.reduce((acc, post) => {
+      if (!post.platform || !post.date) return acc;
+      if (!acc[post.platform]) acc[post.platform] = {};
+      if (!acc[post.platform][post.date]) acc[post.platform][post.date] = [];
+      acc[post.platform][post.date].push(post);
+      return acc;
+    }, {});
+
     // Initialize platforms
     const platforms = Object.keys(PLATFORMS);
     platforms.forEach(platform => {
@@ -79,8 +89,8 @@ const AudienceGrowthChart = ({
         const trendGrowth = Math.floor((timeRange - i) / 10); // Slight upward trend
         baseFollowers += randomGrowth + trendGrowth;
         
-        // Add posts engagement to calculate growth
-        const dayPosts = posts.filter(p => p.platform === platform && p.date === dateStr);
+        // Use O(1) hash map lookup instead of O(N) array filter
+        const dayPosts = (postsByPlatformDate[platform] && postsByPlatformDate[platform][dateStr]) || [];
         const dayEngagement = dayPosts.reduce((sum, p) => 
           sum + ((p.engagement?.likes || 0) * 0.1) + ((p.engagement?.comments || 0) * 0.5), 0);
         

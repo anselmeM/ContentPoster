@@ -144,15 +144,17 @@ const EngagementTimelineChart = ({
       days.push(date.toISOString().split('T')[0]);
     }
 
-    const previousPosts = posts.filter(post => {
+    // Bolt Optimization: Pre-group previous posts by date to avoid O(D*P) complexity
+    // where D is number of days and P is number of previous posts.
+    const previousPostsByDate = posts.reduce((acc, post) => {
       const postDate = new Date(post.date);
-      return postDate >= previousStart && postDate < previousEnd;
-    });
+      if (postDate >= previousStart && postDate < previousEnd) {
+        acc[post.date] = (acc[post.date] || 0) + (post.engagement?.likes || 0);
+      }
+      return acc;
+    }, {});
 
-    const aggregated = days.map(date => {
-      const dayPosts = previousPosts.filter(p => p.date === date);
-      return dayPosts.reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
-    });
+    const aggregated = days.map(date => previousPostsByDate[date] || 0);
 
     return {
       labels: smoothedData.map(d => d.displayDate),
