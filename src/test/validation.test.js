@@ -7,7 +7,7 @@ import {
   getHashtagLimit,
   supportsMediaType,
   formatValidationResult
-} from '../../services/validation';
+} from '../services/validation';
 
 // Mock platform config
 vi.mock('../../config/platforms', () => ({

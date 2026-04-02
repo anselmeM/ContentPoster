@@ -1,6 +1,24 @@
 import '@testing-library/jest-dom';
 
-// Mock Firebase
+// Mock environment variables for Vite
+Object.defineProperty(window, 'import', {
+  writable: true,
+  value: {
+    meta: {
+      env: {
+        VITE_FIREBASE_API_KEY: 'test-api-key',
+        VITE_FIREBASE_AUTH_DOMAIN: 'test.firebaseapp.com',
+        VITE_FIREBASE_PROJECT_ID: 'test-project',
+        VITE_FIREBASE_STORAGE_BUCKET: 'test.appspot.com',
+        VITE_FIREBASE_MESSAGING_SENDER_ID: '123456789',
+        VITE_FIREBASE_APP_ID: '1:123456789:web:abc123',
+        VITE_FIREBASE_MEASUREMENT_ID: 'G-TEST123'
+      }
+    }
+  }
+});
+
+// Mock Firebase config
 vi.mock('../config/firebase', () => ({
   __esModule: true,
   default: {
@@ -9,33 +27,115 @@ vi.mock('../config/firebase', () => ({
     projectId: 'test-project',
     storageBucket: 'test.appspot.com',
     messagingSenderId: '123456789',
-    appId: '1:123456789:web:abc123'
+    appId: '1:123456789:web:abc123',
+    measurementId: 'G-TEST123'
   }
 }));
 
-// Mock Firebase services
+// Mock Firebase auth with proper credential handling
 vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(() => ({})),
-  onAuthStateChanged: vi.fn(),
-  createUserWithEmailAndPassword: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  signOut: vi.fn(),
-  updatePassword: vi.fn(),
-  EmailAuthProvider: { credential: vi.fn() },
-  reauthenticateWithCredential: vi.fn()
+  getAuth: vi.fn(() => ({
+    currentUser: null,
+    app: {}
+  })),
+  onAuthStateChanged: vi.fn((auth, callback) => {
+    callback(null);
+    return vi.fn();
+  }),
+  createUserWithEmailAndPassword: vi.fn(() => 
+    Promise.resolve({ user: { uid: 'test-user-id', email: 'test@test.com' } })
+  ),
+  signInWithEmailAndPassword: vi.fn(() => 
+    Promise.resolve({ user: { uid: 'test-user-id', email: 'test@test.com' } })
+  ),
+  signOut: vi.fn(() => Promise.resolve()),
+  updatePassword: vi.fn(() => Promise.resolve()),
+  EmailAuthProvider: { 
+    credential: vi.fn((email, password) => ({
+      providerId: 'password',
+      signInMethod: 'password',
+      toJSON: () => ({})
+    })) 
+  },
+  reauthenticateWithCredential: vi.fn(() => 
+    Promise.resolve({ user: { uid: 'test-user-id' } })
+  ),
+  OAuthProvider: vi.fn(() => ({
+    providerId: 'oauth',
+    addScope: vi.fn(),
+    setCustomParameters: vi.fn()
+  })),
+  GoogleAuthProvider: vi.fn(() => ({
+    providerId: 'google.com',
+    addScope: vi.fn()
+  })),
+  GithubAuthProvider: vi.fn(() => ({
+    providerId: 'github.com',
+    addScope: vi.fn()
+  })),
+  signInWithPopup: vi.fn(() => 
+    Promise.resolve({ user: { uid: 'test-user-id', email: 'test@test.com' } })
+  ),
+  signInWithRedirect: vi.fn(() => Promise.resolve()),
+  getRedirectResult: vi.fn(() => Promise.resolve(null)),
+  updateProfile: vi.fn(() => Promise.resolve()),
+  sendEmailVerification: vi.fn(() => Promise.resolve()),
+  sendPasswordResetEmail: vi.fn(() => Promise.resolve()),
+  verifyBeforeUpdateEmail: vi.fn(() => Promise.resolve()),
+  delete: vi.fn(() => Promise.resolve()),
+  reload: vi.fn(() => Promise.resolve()),
+  getIdToken: vi.fn(() => Promise.resolve('test-token')),
+  getIdTokenResult: vi.fn(() => Promise.resolve({
+    token: 'test-token',
+    expirationTime: '2024-01-01T00:00:00.000Z',
+    authTime: '2024-01-01T00:00:00.000Z',
+    claims: {}
+  })),
+  linkWithPopup: vi.fn(() => Promise.resolve({ user: {} })),
+  linkWithRedirect: vi.fn(() => Promise.resolve()),
+  unlink: vi.fn(() => Promise.resolve({ user: {} })),
+  onIdTokenChanged: vi.fn((auth, callback) => {
+    callback(null);
+    return vi.fn();
+  }),
+  currentUser: null,
+  auth: null
 }));
 
 vi.mock('firebase/firestore', () => ({
   getFirestore: vi.fn(() => ({})),
-  collection: vi.fn(),
-  onSnapshot: vi.fn(),
-  addDoc: vi.fn(),
-  doc: vi.fn(),
-  updateDoc: vi.fn(),
-  deleteDoc: vi.fn(),
-  setDoc: vi.fn(),
+  collection: vi.fn(() => ({})),
+  doc: vi.fn(() => ({ id: 'mock-doc-id' })),
+  onSnapshot: vi.fn((doc, callback) => {
+    callback({ exists: () => false, data: () => ({}), id: 'mock-doc-id' });
+    return vi.fn();
+  }),
+  addDoc: vi.fn(() => Promise.resolve({ id: 'mock-doc-id' })),
+  updateDoc: vi.fn(() => Promise.resolve()),
+  deleteDoc: vi.fn(() => Promise.resolve()),
+  setDoc: vi.fn(() => Promise.resolve()),
+  getDoc: vi.fn(() => Promise.resolve({ exists: () => false, data: () => ({}) })),
+  getDocs: vi.fn(() => Promise.resolve({ docs: [], empty: true })),
   query: vi.fn(),
-  orderBy: vi.fn()
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  limit: vi.fn(),
+  startAfter: vi.fn(),
+  endAt: vi.fn(),
+  serverTimestamp: vi.fn(() => new Date().toISOString()),
+  Timestamp: {
+    now: vi.fn(() => ({ seconds: Date.now() / 1000, nanoseconds: 0 })),
+    fromDate: vi.fn(() => ({ seconds: Date.now() / 1000, nanoseconds: 0 })),
+    fromMillis: vi.fn(() => ({ seconds: Date.now() / 1000, nanoseconds: 0 }))
+  }
+}));
+
+vi.mock('firebase/storage', () => ({
+  getStorage: vi.fn(() => ({})),
+  ref: vi.fn(),
+  uploadBytes: vi.fn(() => Promise.resolve()),
+  getDownloadURL: vi.fn(() => Promise.resolve('https://test.firebase.com/test.jpg')),
+  deleteObject: vi.fn(() => Promise.resolve())
 }));
 
 // Mock localStorage

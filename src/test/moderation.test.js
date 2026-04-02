@@ -5,7 +5,7 @@ import {
   filterProfanity,
   generateModerationReport,
   moderateBatch 
-} from '../../services/moderation';
+} from '../services/moderation';
 
 describe('Moderation Service', () => {
   describe('moderateContent', () => {

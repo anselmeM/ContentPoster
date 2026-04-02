@@ -158,11 +158,27 @@ const PlatformPerformanceChart = ({
     const now = new Date();
     const days = 30;
     const labels = [];
+    const dateStrs = [];
     
+    // Pre-calculate date strings and labels
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(now.getDate() - i);
       labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      dateStrs.push(date.toISOString().split('T')[0]);
+    }
+
+    // Pre-calculate engagement data grouped by platform and date using a single O(N) pass
+    const engagementMap = {};
+    for (const post of posts) {
+      if (!post.platform || !post.date) continue;
+      if (!engagementMap[post.platform]) {
+        engagementMap[post.platform] = {};
+      }
+      if (!engagementMap[post.platform][post.date]) {
+        engagementMap[post.platform][post.date] = 0;
+      }
+      engagementMap[post.platform][post.date] += (post.engagement?.likes || 0) + (post.engagement?.comments || 0);
     }
 
     // Bolt Optimization: Pre-group posts by platform and date into a hash map
