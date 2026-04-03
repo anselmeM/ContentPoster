@@ -64,10 +64,17 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost, isC
       .slice(0, 5);
   }, [posts]);
 
-  // Get posts for a specific date
-  const getPostsForDate = (dateStr) => {
-    return posts.filter(p => p.date === dateStr);
-  };
+  // Bolt Optimization: Pre-group posts by date to turn O(N*M) lookups inside the
+  // render loop into O(1) lookups after a single O(N) pass.
+  const postsByDate = useMemo(() => {
+    return posts.reduce((acc, post) => {
+      if (!acc[post.date]) {
+        acc[post.date] = [];
+      }
+      acc[post.date].push(post);
+      return acc;
+    }, {});
+  }, [posts]);
 
   // Calendar logic
   const getDaysInMonth = (date) => {
@@ -103,7 +110,7 @@ const LeftPanel = ({ posts, selectedDate, setSelectedDate, onReschedulePost, isC
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const dayPosts = getPostsForDate(dateStr);
+      const dayPosts = postsByDate[dateStr] || [];
       const isSelected = selectedDate === dateStr;
       const isToday = dateStr === today;
       const isPast = dateStr < today;
