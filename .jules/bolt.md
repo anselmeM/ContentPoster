@@ -45,3 +45,6 @@
 ## 2026-03-27 - [Nested Filters in Analytics Components]
 **Learning:** Found nested loops in multiple Analytics components where inner loops filtered and reduced the entire posts array (e.g. `days.map` containing `posts.filter(p => p.date === date).reduce()`). This leads to severe O(N*M) complexity where N is categories (days/platforms) and M is posts.
 **Action:** Whenever an array needs to be filtered or aggregated by a categorical property (like date or platform) within an outer loop, always pre-group the entire array into a hash map dictionary (e.g., `postsByPlatformDate`) using a single O(N) pass. The inner loop can then perform O(1) hash map lookups.
+## 2024-03-01 - Avoid Multiple Filter/Reduce Iterations in Hooks
+**Learning:** Found an instance in AnalyticsView where a `useMemo` hook calculated grouped analytics using nested `filter()` calls on a large post array, followed by multiple `.reduce()` calculations on the subsets. This created multiple intermediate arrays and caused O(K*N) complexity (where K is number of groups and metrics).
+**Action:** Always replace nested or consecutive `.filter()` / `.reduce()` chains over the same large dataset with a single-pass loop (`for...of`) that accumulates all metrics simultaneously into a predefined stats object.
