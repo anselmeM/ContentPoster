@@ -386,23 +386,33 @@ const AnalyticsView = ({ posts }) => {
   // A/B Testing data - group posts by content similarity
   const abTestData = useMemo(() => {
     // Group posts by similar content length ranges
-    const groups = {
-      short: filteredPosts.filter(p => (p.content?.length || 0) < 100),
-      medium: filteredPosts.filter(p => (p.content?.length || 0) >= 100 && (p.content?.length || 0) < 300),
-      long: filteredPosts.filter(p => (p.content?.length || 0) >= 300)
+    const stats = {
+      short: { count: 0, likes: 0, comments: 0 },
+      medium: { count: 0, likes: 0, comments: 0 },
+      long: { count: 0, likes: 0, comments: 0 }
     };
-    
-    const results = Object.entries(groups).map(([type, posts]) => {
-      const avgLikes = posts.length > 0 
-        ? Math.round(posts.reduce((s, p) => s + (p.engagement?.likes || 0), 0) / posts.length)
-        : 0;
-      const avgComments = posts.length > 0
-        ? Math.round(posts.reduce((s, p) => s + (p.engagement?.comments || 0), 0) / posts.length)
-        : 0;
+
+    for (const p of filteredPosts) {
+      const len = p.content?.length || 0;
+      const likes = p.engagement?.likes || 0;
+      const comments = p.engagement?.comments || 0;
+
+      let type = 'short';
+      if (len >= 300) type = 'long';
+      else if (len >= 100) type = 'medium';
+
+      stats[type].count += 1;
+      stats[type].likes += likes;
+      stats[type].comments += comments;
+    }
+
+    const results = Object.entries(stats).map(([type, data]) => {
+      const avgLikes = data.count > 0 ? Math.round(data.likes / data.count) : 0;
+      const avgComments = data.count > 0 ? Math.round(data.comments / data.count) : 0;
       
       return {
         type: type.charAt(0).toUpperCase() + type.slice(1),
-        count: posts.length,
+        count: data.count,
         avgLikes,
         avgComments,
         avgEngagement: Math.round(avgLikes + avgComments)
