@@ -85,12 +85,25 @@ export function useTaskCategories(tasks: Task[]): { category: string; count: num
  */
 export function useTaskStatusCounts(tasks: Task[]): { all: number; active: number; completed: number; overdue: number } {
   return useMemo(() => {
-    return {
-      all: tasks.length,
-      active: tasks.filter(t => !t.completed).length,
-      completed: tasks.filter(t => t.completed).length,
-      overdue: tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
-    };
+    // Bolt Optimization: Replaced O(3N) chained filters with a single O(N) pass
+    // to prevent intermediate array garbage collection and redundant Date instantiations.
+    const counts = { all: tasks.length, active: 0, completed: 0, overdue: 0 };
+
+    // Cache current date string to prevent redundant instantiations within loop
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const task of tasks) {
+      if (task.completed) {
+        counts.completed++;
+      } else {
+        counts.active++;
+        if (task.deadline && task.deadline < today) {
+          counts.overdue++;
+        }
+      }
+    }
+
+    return counts;
   }, [tasks]);
 }
 

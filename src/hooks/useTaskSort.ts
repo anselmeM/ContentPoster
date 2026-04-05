@@ -25,15 +25,20 @@ export function useTaskSort(tasks: Task[], sort: TaskSortConfig): Task[] {
       switch (sort.field) {
         case 'deadline':
           comparison = compareDates(a.deadline, b.deadline);
+          if (sort.direction === 'desc') {
+            if (!a.deadline && !b.deadline) return 0;
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+            comparison = -comparison;
+          }
           break;
           
         case 'priority':
-          // Higher priority order = more urgent = comes first
-          comparison = getPriorityOrder(b.priority) - getPriorityOrder(a.priority);
+          comparison = getPriorityOrder(a.priority) - getPriorityOrder(b.priority);
           break;
           
         case 'createdAt':
-          comparison = b.createdAt - a.createdAt; // Newest first by default
+          comparison = a.createdAt - b.createdAt;
           break;
           
         case 'text':
@@ -44,7 +49,10 @@ export function useTaskSort(tasks: Task[], sort: TaskSortConfig): Task[] {
           comparison = 0;
       }
       
-      // Apply direction
+      if (sort.field === 'deadline' && sort.direction === 'desc') {
+        return comparison;
+      }
+
       return sort.direction === 'asc' ? comparison : -comparison;
     });
   }, [tasks, sort]);
