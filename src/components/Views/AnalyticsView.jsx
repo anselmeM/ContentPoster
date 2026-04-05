@@ -18,6 +18,7 @@ import { abTestService } from '../../services/abTestService';
 import { scheduledExportService, EXPORT_FREQUENCY, EXPORT_FORMAT } from '../../services/scheduledExportService';
 import { useAuth } from '../../context/AuthContext';
 import { PLATFORMS } from '../../config/platforms';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -287,17 +288,38 @@ const AnalyticsView = ({ posts }) => {
   }, [filteredPosts]);
 
   // Platform comparison data
+  // Bolt Optimization: Replaced O(P*N) chained array methods (.map containing .filter and multiple .reduce calls)
+  // with a single O(N) pass to pre-aggregate platform statistics.
+  // This eliminates 4x intermediate array allocations per platform and significantly speeds up calculations.
   const platformComparisonData = useMemo(() => {
+    const platformData = {};
     const platforms = Object.keys(analytics.byPlatform);
     
+    platforms.forEach(platform => {
+        platformData[platform] = {
+            totalLikes: 0,
+            totalComments: 0,
+            totalShares: 0,
+            totalViews: 0,
+            postCount: 0
+        };
+    });
+
+    for (const p of filteredPosts) {
+      if (platformData[p.platform]) {
+          const stats = platformData[p.platform];
+          stats.totalLikes += (p.engagement?.likes || 0);
+          stats.totalComments += (p.engagement?.comments || 0);
+          stats.totalShares += (p.engagement?.shares || 0);
+          stats.totalViews += (p.engagement?.views || 0);
+          stats.postCount += 1;
+      }
+    }
+
     return platforms.map(platform => {
-      const platformPosts = filteredPosts.filter(p => p.platform === platform);
-      const totalLikes = platformPosts.reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
-      const totalComments = platformPosts.reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
-      const totalShares = platformPosts.reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
-      const totalViews = platformPosts.reduce((sum, p) => sum + (p.engagement?.views || 0), 0);
-      const postCount = platformPosts.length;
-      
+      const stats = platformData[platform];
+      const { totalLikes, totalComments, totalShares, totalViews, postCount } = stats;
+
       return {
         platform: PLATFORMS[platform]?.name || platform,
         color: platformColors[platform],
@@ -310,7 +332,7 @@ const AnalyticsView = ({ posts }) => {
         avgEngagement: postCount > 0 ? Math.round((totalLikes + totalComments + totalShares) / postCount) : 0
       };
     });
-  }, [filteredPosts, analytics.byPlatform]);
+  }, [filteredPosts]);
 
   // Predictive analytics - simple linear regression forecast
   const predictedEngagement = useMemo(() => {
@@ -386,23 +408,33 @@ const AnalyticsView = ({ posts }) => {
   // A/B Testing data - group posts by content similarity
   const abTestData = useMemo(() => {
     // Group posts by similar content length ranges
-    const groups = {
-      short: filteredPosts.filter(p => (p.content?.length || 0) < 100),
-      medium: filteredPosts.filter(p => (p.content?.length || 0) >= 100 && (p.content?.length || 0) < 300),
-      long: filteredPosts.filter(p => (p.content?.length || 0) >= 300)
+    const stats = {
+      short: { count: 0, likes: 0, comments: 0 },
+      medium: { count: 0, likes: 0, comments: 0 },
+      long: { count: 0, likes: 0, comments: 0 }
     };
-    
-    const results = Object.entries(groups).map(([type, posts]) => {
-      const avgLikes = posts.length > 0 
-        ? Math.round(posts.reduce((s, p) => s + (p.engagement?.likes || 0), 0) / posts.length)
-        : 0;
-      const avgComments = posts.length > 0
-        ? Math.round(posts.reduce((s, p) => s + (p.engagement?.comments || 0), 0) / posts.length)
-        : 0;
+
+    for (const p of filteredPosts) {
+      const len = p.content?.length || 0;
+      const likes = p.engagement?.likes || 0;
+      const comments = p.engagement?.comments || 0;
+
+      let type = 'short';
+      if (len >= 300) type = 'long';
+      else if (len >= 100) type = 'medium';
+
+      stats[type].count += 1;
+      stats[type].likes += likes;
+      stats[type].comments += comments;
+    }
+
+    const results = Object.entries(stats).map(([type, data]) => {
+      const avgLikes = data.count > 0 ? Math.round(data.likes / data.count) : 0;
+      const avgComments = data.count > 0 ? Math.round(data.comments / data.count) : 0;
       
       return {
         type: type.charAt(0).toUpperCase() + type.slice(1),
-        count: posts.length,
+        count: data.count,
         avgLikes,
         avgComments,
         avgEngagement: Math.round(avgLikes + avgComments)
@@ -1222,7 +1254,7 @@ const AnalyticsView = ({ posts }) => {
                     <div className="flex items-center">
                       {post.image && (
                         <img 
-                          src={post.image} 
+                          src={sanitizeURL(post.image)}
                           alt={post.title}
                           className="w-10 h-10 rounded object-cover mr-3" 
                         />
