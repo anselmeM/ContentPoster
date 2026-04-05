@@ -40,13 +40,14 @@ export const sanitizeURL = (url) => {
     'https:',
     'mailto:',
     'tel:',
-    'data:',
     'blob:'
   ];
 
+  if (protocol === 'data:') {
+    return urlString.toLowerCase().startsWith('data:image/') ? urlString : 'about:blank';
+  }
+
   if (allowedProtocols.includes(protocol)) {
-    // For data: URLs, verify it's an image or something safe if possible,
-    // but at least it's not javascript:
     return urlString;
   }
 
