@@ -12,3 +12,8 @@
 **Vulnerability:** A fallback condition in the `updatePreview` function injected the `platform` variable directly into the DOM via `innerHTML` without sanitization (`<div class="...">Preview for ${platform} coming soon...</div>`).
 **Learning:** Even internal state variables (like `platform` derived from radio buttons) can be manipulated if the DOM is altered or if values are unexpectedly passed. Trusting any dynamically constructed HTML string for `innerHTML` without escaping is risky.
 **Prevention:** Always wrap variables injected into HTML strings destined for `innerHTML` with an escaping function like `App.utils.escapeHTML()`, regardless of whether the source appears "safe" or controlled.
+
+## 2024-10-24 - React `src`/`href` Attribute Sanitization
+**Vulnerability:** User-provided inputs, such as `post.image` or `template.image`, were passed directly to the `src` attribute of `<img>` tags across several components.
+**Learning:** While React automatically escapes characters injected directly into the DOM (mitigating standard text-based XSS), it does not sanitize the contents of attributes like `src` or `href` to prevent malicious URI protocols. Consequently, values like `javascript:alert('XSS')` bypass React's standard escaping mechanisms and result in script execution.
+**Prevention:** Always implement a dedicated utility function (e.g., `sanitizeURL()`) to validate that any user-controlled URL conforms to a strictly allowed protocol list (`http:`, `https:`, etc.) before passing the variable to an attribute prop in JSX.

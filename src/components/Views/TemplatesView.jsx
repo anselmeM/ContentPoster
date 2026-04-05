@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { templatesService } from '../../services/firebase';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 import clsx from 'clsx';
 
 const TemplatesView = ({ onOpenModal }) => {
@@ -175,7 +176,7 @@ const TemplatesView = ({ onOpenModal }) => {
               
               {template.image && (
                 <img
-                  src={template.image}
+                    src={sanitizeURL(template.image)}
                   alt={template.name}
                   className="rounded-lg mb-3 w-full h-32 object-cover"
                 />

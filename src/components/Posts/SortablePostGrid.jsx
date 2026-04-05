@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { postsService } from '../../services/firebase';
 import SortablePostCard from './SortablePostCard';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 import clsx from 'clsx';
 
 // Platform-specific colors for drag preview with smooth animations
@@ -56,7 +57,7 @@ const DragPreview = ({ post }) => {
       </div>
       {post.image && (
         <img 
-          src={post.image} 
+          src={sanitizeURL(post.image)}
           alt="" 
           className="w-full h-20 object-cover rounded"
         />
