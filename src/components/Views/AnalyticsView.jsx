@@ -289,14 +289,32 @@ const AnalyticsView = ({ posts }) => {
   // Platform comparison data
   const platformComparisonData = useMemo(() => {
     const platforms = Object.keys(analytics.byPlatform);
+    const platformData = {};
+
+    platforms.forEach(platform => {
+      platformData[platform] = {
+        totalLikes: 0,
+        totalComments: 0,
+        totalShares: 0,
+        totalViews: 0,
+        postCount: 0
+      };
+    });
+
+    for (const p of filteredPosts) {
+      const stats = platformData[p.platform];
+      if (stats) {
+        stats.totalLikes += (p.engagement?.likes || 0);
+        stats.totalComments += (p.engagement?.comments || 0);
+        stats.totalShares += (p.engagement?.shares || 0);
+        stats.totalViews += (p.engagement?.views || 0);
+        stats.postCount += 1;
+      }
+    }
     
     return platforms.map(platform => {
-      const platformPosts = filteredPosts.filter(p => p.platform === platform);
-      const totalLikes = platformPosts.reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
-      const totalComments = platformPosts.reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
-      const totalShares = platformPosts.reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
-      const totalViews = platformPosts.reduce((sum, p) => sum + (p.engagement?.views || 0), 0);
-      const postCount = platformPosts.length;
+      const stats = platformData[platform];
+      const { totalLikes, totalComments, totalShares, totalViews, postCount } = stats;
       
       return {
         platform: PLATFORMS[platform]?.name || platform,
