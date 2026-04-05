@@ -189,9 +189,23 @@ export function getCategoryBgColor(category: TaskCategory): string {
  */
 export function calculateStats(tasks: Task[]): TaskStats {
   const total = tasks.length;
-  const completed = tasks.filter(t => t.completed).length;
+
+  // Bolt Optimization: Replaced O(2N) chained filters with a single O(N) pass
+  // to prevent intermediate array garbage collection and redundant Date instantiations.
+  let completed = 0;
+  let overdue = 0;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  for (const task of tasks) {
+    if (task.completed) {
+      completed++;
+    } else if (task.deadline && task.deadline < today) {
+      overdue++;
+    }
+  }
+
   const active = total - completed;
-  const overdue = tasks.filter(t => !t.completed && isOverdue(t.deadline)).length;
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
   
   return {
@@ -292,7 +306,9 @@ export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
     // Search query filter
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
-      if (!task.text.toLowerCase().includes(query)) {
+      const textMatch = task.text.toLowerCase().includes(query);
+      const categoryMatch = task.category.toLowerCase().includes(query);
+      if (!textMatch && !categoryMatch) {
         return false;
       }
     }
@@ -314,12 +330,18 @@ export function sortTasks(tasks: Task[], sort: TaskSortConfig): Task[] {
     switch (sort.field) {
       case 'deadline':
         comparison = compareDates(a.deadline, b.deadline);
+        if (sort.direction === 'desc') {
+          if (!a.deadline && !b.deadline) return 0;
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          comparison = -comparison;
+        }
         break;
       case 'priority':
-        comparison = getPriorityOrder(b.priority) - getPriorityOrder(a.priority);
+        comparison = getPriorityOrder(a.priority) - getPriorityOrder(b.priority);
         break;
       case 'createdAt':
-        comparison = b.createdAt - a.createdAt;
+        comparison = a.createdAt - b.createdAt;
         break;
       case 'text':
         comparison = a.text.localeCompare(b.text);
@@ -328,6 +350,10 @@ export function sortTasks(tasks: Task[], sort: TaskSortConfig): Task[] {
         comparison = 0;
     }
     
+    if (sort.field === 'deadline' && sort.direction === 'desc') {
+      return comparison;
+    }
+
     return sort.direction === 'asc' ? comparison : -comparison;
   });
 }

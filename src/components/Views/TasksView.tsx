@@ -128,13 +128,23 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   // Calculate stats
   const stats = useMemo(() => {
     const total = tasks.length;
-    const active = tasks.filter(t => !t.completed).length;
-    const completed = tasks.filter(t => t.completed).length;
-    const overdue = tasks.filter(t => {
-      if (!t.deadline || t.completed) return false;
-      const today = new Date().toISOString().split('T')[0];
-      return t.deadline < today;
-    }).length;
+
+    // Bolt Optimization: Replaced O(3N) chained filters with a single O(N) pass
+    // to prevent intermediate array garbage collection and redundant Date instantiations.
+    let completed = 0;
+    let overdue = 0;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const task of tasks) {
+      if (task.completed) {
+        completed++;
+      } else if (task.deadline && task.deadline < today) {
+        overdue++;
+      }
+    }
+
+    const active = total - completed;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     
     return { total, active, completed, overdue, completionRate };
