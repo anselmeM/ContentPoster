@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { memo } from 'react';
 import clsx from 'clsx';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 
 const platformIcons = {
   linkedin: { icon: 'fa-linkedin-in', class: 'bg-blue-600' },
@@ -75,7 +76,7 @@ const SortablePostCard = ({ post, onEdit, onDelete, onToggleComplete }) => {
       
       {/* Image */}
       <img
-        src={post.image}
+        src={sanitizeURL(post.image)}
         alt={post.title}
         className="rounded-lg mb-3 w-full h-24 object-cover"
         onError={handleImageError}

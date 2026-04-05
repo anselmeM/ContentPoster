@@ -18,6 +18,7 @@ import { abTestService } from '../../services/abTestService';
 import { scheduledExportService, EXPORT_FREQUENCY, EXPORT_FORMAT } from '../../services/scheduledExportService';
 import { useAuth } from '../../context/AuthContext';
 import { PLATFORMS } from '../../config/platforms';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -1250,7 +1251,7 @@ const AnalyticsView = ({ posts }) => {
                     <div className="flex items-center">
                       {post.image && (
                         <img 
-                          src={post.image} 
+                          src={sanitizeURL(post.image)}
                           alt={post.title}
                           className="w-10 h-10 rounded object-cover mr-3" 
                         />
