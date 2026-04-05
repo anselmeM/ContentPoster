@@ -48,7 +48,9 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
       // Search query filter
       if (filters.searchQuery && filters.searchQuery.trim() !== '') {
         const query = filters.searchQuery.toLowerCase();
-        if (!task.text.toLowerCase().includes(query)) {
+        const textMatch = task.text.toLowerCase().includes(query);
+        const categoryMatch = task.category.toLowerCase().includes(query);
+        if (!textMatch && !categoryMatch) {
           return false;
         }
       }

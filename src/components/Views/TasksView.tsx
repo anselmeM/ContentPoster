@@ -8,6 +8,7 @@ import TaskFilters from '../Tasks/TaskFilters';
 import { TaskCategory, TaskPriority, TaskCreateInput, DEFAULT_FILTERS, DEFAULT_SORT, Task, TaskFilters as TaskFiltersType, TaskSortConfig, TaskStats as TaskStatsType } from '../../types/task';
 import { useTaskFilters, useTaskStatusCounts } from '../../hooks/useTaskFilters';
 import { useTaskSort, parseSortOption } from '../../hooks/useTaskSort';
+import { calculateStats } from '../../utils/taskUtils';
 import LoadingSpinner from '../UI/LoadingSpinner';
 import type { User } from 'firebase/auth';
 
