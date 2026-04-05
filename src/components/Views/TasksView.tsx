@@ -8,6 +8,7 @@ import TaskFilters from '../Tasks/TaskFilters';
 import { TaskCategory, TaskPriority, TaskCreateInput, DEFAULT_FILTERS, DEFAULT_SORT, Task, TaskFilters as TaskFiltersType, TaskSortConfig, TaskStats as TaskStatsType } from '../../types/task';
 import { useTaskFilters, useTaskStatusCounts } from '../../hooks/useTaskFilters';
 import { useTaskSort, parseSortOption } from '../../hooks/useTaskSort';
+import { calculateStats } from '../../utils/taskUtils';
 import LoadingSpinner from '../UI/LoadingSpinner';
 import type { User } from 'firebase/auth';
 
@@ -126,19 +127,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   };
 
   // Calculate stats
-  const stats = useMemo(() => {
-    const total = tasks.length;
-    const active = tasks.filter(t => !t.completed).length;
-    const completed = tasks.filter(t => t.completed).length;
-    const overdue = tasks.filter(t => {
-      if (!t.deadline || t.completed) return false;
-      const today = new Date().toISOString().split('T')[0];
-      return t.deadline < today;
-    }).length;
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
-    return { total, active, completed, overdue, completionRate };
-  }, [tasks]);
+  const stats = useMemo(() => calculateStats(tasks), [tasks]);
 
   if (isLoading) {
     return (

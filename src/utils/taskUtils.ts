@@ -292,7 +292,9 @@ export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
     // Search query filter
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
-      if (!task.text.toLowerCase().includes(query)) {
+      const textMatch = task.text.toLowerCase().includes(query);
+      const categoryMatch = task.category.toLowerCase().includes(query);
+      if (!textMatch && !categoryMatch) {
         return false;
       }
     }
@@ -328,7 +330,13 @@ export function sortTasks(tasks: Task[], sort: TaskSortConfig): Task[] {
         comparison = 0;
     }
     
-    return sort.direction === 'asc' ? comparison : -comparison;
+    if (sort.direction === 'desc') {
+      if (sort.field === 'deadline' && (a.deadline === null || b.deadline === null)) {
+        return comparison;
+      }
+      return -comparison;
+    }
+    return comparison;
   });
 }
 

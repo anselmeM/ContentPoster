@@ -45,7 +45,13 @@ export function useTaskSort(tasks: Task[], sort: TaskSortConfig): Task[] {
       }
       
       // Apply direction
-      return sort.direction === 'asc' ? comparison : -comparison;
+      if (sort.direction === 'desc') {
+        if (sort.field === 'deadline' && (a.deadline === null || b.deadline === null)) {
+          return comparison;
+        }
+        return -comparison;
+      }
+      return comparison;
     });
   }, [tasks, sort]);
 }
