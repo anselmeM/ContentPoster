@@ -5,6 +5,7 @@ import { PLATFORMS, PLATFORM_LIST } from '../../config/platforms';
 import { getOptimalTimes, getNextOptimalSlot, getRelativeTime } from '../../utils/timezoneUtils';
 import { getHashtagSuggestions, validateHashtagCount, generateOptimalHashtags } from '../../utils/hashtagUtils';
 import { TRIGGER_TYPES, CONDITION_FIELDS, CONDITION_OPERATORS, TRIGGER_ACTIONS, formatCondition } from '../../utils/triggerEngine';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 import clsx from 'clsx';
 
 // Helper functions for best time suggestions
@@ -439,7 +440,7 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
           {formData.image && (
             <div className="relative">
               <img
-                src={formData.image}
+                src={sanitizeURL(formData.image)}
                 alt="Preview"
                 className="w-full h-48 object-cover rounded-lg"
               />

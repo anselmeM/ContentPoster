@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import clsx from 'clsx';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 
 // Memoized platform icons to prevent recreation on every render
 const platformIcons = {
@@ -48,7 +49,7 @@ const PostCard = memo(({ post, onEdit, onDelete, onToggleComplete }) => {
       
       {/* Image */}
       <img
-        src={post.image}
+        src={sanitizeURL(post.image)}
         alt={post.title}
         className="rounded-lg mb-3 w-full h-24 object-cover"
         onError={handleImageError}
