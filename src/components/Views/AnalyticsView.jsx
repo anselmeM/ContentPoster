@@ -287,17 +287,38 @@ const AnalyticsView = ({ posts }) => {
   }, [filteredPosts]);
 
   // Platform comparison data
+  // Bolt Optimization: Replaced O(P*N) chained array methods (.map containing .filter and multiple .reduce calls)
+  // with a single O(N) pass to pre-aggregate platform statistics.
+  // This eliminates 4x intermediate array allocations per platform and significantly speeds up calculations.
   const platformComparisonData = useMemo(() => {
+    const platformData = {};
     const platforms = Object.keys(analytics.byPlatform);
     
+    platforms.forEach(platform => {
+        platformData[platform] = {
+            totalLikes: 0,
+            totalComments: 0,
+            totalShares: 0,
+            totalViews: 0,
+            postCount: 0
+        };
+    });
+
+    for (const p of filteredPosts) {
+      if (platformData[p.platform]) {
+          const stats = platformData[p.platform];
+          stats.totalLikes += (p.engagement?.likes || 0);
+          stats.totalComments += (p.engagement?.comments || 0);
+          stats.totalShares += (p.engagement?.shares || 0);
+          stats.totalViews += (p.engagement?.views || 0);
+          stats.postCount += 1;
+      }
+    }
+
     return platforms.map(platform => {
-      const platformPosts = filteredPosts.filter(p => p.platform === platform);
-      const totalLikes = platformPosts.reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
-      const totalComments = platformPosts.reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
-      const totalShares = platformPosts.reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
-      const totalViews = platformPosts.reduce((sum, p) => sum + (p.engagement?.views || 0), 0);
-      const postCount = platformPosts.length;
-      
+      const stats = platformData[platform];
+      const { totalLikes, totalComments, totalShares, totalViews, postCount } = stats;
+
       return {
         platform: PLATFORMS[platform]?.name || platform,
         color: platformColors[platform],
