@@ -156,13 +156,22 @@ export const queueService = {
   // Get queue statistics
   getStats: (userId) => {
     const queue = postQueue.get(userId) || [];
-    return {
-      total: queue.length,
-      queued: queue.filter(i => i.status === 'queued').length,
-      processing: queue.filter(i => i.status === 'processing').length,
-      completed: queue.filter(i => i.status === 'completed').length,
-      failed: queue.filter(i => i.status === 'failed').length
-    };
+    // ⚡ Bolt: O(N) calculation to prevent multiple array traversals
+    return queue.reduce(
+      (stats, item) => {
+        if (stats[item.status] !== undefined) {
+          stats[item.status]++;
+        }
+        return stats;
+      },
+      {
+        total: queue.length,
+        queued: 0,
+        processing: 0,
+        completed: 0,
+        failed: 0
+      }
+    );
   }
 };
 
