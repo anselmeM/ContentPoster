@@ -45,3 +45,7 @@
 ## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
 **Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
+
+## 2026-04-06 - [O(N) queue stats calculation using reduce]
+**Learning:** Found an anti-pattern in `getStats` where `.filter().length` was chained multiple times on the same `queue` array to derive various metrics. This resulted in O(4N) time complexity and unnecessary intermediate array allocations that triggered garbage collection.
+**Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop (like `.reduce()`). This improves time complexity to O(N) and avoids memory overhead.
