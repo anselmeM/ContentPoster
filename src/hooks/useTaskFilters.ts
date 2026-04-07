@@ -19,6 +19,16 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
   return useMemo(() => {
     if (!tasks || tasks.length === 0) return [];
     
+    // Bolt Optimization: Convert filter arrays to Sets outside the loop
+    // to replace O(K) array lookups with O(1) hash map lookups.
+    const hasCategories = filters.categories.length > 0;
+    const categorySet = hasCategories ? new Set(filters.categories) : null;
+
+    const hasPriorities = filters.priorities.length > 0;
+    const prioritySet = hasPriorities ? new Set(filters.priorities) : null;
+
+    const query = filters.searchQuery ? filters.searchQuery.trim().toLowerCase() : '';
+
     return tasks.filter(task => {
       // Status filter (all/active/completed)
       if (filters.status === 'active' && task.completed) {
@@ -28,13 +38,13 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
         return false;
       }
       
-      // Category filter (multiple selection)
-      if (filters.categories.length > 0 && !filters.categories.includes(task.category)) {
+      // Category filter (O(1) Set lookup)
+      if (hasCategories && !categorySet!.has(task.category)) {
         return false;
       }
       
-      // Priority filter (multiple selection)
-      if (filters.priorities.length > 0 && !filters.priorities.includes(task.priority)) {
+      // Priority filter (O(1) Set lookup)
+      if (hasPriorities && !prioritySet!.has(task.priority)) {
         return false;
       }
       
@@ -46,8 +56,7 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
       }
       
       // Search query filter
-      if (filters.searchQuery && filters.searchQuery.trim() !== '') {
-        const query = filters.searchQuery.toLowerCase();
+      if (query !== '') {
         const textMatch = task.text.toLowerCase().includes(query);
         const categoryMatch = task.category.toLowerCase().includes(query);
         if (!textMatch && !categoryMatch) {
