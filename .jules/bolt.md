@@ -45,3 +45,7 @@
 ## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
 **Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
+
+## 2025-04-08 - Bolt: Combine Array Filter Chains
+**Learning:** Chained `.filter()` methods create multiple intermediate arrays and O(M*N) total array iterations over the same set of data (e.g. `posts.filter(...).filter(...).filter(...)`). Combining all condition checks into a single `.filter()` loop converts this into an O(N) iteration while preventing garbage collection overhead from temporary intermediate arrays.
+**Action:** Always combine consecutive array filtering conditions into a single pass when parsing over the same dataset. Also implement early returns if filters are disabled.
