@@ -158,15 +158,14 @@ const AnalyticsView = ({ posts }) => {
 
   // Calculate analytics data
   const analytics = useMemo(() => {
+    // Bolt Optimization: Replace multiple array operations (filter, reduce, forEach)
+    // with a single O(N) pass to calculate all metrics, reducing memory allocation
+    // and significantly speeding up calculations.
     const totalPosts = filteredPosts.length;
-    const completedPosts = filteredPosts.filter(p => p.completed).length;
-    const scheduledPosts = filteredPosts.filter(p => !p.completed).length;
-    
-    // Posts by platform
-    const byPlatform = filteredPosts.reduce((acc, post) => {
-      acc[post.platform] = (acc[post.platform] || 0) + 1;
-      return acc;
-    }, {});
+    let completedPosts = 0;
+    let scheduledPosts = 0;
+    const byPlatform = {};
+    const byStatus = {};
     
     // Posts by month
     const byMonth = {};
@@ -179,29 +178,29 @@ const AnalyticsView = ({ posts }) => {
     
     // Engagement stats
     let totalEngagement = { likes: 0, comments: 0, shares: 0, views: 0 };
-    
-    filteredPosts.forEach(post => {
+
+    for (const post of filteredPosts) {
+      if (post.completed) completedPosts++;
+      else scheduledPosts++;
+
+      byPlatform[post.platform] = (byPlatform[post.platform] || 0) + 1;
+
+      const status = post.status || (post.completed ? 'published' : 'draft');
+      byStatus[status] = (byStatus[status] || 0) + 1;
+
       const date = new Date(post.date);
       const key = date.toLocaleString('default', { month: 'short' });
       if (byMonth[key] !== undefined) {
         byMonth[key]++;
       }
       
-      // Add engagement data if available
       if (post.engagement) {
         totalEngagement.likes += post.engagement.likes || 0;
         totalEngagement.comments += post.engagement.comments || 0;
         totalEngagement.shares += post.engagement.shares || 0;
         totalEngagement.views += post.engagement.views || 0;
       }
-    });
-    
-    // Status breakdown
-    const byStatus = filteredPosts.reduce((acc, post) => {
-      const status = post.status || (post.completed ? 'published' : 'draft');
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
+    }
     
     return {
       totalPosts,
