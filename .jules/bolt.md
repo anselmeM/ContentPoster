@@ -45,3 +45,7 @@
 ## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
 **Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
+
+## 2025-04-11 - AnalyticsView Single-Pass Loop Optimization
+**Learning:** When processing derived data in `useMemo` hooks for analytic charts, multiple chained `.filter()`, `.reduce()`, and `.forEach()` methods on the same large array cause redundant passes (O(M*N)) and intermediate array allocations. This pattern can become a CPU bottleneck for reporting dashboards displaying many items.
+**Action:** Combine all counting, aggregation, and filtering operations into a single-pass `for...of` loop to achieve O(N) time complexity and eliminate intermediate garbage collection overhead.
