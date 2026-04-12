@@ -1,5 +1,6 @@
 import { useTeam } from '../../context/TeamContext';
 import clsx from 'clsx';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 
 const ActiveUser = ({ user, isCurrentUser }) => {
   // Generate a consistent color based on user ID
@@ -46,7 +47,7 @@ const ActiveUser = ({ user, isCurrentUser }) => {
       )}>
         {user.photoURL ? (
           <img 
-            src={user.photoURL} 
+            src={sanitizeURL(user.photoURL)}
             alt={user.displayName || 'User'}
             className="w-full h-full rounded-full object-cover"
           />

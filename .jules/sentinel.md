@@ -17,3 +17,7 @@
 **Vulnerability:** User-provided inputs, such as `post.image` or `template.image`, were passed directly to the `src` attribute of `<img>` tags across several components.
 **Learning:** While React automatically escapes characters injected directly into the DOM (mitigating standard text-based XSS), it does not sanitize the contents of attributes like `src` or `href` to prevent malicious URI protocols. Consequently, values like `javascript:alert('XSS')` bypass React's standard escaping mechanisms and result in script execution.
 **Prevention:** Always implement a dedicated utility function (e.g., `sanitizeURL()`) to validate that any user-controlled URL conforms to a strictly allowed protocol list (`http:`, `https:`, etc.) before passing the variable to an attribute prop in JSX.
+## 2025-05-24 - [Fix Stored XSS in Media and Avatars]
+**Vulnerability:** Unsanitized variables `user.photoURL` and `item.url` were being injected directly into the `src` attribute of `<img>` tags in `PresenceIndicator.jsx` and `MediaLibrary.jsx`.
+**Learning:** Even though images might originate from known or internal sources, user-controlled inputs (like an uploaded avatar or media library item) can potentially be crafted to execute `javascript:` URIs if they are displayed without protocol validation.
+**Prevention:** Always wrap dynamically generated or user-controlled URLs in `src` or `href` attributes with a utility like `sanitizeURL` to restrict to allowed protocols.

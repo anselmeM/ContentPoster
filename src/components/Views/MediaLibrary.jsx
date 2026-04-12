@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { storageService } from '../../services/storage';
+import { sanitizeURL } from '../../utils/sanitizeUtils';
 
 const MediaLibrary = ({ onSelectMedia, onClose }) => {
   const { user } = useAuth();
@@ -135,7 +136,7 @@ const MediaLibrary = ({ onSelectMedia, onClose }) => {
                 >
                   {item.type === 'image' ? (
                     <img
-                      src={item.url}
+                      src={sanitizeURL(item.url)}
                       alt={item.name}
                       className="w-full h-40 object-cover"
                     />
