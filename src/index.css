@@ -1,0 +1,424 @@
+@import "tailwindcss";
+
+/* Custom animations */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Task Management System Animations */
+@keyframes task-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes task-slide-down {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes checkbox-bounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes priority-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animation utility classes */
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Task-specific animation classes */
+.animate-task-slide-up {
+  animation: task-slide-up 0.4s ease-out forwards;
+}
+
+.animate-task-slide-down {
+  animation: task-slide-down 0.4s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-checkbox-bounce {
+  animation: checkbox-bounce 0.3s ease-out;
+}
+
+.animate-priority-pulse {
+  animation: priority-pulse 2s infinite;
+}
+
+.animate-progress-fill {
+  animation: progress-fill 0.5s ease-out forwards;
+}
+
+.animate-badge-pop {
+  animation: badge-pop 0.3s ease-out forwards;
+}
+
+/* Staggered animations for task lists */
+.task-item-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.task-item-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.task-item-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.task-item-exit-active {
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Micro-interactions */
+.btn-primary {
+  @apply px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+:root {
+  --color-primary: #4f46e5;
+  --color-primary-dark: #4338ca;
+  --color-background: #f4f7fe;
+  --color-surface: #ffffff;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+}
+
+.dark {
+  --color-background: #111827;
+  --color-surface: #1f2937;
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #9ca3af;
+  --color-border: #374151;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom component styles */
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-sm p-4 transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+  }
+  
+  .sidebar-item {
+    @apply p-3 rounded-lg text-gray-400 hover:text-indigo-600 transition-colors duration-200;
+  }
+  
+  .sidebar-item.active {
+    @apply bg-indigo-50 text-indigo-600;
+  }
+}
+
+/* Post card hover effects */
+.post-card .actions {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.post-card:hover .actions {
+  opacity: 1;
+}
+
+.post-card[draggable="true"] {
+  cursor: grab;
+}
+
+.post-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Calendar styles */
+.calendar-day {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.calendar-day.selected {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border-radius: 9999px;
+}
+
+.calendar-day.drag-over {
+  background-color: #e0e7ff;
+  border: 2px dashed var(--color-primary);
+  border-radius: 8px;
+}
+
+/* Platform icons */
+.platform-icon-linkedin {
+  @apply bg-blue-600 rounded-full text-white;
+}
+
+.platform-icon-instagram {
+  @apply bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 rounded-full text-white;
+}
+
+.platform-icon-dribbble {
+  @apply bg-pink-500 rounded-full text-white;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  @apply absolute -top-10 left-0 bg-indigo-600 text-white px-4 py-2 z-50 transition-all duration-200;
+}
+
+.skip-link:focus {
+  @apply top-0;
+}
+
+/* ============================================================================
+   Task Management System - Completion & Interaction Animations
+   ============================================================================ */
+
+/* Checkbox completion animation */
+@keyframes checkbox-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.checkbox-pop { animation: checkbox-pop 0.2s ease-out; }
+
+/* Strikethrough animation for completed tasks */
+@keyframes strikethrough {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.task-completed .task-text { position: relative; }
+.task-completed .task-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 2px;
+  background-color: currentColor;
+  animation: strikethrough 0.3s ease-out forwards;
+}
+
+/* Task item hover elevation */
+.task-item { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
+.task-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px -2px rgba(0,0,0,0.1); }
+.dark .task-item:hover { box-shadow: 0 4px 12px -2px rgba(0,0,0,0.3); }
+
+/* Task completion scale animation */
+@keyframes task-complete-pop {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.task-completing { animation: task-complete-pop 0.3s ease-out; }
+
+/* Task deletion slide out */
+@keyframes task-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; height: 0; padding: 0; margin: 0; }
+}
+.task-deleting { animation: task-slide-out 0.3s ease-out forwards; }
+
+/* Confetti celebration for milestones */
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+.confetti-particle { position: fixed; width: 10px; height: 10px; top: 0; animation: confetti-fall 3s ease-out forwards; }
+
+/* Milestone celebration overlay */
+@keyframes celebration-zoom {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.milestone-celebration { animation: celebration-zoom 0.5s ease-out; }
+
+/* Filter tab transitions */
+.filter-tab { transition: all 0.2s ease-out; }
+.filter-tab:hover { background-color: rgba(99,102,241,0.1); }
+.filter-tab.active { background-color: rgba(99,102,241,0.2); color: #4f46e5; }
+
+/* Bulk action bar slide in */
+@keyframes bulk-bar-slide-in {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.bulk-action-bar { animation: bulk-bar-slide-in 0.2s ease-out; }
+
+/* Touch-friendly tap targets for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .task-item button, .task-item [role="checkbox"] { min-height: 44px; min-width: 44px; }
+}
+
+/* Focus ring for keyboard navigation */
+.task-item:focus-within { outline: 2px solid rgba(79,70,229,0.5); outline-offset: 2px; }
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .checkbox-pop, .task-complete-pop, .task-deleting, .confetti-particle,
+  .animate-checkbox-bounce, .animate-task-slide-up, .animate-scale-in,
+  .animate-slide-in, .animate-fade-in { animation: none !important; transition: none !important; }
+}

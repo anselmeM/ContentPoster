@@ -29,3 +29,19 @@
 ## 2026-03-22 - [Unoptimized Image Loading in Dynamic Lists]
 **Learning:** Found an anti-pattern in `createPostCard` and `updatePreview` where dynamic `<img>` tags (which can potentially render many items below the fold) lacked the `loading="lazy"` attribute, leading to eager loading of all images and unnecessary initial bandwidth and memory usage.
 **Action:** Always add native `loading="lazy"` attributes to `<img>` tags, especially those rendered dynamically in lists, feeds, or off-screen preview panels, to defer network requests and improve initial load performance.
+
+## 2026-03-22 - [Intermediate Array Allocations from Chained Methods]
+**Learning:** Found multiple instances where chained array methods (e.g., `.filter().length`, `.filter().map()`, `.map().filter()`) were used in high-frequency notification logic. This pattern creates unnecessary intermediate arrays that are immediately discarded, leading to memory overhead and triggering frequent garbage collection, especially within `setInterval` loops and render cycles.
+**Action:** Always replace chained array methods with a single-pass `for...of` loop or `.reduce()` when performing multiple operations on the same data. This eliminates intermediate object allocations and reduces the time complexity overhead from multiple iterations.
+
+## 2026-03-22 - [O(4N) chained filters and Redundant Date Instantiations in Dashboard Stats]
+**Learning:** Found an anti-pattern in `LeftPanel.jsx` where `.filter().length` was chained four times on the same `posts` array to derive various metrics (completed, inProgress, overdue, scheduled). This resulted in O(4N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
+**Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop (like `.reduce()`). This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
+
+## 2026-03-27 - Optimized engagementTrendsData O(W*N) to O(N)
+**Learning:** In AnalyticsView.jsx, calculating aggregate weekly data points over multiple weeks and metrics resulted in highly repetitive operations using `.filter()` followed by `.reduce()` inside of array maps. The operation performed was effectively `O(W * M * N)` where W is weeks (12), M is metrics (3), and N is posts.
+**Action:** Replace multiple passes with a single pass grouping logic. When aggregating timeseries data for charts over numerous categories or weeks, pre-compute the bins/buckets and use a single O(N) `forEach` pass over the primary dataset to distribute values into all bins.
+
+## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
+**Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
+**Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
