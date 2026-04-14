@@ -159,16 +159,11 @@ const AnalyticsView = ({ posts }) => {
   // Calculate analytics data
   const analytics = useMemo(() => {
     const totalPosts = filteredPosts.length;
-    const completedPosts = filteredPosts.filter(p => p.completed).length;
-    const scheduledPosts = filteredPosts.filter(p => !p.completed).length;
+    let completedPosts = 0;
+    let scheduledPosts = 0;
     
-    // Posts by platform
-    const byPlatform = filteredPosts.reduce((acc, post) => {
-      acc[post.platform] = (acc[post.platform] || 0) + 1;
-      return acc;
-    }, {});
+    const byPlatform = {};
     
-    // Posts by month
     const byMonth = {};
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
@@ -177,31 +172,32 @@ const AnalyticsView = ({ posts }) => {
       byMonth[key] = 0;
     }
     
-    // Engagement stats
     let totalEngagement = { likes: 0, comments: 0, shares: 0, views: 0 };
+    const byStatus = {};
     
-    filteredPosts.forEach(post => {
+    // Single pass over posts
+    for (const post of filteredPosts) {
+      if (post.completed) completedPosts++;
+      else scheduledPosts++;
+
+      byPlatform[post.platform] = (byPlatform[post.platform] || 0) + 1;
+
       const date = new Date(post.date);
       const key = date.toLocaleString('default', { month: 'short' });
       if (byMonth[key] !== undefined) {
         byMonth[key]++;
       }
-      
-      // Add engagement data if available
+
       if (post.engagement) {
         totalEngagement.likes += post.engagement.likes || 0;
         totalEngagement.comments += post.engagement.comments || 0;
         totalEngagement.shares += post.engagement.shares || 0;
         totalEngagement.views += post.engagement.views || 0;
       }
-    });
-    
-    // Status breakdown
-    const byStatus = filteredPosts.reduce((acc, post) => {
+
       const status = post.status || (post.completed ? 'published' : 'draft');
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
+      byStatus[status] = (byStatus[status] || 0) + 1;
+    }
     
     return {
       totalPosts,

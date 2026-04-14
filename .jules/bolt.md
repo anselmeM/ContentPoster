@@ -45,3 +45,7 @@
 ## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
 **Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
+
+## 2026-04-03 - [O(5N) Multi-pass Calculation in AnalyticsView.jsx]
+**Learning:** Found an anti-pattern in `AnalyticsView.jsx` where `filteredPosts` was iterated over multiple times using `.filter().length`, `.reduce()`, and `.forEach()` within the `analytics` useMemo block to calculate status counts, engagement, platform distribution, and monthly breakdown. This resulted in O(5N) time complexity and redundant allocations.
+**Action:** When calculating multiple aggregate metrics from a single array, always use a single `for...of` loop or a single pass mechanism to collect all data points simultaneously. This transforms the operation to O(N), reduces memory overhead from intermediate structures, and improves execution speed significantly.
