@@ -32,28 +32,33 @@ const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, se
 
   // Filter posts based on platform and search query
   const filteredPosts = useMemo(() => {
-    let filtered = posts;
-    
-    // Filter by platform
-    if (selectedPlatform !== 'All') {
-      filtered = filtered.filter(p => p.platform === selectedPlatform);
+    // Bolt Optimization: Added early return if no filters are active to avoid iteration
+    if (selectedPlatform === 'All' && !searchQuery && !selectedDate) {
+      return posts;
     }
+
+    const query = searchQuery ? searchQuery.toLowerCase() : null;
     
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.title?.toLowerCase().includes(query) ||
-        p.platform?.toLowerCase().includes(query)
-      );
-    }
-    
-    // Filter by selected date
-    if (selectedDate) {
-      filtered = filtered.filter(p => p.date === selectedDate);
-    }
-    
-    return filtered;
+    // Bolt Optimization: Replaced O(3N) chained .filter() array methods
+    // with a single O(N) pass to prevent intermediate array garbage collection
+    return posts.filter(p => {
+      // Filter by platform
+      if (selectedPlatform !== 'All' && p.platform !== selectedPlatform) {
+        return false;
+      }
+
+      // Filter by selected date
+      if (selectedDate && p.date !== selectedDate) {
+        return false;
+      }
+
+      // Filter by search query
+      if (query && !(p.title?.toLowerCase().includes(query) || p.platform?.toLowerCase().includes(query))) {
+        return false;
+      }
+
+      return true;
+    });
   }, [posts, selectedPlatform, searchQuery, selectedDate]);
 
   const handleClearFilter = () => {
