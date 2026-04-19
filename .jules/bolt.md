@@ -48,3 +48,6 @@
 ## 2024-04-18 - Avoid Repetitive Array Mapping for Max Value Calculations inside Map Loops
 **Learning:** In `PlatformComparison.jsx`, calculating the `Math.max` over an array property (like `posts` or `engagement`) directly *inside* another `map` function over the *same* array resulted in an O(N^2) complexity because the inner `map` iteration occurs once per element in the outer loop.
 **Action:** Always pre-calculate aggregate values like maximums or sums before mapping over arrays for visualization (like datasets in Chart.js) by pre-aggregating in a single-pass `reduce` to avoid redundant iterations and intermediate array allocations.
+## 2025-02-17 - Optimize task filter arrays and search query
+**Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
+**Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
