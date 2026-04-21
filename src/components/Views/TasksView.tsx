@@ -73,11 +73,11 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   };
 
   // Handle toggling task completion
-  const handleToggleTask = async (task: Task) => {
+  const handleToggleTask = async (taskId: string, currentCompletedStatus: boolean) => {
     if (!user) return;
-    await tasksService.update(user.uid, task.id, { 
-      completed: !task.completed,
-      completedAt: !task.completed ? Date.now() : null
+    await tasksService.update(user.uid, taskId, {
+      completed: !currentCompletedStatus,
+      completedAt: !currentCompletedStatus ? Date.now() : null
     });
   };
 
@@ -228,7 +228,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
               task={task}
               isSelected={selectedTaskIds.has(task.id)}
               isEditing={editingTaskId === task.id}
-              onToggle={() => handleToggleTask(task)}
+              onToggle={() => handleToggleTask(task.id, task.completed)}
               onEdit={() => setEditingTaskId(task.id === editingTaskId ? null : task.id)}
               onSave={(text) => handleUpdateTaskText(task.id, text)}
               onDelete={() => handleDeleteTask(task.id)}
