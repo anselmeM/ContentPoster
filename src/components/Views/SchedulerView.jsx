@@ -32,28 +32,32 @@ const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, se
 
   // Filter posts based on platform and search query
   const filteredPosts = useMemo(() => {
-    let filtered = posts;
-    
-    // Filter by platform
-    if (selectedPlatform !== 'All') {
-      filtered = filtered.filter(p => p.platform === selectedPlatform);
+    // Early return if no filters are applied
+    if (selectedPlatform === 'All' && !searchQuery && !selectedDate) {
+      return posts;
     }
-    
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.title?.toLowerCase().includes(query) ||
-        p.platform?.toLowerCase().includes(query)
-      );
-    }
-    
-    // Filter by selected date
-    if (selectedDate) {
-      filtered = filtered.filter(p => p.date === selectedDate);
-    }
-    
-    return filtered;
+
+    const query = searchQuery ? searchQuery.toLowerCase() : null;
+
+    // Single-pass filter for optimal performance
+    return posts.filter(p => {
+      // Platform filter
+      if (selectedPlatform !== 'All' && p.platform !== selectedPlatform) {
+        return false;
+      }
+
+      // Date filter
+      if (selectedDate && p.date !== selectedDate) {
+        return false;
+      }
+
+      // Search query filter
+      if (query && !(p.title?.toLowerCase().includes(query) || p.platform?.toLowerCase().includes(query))) {
+        return false;
+      }
+
+      return true;
+    });
   }, [posts, selectedPlatform, searchQuery, selectedDate]);
 
   const handleClearFilter = () => {
