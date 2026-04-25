@@ -51,3 +51,7 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+
+## 2026-03-31 - [O(N) Sequential Wait Times in Firestore Bulk Operations]
+**Learning:** Found an anti-pattern in `TasksView.tsx` where a `for...of` loop was used to sequentially `await` individual `delete` requests for bulk task deletion. This forces the application to wait for N consecutive network round-trips to complete, causing O(N) latency that scales poorly.
+**Action:** When performing bulk updates or deletions in Firestore, always utilize `writeBatch` (like the one implemented in `taskService.bulkDelete`) instead of looping through sequential requests. This reduces network overhead from O(N) round-trips to an O(1) atomic commit, vastly improving performance.

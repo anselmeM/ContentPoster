@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { tasksService } from '../../services/firebase';
+import { taskService } from '../../services/taskService';
 import { TaskForm } from '../Tasks/TaskForm';
 import { TaskItem } from '../Tasks/TaskItem';
 import { TaskStats } from '../Tasks/TaskStats';
@@ -43,7 +43,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const unsubscribe = tasksService.subscribe(user.uid, (tasksData: Task[]) => {
+    const unsubscribe = taskService.subscribe(user.uid, (tasksData: Task[]) => {
       setTasks(tasksData);
       setIsLoading(false);
     });
@@ -55,7 +55,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   const handleCreateTask = async (input: TaskCreateInput) => {
     if (!user || !input.text.trim()) return;
 
-    await tasksService.create(user.uid, {
+    await taskService.create(user.uid, {
       text: input.text.trim(),
       completed: false,
       category: input.category || TaskCategory.GENERAL,
@@ -68,14 +68,14 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   const handleUpdateTaskText = async (taskId: string, text: string) => {
     if (!user || !text.trim()) return;
     
-    await tasksService.update(user.uid, taskId, { text: text.trim() });
+    await taskService.update(user.uid, taskId, { text: text.trim() });
     setEditingTaskId(null);
   };
 
   // Handle toggling task completion
   const handleToggleTask = async (taskId: string, currentCompletedStatus: boolean) => {
     if (!user) return;
-    await tasksService.update(user.uid, taskId, {
+    await taskService.update(user.uid, taskId, {
       completed: !currentCompletedStatus,
       completedAt: !currentCompletedStatus ? Date.now() : null
     });
@@ -84,7 +84,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   // Handle deleting a task
   const handleDeleteTask = async (taskId: string) => {
     if (!user) return;
-    await tasksService.delete(user.uid, taskId);
+    await taskService.delete(user.uid, taskId);
     // Also remove from selection if selected
     setSelectedTaskIds(prev => {
       const next = new Set(prev);
@@ -97,9 +97,10 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   const handleBulkDelete = async () => {
     if (!user || selectedTaskIds.size === 0) return;
     
-    for (const taskId of selectedTaskIds) {
-      await tasksService.delete(user.uid, taskId);
-    }
+    // Bolt Optimization: Replace O(N) sequential await loop with O(1) batched bulkDelete
+    // Reduces network overhead from N round-trips to a single atomic commit.
+    await taskService.bulkDelete(user.uid, Array.from(selectedTaskIds));
+
     setSelectedTaskIds(new Set());
   };
 
