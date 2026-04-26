@@ -51,3 +51,6 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+## 2024-05-18 - [O(P*D*N) Array Recalculation inside Nested Maps]
+**Learning:** Found an anti-pattern in `PlatformPerformanceChart.jsx` where an outer loop mapped over platforms and an inner loop mapped over days, and inside the inner loop an array `.reduce()` recalculated the sum of a platform's daily engagement by iterating over pre-grouped daily posts. This caused redundant O(N) array reductions in an `O(Platforms * Days)` rendering loop.
+**Action:** When aggregating metrics for a chart with multiple dimensions (e.g. platform and time), calculate the exact aggregated metric inside the single O(N) grouping pass (a hash map) rather than just grouping objects, then perform an O(1) hash map lookup inside the nested rendering loops to completely avoid redundant iterations.
