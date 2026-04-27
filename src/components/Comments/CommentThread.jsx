@@ -40,8 +40,10 @@ const CommentItem = ({ comment, currentUserId, onDelete, canDelete }) => {
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Comment actions"
+            aria-expanded={showMenu}
           >
-            <i className="fas fa-ellipsis-h" />
+            <i className="fas fa-ellipsis-h" aria-hidden="true" />
           </button>
           
           {showMenu && (
@@ -151,9 +153,11 @@ const CommentThread = ({ postId, canComment = true }) => {
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        aria-expanded={isExpanded}
+        aria-controls="comments-section"
       >
-        <i className={clsx('fas fa-chevron-right transition-transform', isExpanded && 'rotate-90')} />
-        <i className="fas fa-comment" />
+        <i className={clsx('fas fa-chevron-right transition-transform', isExpanded && 'rotate-90')} aria-hidden="true" />
+        <i className="fas fa-comment" aria-hidden="true" />
         <span>Comments</span>
         {comments.length > 0 && (
           <span className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full text-xs">
@@ -164,7 +168,7 @@ const CommentThread = ({ postId, canComment = true }) => {
       
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="mt-4 space-y-4">
+        <div id="comments-section" className="mt-4 space-y-4">
           {/* Comment List */}
           {loading ? (
             <div className="text-center py-4">
