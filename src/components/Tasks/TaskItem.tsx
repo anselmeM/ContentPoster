@@ -17,11 +17,11 @@ interface TaskItemProps {
   task: Task;
   isSelected?: boolean;
   isEditing?: boolean;
-  onToggle: () => void;
-  onEdit: () => void;
-  onSave: (text: string) => void;
-  onDelete: () => void;
-  onSelect?: () => void;
+  onToggle: (id: string, completed: boolean) => void;
+  onEdit: (id: string) => void;
+  onSave: (id: string, text: string) => void;
+  onDelete: (id: string) => void;
+  onSelect?: (id: string) => void;
   className?: string;
 }
 
@@ -32,14 +32,14 @@ interface TaskItemProps {
  * <TaskItem 
  *   task={task}
  *   isSelected={selectedIds.has(task.id)}
- *   onToggle={() => toggleTask(task.id)}
- *   onEdit={() => setEditingTaskId(task.id)}
- *   onSave={(text) => updateTask(task.id, { text })}
- *   onDelete={() => deleteTask(task.id)}
- *   onSelect={() => toggleSelect(task.id)}
+ *   onToggle={toggleTask}
+ *   onEdit={setEditingTaskId}
+ *   onSave={updateTask}
+ *   onDelete={deleteTask}
+ *   onSelect={toggleSelect}
  * />
  */
-export function TaskItem({ 
+export const TaskItem = React.memo(function TaskItem({
   task, 
   isSelected = false,
   isEditing = false,
@@ -73,15 +73,15 @@ export function TaskItem({
   // Handle edit save
   const handleSaveEdit = () => {
     if (editText.trim() && editText !== task.text) {
-      onSave(editText.trim());
+      onSave(task.id, editText.trim());
     }
-    onEdit(); // Exit edit mode
+    onEdit(task.id); // Exit edit mode
   };
   
   // Handle edit cancel
   const handleCancelEdit = () => {
     setEditText(task.text);
-    onEdit(); // Exit edit mode
+    onEdit(task.id); // Exit edit mode
   };
   
   // Handle keydown in edit mode
@@ -98,7 +98,7 @@ export function TaskItem({
   // Handle delete confirmation
   const handleDeleteClick = () => {
     if (showDeleteConfirm) {
-      onDelete();
+      onDelete(task.id);
       setShowDeleteConfirm(false);
     } else {
       setShowDeleteConfirm(true);
@@ -137,7 +137,7 @@ export function TaskItem({
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={onSelect}
+            onChange={() => onSelect?.(task.id)}
             className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
             aria-label={`Select task: ${task.text}`}
           />
@@ -147,7 +147,7 @@ export function TaskItem({
       {/* Completion Toggle */}
       <button
         type="button"
-        onClick={onToggle}
+        onClick={() => onToggle(task.id, task.completed)}
         className={clsx(
           'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center',
           'transition-all duration-200 hover:scale-110',
@@ -192,7 +192,7 @@ export function TaskItem({
             /* Display Mode */
             <button
               type="button"
-              onClick={onEdit}
+              onClick={() => onEdit(task.id)}
               className={clsx(
                 'flex-1 text-left text-base font-medium',
                 'text-gray-900 dark:text-white',
@@ -230,7 +230,7 @@ export function TaskItem({
         {/* Edit Button */}
         <button
           type="button"
-          onClick={onEdit}
+          onClick={() => onEdit(task.id)}
           className={clsx(
             'p-2 rounded-lg',
             'text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400',
@@ -270,7 +270,7 @@ export function TaskItem({
       )}
     </div>
   );
-}
+});
 
 /**
  * Task Item Skeleton (loading state)

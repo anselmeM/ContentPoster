@@ -17,7 +17,7 @@ interface TaskListProps {
   onToggleSelect: (id: string) => void;
   onSelectAll: () => void;
   onBulkDelete: () => void;
-  onToggleTask: (id: string) => void;
+  onToggleTask: (id: string, completed: boolean) => void;
   onEditTask: (id: string) => void;
   onSaveTask: (id: string, text: string) => void;
   onDeleteTask: (id: string) => void;
@@ -171,11 +171,11 @@ export function TaskList({
               task={task}
               isSelected={selectedIds.has(task.id)}
               isEditing={editingTaskId === task.id}
-              onToggle={() => onToggleTask(task.id)}
-              onEdit={() => onEditTask(task.id)}
-              onSave={(text) => onSaveTask(task.id, text)}
-              onDelete={() => onDeleteTask(task.id)}
-              onSelect={() => onToggleSelect(task.id)}
+              onToggle={onToggleTask}
+              onEdit={onEditTask}
+              onSave={onSaveTask}
+              onDelete={onDeleteTask}
+              onSelect={onToggleSelect}
             />
           </div>
         ))}
