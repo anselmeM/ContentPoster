@@ -51,3 +51,6 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+## 2024-04-19 - [React.memo and inline closures in list rendering]
+**Learning:** Wrapping a component rendered in a list map (e.g., `<TaskItem />`) with `React.memo` is completely ineffective if the parent component passes down inline arrow functions for callbacks (e.g., `onToggle={() => onToggleTask(task.id)}`). This breaks memoization because the function reference changes on every single render.
+**Action:** When applying `React.memo` to list items, always ensure that the callback props are stable references by modifying the item component to invoke the callbacks with its own `id` (e.g., `onClick={() => onToggle(task.id)}`). Then, wrap the parent's handler functions in `useCallback` and pass them down directly.

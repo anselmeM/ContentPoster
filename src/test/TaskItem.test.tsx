@@ -174,7 +174,7 @@ describe('TaskItem', () => {
       const saveButton = screen.getByTestId('save-button');
       await user.click(saveButton);
       
-      expect(defaultProps.onSave).toHaveBeenCalledWith('Updated task text');
+      expect(defaultProps.onSave).toHaveBeenCalledWith(defaultProps.task.id, 'Updated task text');
     });
 
     it('should not save empty text', async () => {
@@ -276,7 +276,7 @@ describe('TaskItem', () => {
       const input = screen.getByRole('textbox');
       await user.keyboard('{Escape}');
       
-      expect(onEdit).toHaveBeenCalledTimes(1);
+      expect(onEdit).toHaveBeenCalledWith(defaultProps.task.id);
     });
   });
 
