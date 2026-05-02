@@ -363,7 +363,7 @@ export function sortTasks(tasks: Task[], sort: TaskSortConfig): Task[] {
  * @returns UUID string
  */
 export function generateTaskId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return crypto.randomUUID();
 }
 
 /**

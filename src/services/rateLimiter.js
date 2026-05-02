@@ -79,7 +79,7 @@ export const queueService = {
     const queue = postQueue.get(userId) || [];
     
     const queueItem = {
-      id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `queue_${crypto.randomUUID()}`,
       userId,
       postData,
       status: 'queued',
