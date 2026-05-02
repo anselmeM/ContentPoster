@@ -161,7 +161,7 @@ const toastService = {
   
   show: function(options) {
     const toast = {
-      id: `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `toast_${crypto.randomUUID()}`,
       type: options.type || 'info', // success, error, warning, info
       title: options.title,
       message: options.message,
