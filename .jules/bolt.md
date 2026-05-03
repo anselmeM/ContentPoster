@@ -51,3 +51,6 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+## 2026-04-10 - Avoid Repeated Sorting for Finding Max Values
+**Learning:** In `PlatformPerformanceChart.jsx`, `[...array].sort()` was used three times to find the platforms with the highest reach, engagement rate, and post counts. This pattern creates an O(3 * N log N) time complexity combined with excessive memory overhead from shallow copying arrays (`[...array]`).
+**Action:** Always replace multiple full-array sorts when searching for maximum (or minimum) values with a single `reduce()` operation. This condenses the task into a single O(N) pass, saving memory by avoiding array duplication and dramatically cutting CPU cycles.
