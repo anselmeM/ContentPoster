@@ -45,9 +45,15 @@
 ## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
 **Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
+
 ## 2024-04-18 - Avoid Repetitive Array Mapping for Max Value Calculations inside Map Loops
 **Learning:** In `PlatformComparison.jsx`, calculating the `Math.max` over an array property (like `posts` or `engagement`) directly *inside* another `map` function over the *same* array resulted in an O(N^2) complexity because the inner `map` iteration occurs once per element in the outer loop.
 **Action:** Always pre-calculate aggregate values like maximums or sums before mapping over arrays for visualization (like datasets in Chart.js) by pre-aggregating in a single-pass `reduce` to avoid redundant iterations and intermediate array allocations.
+
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+
+## 2026-05-04 - [Repeated Array Sorting for Multiple Aggregate Metrics]
+**Learning:** In `PlatformPerformanceChart.jsx`, the `winnerMetrics` were calculated by creating a duplicate array and sorting it three separate times `[...array].sort(...)` inside a `useMemo` block to find the maximum values for `totalReach`, `engagementRate`, and `posts`. This resulted in O(K * N log N) time complexity and redundant intermediate array allocations.
+**Action:** Always use a single `.reduce()` pass to aggregate multiple maximum/minimum metrics from an array instead of sorting repeatedly. This changes the complexity to O(N) and prevents unnecessary array duplication.

@@ -213,14 +213,23 @@ const PlatformPerformanceChart = ({
   }, [posts, selectedPlatforms]);
 
   // Calculate winner metrics
+  // Bolt Optimization: Replaced O(K*N log N) multiple array sort calls inside useMemo
+  // with a single O(N) reduce pass to find the maximum values without intermediate array allocations.
   const winnerMetrics = useMemo(() => {
     if (platformMetrics.length === 0) return null;
     
+    const maxMetrics = platformMetrics.reduce((acc, p) => {
+      if (!acc.highestReach || p.totalReach > acc.highestReach.totalReach) acc.highestReach = p;
+      if (!acc.highestEngagementRate || parseFloat(p.engagementRate) > parseFloat(acc.highestEngagementRate.engagementRate)) acc.highestEngagementRate = p;
+      if (!acc.mostPosts || p.posts > acc.mostPosts.posts) acc.mostPosts = p;
+      return acc;
+    }, { highestReach: null, highestEngagementRate: null, mostPosts: null });
+
     return {
       bestPerforming: sortedPlatforms[0]?.name || 'N/A',
-      highestReach: [...platformMetrics].sort((a, b) => b.totalReach - a.totalReach)[0]?.name || 'N/A',
-      highestEngagementRate: [...platformMetrics].sort((a, b) => parseFloat(b.engagementRate) - parseFloat(a.engagementRate))[0]?.name || 'N/A',
-      mostPosts: [...platformMetrics].sort((a, b) => b.posts - a.posts)[0]?.name || 'N/A'
+      highestReach: maxMetrics.highestReach?.name || 'N/A',
+      highestEngagementRate: maxMetrics.highestEngagementRate?.name || 'N/A',
+      mostPosts: maxMetrics.mostPosts?.name || 'N/A'
     };
   }, [platformMetrics, sortedPlatforms]);
 
