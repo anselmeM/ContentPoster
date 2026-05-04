@@ -10,3 +10,7 @@
 ## 2026-04-06 - Accessible Icon Buttons
 **Learning:** Icon-only buttons mapped from dynamic data often lack explicit `aria-label`s, rendering them inaccessible to screen readers. Relying only on title tooltips or visual labels on expanded states is insufficient.
 **Action:** Always map explicit string labels (e.g. `aria-label={item.label}`) when rendering icon buttons, especially in collapsed sidebars.
+
+## 2026-05-04 - Keyboard Navigation for Global Notifications
+**Learning:** Global notifications (like Toasts) often lack visible focus indicators on their dismiss buttons, meaning keyboard users cannot easily navigate to or understand when they are focused on the close action. Adding accessible outline styles (e.g., `focus-visible:ring`) is essential for dismissible floating UI.
+**Action:** Whenever implementing or fixing dismissible UI components (modals, toasts, alerts), ensure the close button has both a descriptive `aria-label` and a clear visual focus indicator (like `focus-visible:ring-2`) for keyboard navigation.

@@ -97,9 +97,10 @@ const Toast = ({ toast, onClose }) => {
         </div>
         <button
           onClick={onClose}
-          className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          className="ml-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 transition-colors"
+          aria-label="Close notification"
         >
-          <i className="fas fa-times" />
+          <i className="fas fa-times" aria-hidden="true" />
         </button>
       </div>
     </div>
