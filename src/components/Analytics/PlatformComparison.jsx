@@ -116,14 +116,25 @@ const PlatformComparison = ({
   const winnerMetrics = useMemo(() => {
     if (filteredMetrics.length === 0) return {};
     
-    const sorted = [...filteredMetrics];
-    return {
-      mostPosts: sorted.sort((a, b) => b.posts - a.posts)[0]?.platform,
-      highestEngagement: sorted.sort((a, b) => b.engagement - a.engagement)[0]?.platform,
-      highestReach: sorted.sort((a, b) => b.reach - a.reach)[0]?.platform,
-      bestEngagementRate: sorted.sort((a, b) => parseFloat(b.avgEngagementRate) - parseFloat(a.avgEngagementRate))[0]?.platform,
-      bestGrowth: sorted.sort((a, b) => b.growth - a.growth)[0]?.platform
-    };
+    // Bolt Optimization: Replaced multiple O(N log N) sorting passes
+    // with a single O(N) reduce pass to find the maximum values.
+    return filteredMetrics.reduce((acc, p) => {
+      const pEngRate = parseFloat(p.avgEngagementRate) || 0;
+
+      if (p.posts > acc.maxPosts) { acc.maxPosts = p.posts; acc.mostPosts = p.platform; }
+      if (p.engagement > acc.maxEngagement) { acc.maxEngagement = p.engagement; acc.highestEngagement = p.platform; }
+      if (p.reach > acc.maxReach) { acc.maxReach = p.reach; acc.highestReach = p.platform; }
+      if (pEngRate > acc.maxEngRate) { acc.maxEngRate = pEngRate; acc.bestEngagementRate = p.platform; }
+      if (p.growth > acc.maxGrowth) { acc.maxGrowth = p.growth; acc.bestGrowth = p.platform; }
+
+      return acc;
+    }, {
+      maxPosts: -Infinity, mostPosts: null,
+      maxEngagement: -Infinity, highestEngagement: null,
+      maxReach: -Infinity, highestReach: null,
+      maxEngRate: -Infinity, bestEngagementRate: null,
+      maxGrowth: -Infinity, bestGrowth: null
+    });
   }, [filteredMetrics]);
 
   // Chart data - Bar comparison
