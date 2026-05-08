@@ -19,7 +19,7 @@ import {
   TaskUpdateInput
 } from '../types/task';
 import { taskService } from '../services/taskService';
-import { calculateStats } from '../utils/taskUtils';
+import { calculateStats, filterTasks, sortTasks } from '../utils/taskUtils';
 import { toast } from '../services/notifications';
 
 // ============================================================================
@@ -140,58 +140,11 @@ export function TaskProvider({ userId, children }: TaskProviderProps) {
   
   // Filter tasks
   const filteredTasks = useMemo(() => {
-    let result = [...tasks];
-    
-    // Apply status filter
-    if (filters.status === 'active') {
-      result = result.filter(t => !t.completed);
-    } else if (filters.status === 'completed') {
-      result = result.filter(t => t.completed);
-    }
-    
-    // Apply category filter
-    if (filters.categories.length > 0) {
-      result = result.filter(t => filters.categories.includes(t.category));
-    }
-    
-    // Apply priority filter
-    if (filters.priorities.length > 0) {
-      result = result.filter(t => filters.priorities.includes(t.priority));
-    }
-    
-    // Apply search query
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      result = result.filter(t => t.text.toLowerCase().includes(query));
-    }
-    
-    // Sort
-    result.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sort.field) {
-        case 'deadline':
-          if (!a.deadline && !b.deadline) comparison = 0;
-          else if (!a.deadline) comparison = 1;
-          else if (!b.deadline) comparison = -1;
-          else comparison = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-          break;
-        case 'priority':
-          const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-          comparison = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
-          break;
-        case 'createdAt':
-          comparison = b.createdAt - a.createdAt;
-          break;
-        case 'text':
-          comparison = a.text.localeCompare(b.text);
-          break;
-      }
-      
-      return sort.direction === 'asc' ? comparison : -comparison;
-    });
-    
-    return result;
+    // Bolt Optimization: Replaced chained O(N) filters and manual sorts
+    // with a single optimized filterTasks and sortTasks call to prevent redundant
+    // intermediate array garbage collection and O(N^2) total filtering time complexity.
+    const filtered = filterTasks(tasks, filters);
+    return sortTasks(filtered, sort);
   }, [tasks, filters, sort]);
   
   // Calculate stats
