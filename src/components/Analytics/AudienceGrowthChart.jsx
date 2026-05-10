@@ -91,8 +91,17 @@ const AudienceGrowthChart = ({
         
         // Use O(1) hash map lookup instead of O(N) array filter
         const dayPosts = (postsByPlatformDate[platform] && postsByPlatformDate[platform][dateStr]) || [];
-        const dayEngagement = dayPosts.reduce((sum, p) => 
-          sum + ((p.engagement?.likes || 0) * 0.1) + ((p.engagement?.comments || 0) * 0.5), 0);
+
+        // Bolt Optimization: Replaced O(2N) redundant iterations with a single pass loop.
+        let dayEngagement = 0;
+        let totalEngagement = 0;
+        for (let j = 0; j < dayPosts.length; j++) {
+          const p = dayPosts[j];
+          const likes = p.engagement?.likes || 0;
+          const comments = p.engagement?.comments || 0;
+          dayEngagement += (likes * 0.1) + (comments * 0.5);
+          totalEngagement += likes + comments;
+        }
         
         data[platform].push({
           date: dateStr,
@@ -100,8 +109,7 @@ const AudienceGrowthChart = ({
           followers: Math.max(0, baseFollowers + Math.floor(dayEngagement)),
           following: Math.floor(baseFollowers * 0.1),
           posts: dayPosts.length,
-          engagement: dayPosts.reduce((sum, p) => 
-            sum + (p.engagement?.likes || 0) + (p.engagement?.comments || 0), 0)
+          engagement: totalEngagement
         });
       }
     });

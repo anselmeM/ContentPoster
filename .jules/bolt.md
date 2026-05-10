@@ -51,3 +51,9 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+## 2026-05-10 - [O(2N) redundant  iteration in AnalyticsChart.jsx]
+**Learning:** Found an anti-pattern in `AudienceGrowthChart.jsx` where an array of objects was iterated over via `.reduce` twice consecutively to calculate two similar sum totals (dayEngagement and engagement). This pattern creates unnecessary intermediate loop overhead and double array iteration for fields of the same objects.
+**Action:** When calculating multiple aggregate metrics from the exact same array loop, always combine them into a single-pass loop (like a single `for` loop) instead of multiple `.reduce()` calls. This changes performance overhead from O(2N) to O(N).
+## 2024-05-18 - [O(2N) redundant `.reduce` iteration in AnalyticsChart.jsx]
+**Learning:** Found an anti-pattern in `AudienceGrowthChart.jsx` where an array of objects was iterated over via `.reduce` twice consecutively to calculate two similar sum totals (dayEngagement and engagement). This pattern creates unnecessary intermediate loop overhead and double array iteration for fields of the same objects.
+**Action:** When calculating multiple aggregate metrics from the exact same array loop, always combine them into a single-pass loop (like a single `for` loop) instead of multiple `.reduce()` calls. This changes performance overhead from O(2N) to O(N).
