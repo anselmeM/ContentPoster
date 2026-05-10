@@ -146,24 +146,37 @@ const PlatformComparison = ({
   }), [filteredMetrics]);
 
   // Chart data - Radar comparison
-  const radarData = useMemo(() => ({
-    labels: ['Posts', 'Engagement', 'Reach', 'Avg Likes', 'Avg Comments', 'Growth'],
-    datasets: filteredMetrics.map(p => ({
-      label: p.name,
-      data: [
-        Math.min(100, (p.posts / Math.max(...filteredMetrics.map(m => m.posts))) * 100),
-        Math.min(100, (p.engagement / Math.max(...filteredMetrics.map(m => m.engagement))) * 100),
-        Math.min(100, (p.reach / Math.max(...filteredMetrics.map(m => m.reach))) * 100),
-        Math.min(100, (p.avgLikes / Math.max(...filteredMetrics.map(m => m.avgLikes))) * 100),
-        Math.min(100, (p.avgComments / Math.max(...filteredMetrics.map(m => m.avgComments))) * 100),
-        Math.min(100, (p.growth / Math.max(...filteredMetrics.map(m => m.growth))) * 100)
-      ],
-      backgroundColor: `${platformColors[p.platform]}40`,
-      borderColor: platformColors[p.platform],
-      borderWidth: 2,
-      pointBackgroundColor: platformColors[p.platform]
-    }))
-  }), [filteredMetrics]);
+  const radarData = useMemo(() => {
+    // Bolt Optimization: Pre-calculate max values to avoid O(P^2) complexity
+    // Replaced multiple Math.max(...filteredMetrics.map(...)) calls inside the map with O(1) property lookups.
+    const maxValues = {
+      posts: Math.max(1, ...filteredMetrics.map(m => m.posts)),
+      engagement: Math.max(1, ...filteredMetrics.map(m => m.engagement)),
+      reach: Math.max(1, ...filteredMetrics.map(m => m.reach)),
+      avgLikes: Math.max(1, ...filteredMetrics.map(m => m.avgLikes)),
+      avgComments: Math.max(1, ...filteredMetrics.map(m => m.avgComments)),
+      growth: Math.max(1, ...filteredMetrics.map(m => m.growth))
+    };
+
+    return {
+      labels: ['Posts', 'Engagement', 'Reach', 'Avg Likes', 'Avg Comments', 'Growth'],
+      datasets: filteredMetrics.map(p => ({
+        label: p.name,
+        data: [
+          Math.min(100, (p.posts / maxValues.posts) * 100),
+          Math.min(100, (p.engagement / maxValues.engagement) * 100),
+          Math.min(100, (p.reach / maxValues.reach) * 100),
+          Math.min(100, (p.avgLikes / maxValues.avgLikes) * 100),
+          Math.min(100, (p.avgComments / maxValues.avgComments) * 100),
+          Math.min(100, (p.growth / maxValues.growth) * 100)
+        ],
+        backgroundColor: `${platformColors[p.platform]}40`,
+        borderColor: platformColors[p.platform],
+        borderWidth: 2,
+        pointBackgroundColor: platformColors[p.platform]
+      }))
+    };
+  }, [filteredMetrics]);
 
   // Chart options
   const barOptions = {

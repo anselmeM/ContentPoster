@@ -41,6 +41,7 @@ const Sidebar = ({ currentView, setCurrentView, isPanelCollapsed, togglePanel, o
             )}
             role="menuitem"
             aria-current={currentView === item.id ? 'page' : undefined}
+            aria-label={item.label}
             title={isPanelCollapsed ? item.label : undefined}
           >
             <i className={`fas ${item.icon}`} aria-hidden="true" />

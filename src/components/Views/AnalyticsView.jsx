@@ -159,16 +159,12 @@ const AnalyticsView = ({ posts }) => {
   // Calculate analytics data
   const analytics = useMemo(() => {
     const totalPosts = filteredPosts.length;
-    const completedPosts = filteredPosts.filter(p => p.completed).length;
-    const scheduledPosts = filteredPosts.filter(p => !p.completed).length;
+    let completedPosts = 0;
+    let scheduledPosts = 0;
+    const byPlatform = {};
+    const byStatus = {};
     
-    // Posts by platform
-    const byPlatform = filteredPosts.reduce((acc, post) => {
-      acc[post.platform] = (acc[post.platform] || 0) + 1;
-      return acc;
-    }, {});
-    
-    // Posts by month
+    // Posts by month initial setup
     const byMonth = {};
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
@@ -177,31 +173,37 @@ const AnalyticsView = ({ posts }) => {
       byMonth[key] = 0;
     }
     
-    // Engagement stats
     let totalEngagement = { likes: 0, comments: 0, shares: 0, views: 0 };
     
-    filteredPosts.forEach(post => {
+    // Bolt Optimization: Single pass calculation for multiple metrics
+    // O(5N) -> O(N) by combining 5 separate iterations over filteredPosts
+    for (const post of filteredPosts) {
+      // 1 & 2. Completed / Scheduled counts
+      if (post.completed) completedPosts++;
+      else scheduledPosts++;
+
+      // 3. Platform breakdown
+      byPlatform[post.platform] = (byPlatform[post.platform] || 0) + 1;
+
+      // 4. Month breakdown
       const date = new Date(post.date);
       const key = date.toLocaleString('default', { month: 'short' });
       if (byMonth[key] !== undefined) {
         byMonth[key]++;
       }
       
-      // Add engagement data if available
+      // 5. Engagement stats
       if (post.engagement) {
         totalEngagement.likes += post.engagement.likes || 0;
         totalEngagement.comments += post.engagement.comments || 0;
         totalEngagement.shares += post.engagement.shares || 0;
         totalEngagement.views += post.engagement.views || 0;
       }
-    });
-    
-    // Status breakdown
-    const byStatus = filteredPosts.reduce((acc, post) => {
+
+      // 6. Status breakdown
       const status = post.status || (post.completed ? 'published' : 'draft');
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
+      byStatus[status] = (byStatus[status] || 0) + 1;
+    }
     
     return {
       totalPosts,

@@ -45,7 +45,9 @@
 ## 2026-03-31 - [O(3N) chained filters and Redundant Date Instantiations in Task Stats]
 **Learning:** Found an anti-pattern in `useTaskStatusCounts` (and `calculateStats` / `TasksView`) where `.filter().length` was chained three times on the same `tasks` array to derive various metrics (active, completed, overdue). This resulted in O(3N) time complexity, redundant `new Date()` instantiations, and excessive intermediate array allocations that triggered unnecessary garbage collection within the render cycle.
 **Action:** When calculating multiple metrics from the same array, always combine the logic into a single-pass loop. This improves time complexity to O(N), avoids memory overhead, and allows caching expensive operations (like date parsing) per item.
-
-## 2025-04-08 - Bolt: Combine Array Filter Chains
-**Learning:** Chained `.filter()` methods create multiple intermediate arrays and O(M*N) total array iterations over the same set of data (e.g. `posts.filter(...).filter(...).filter(...)`). Combining all condition checks into a single `.filter()` loop converts this into an O(N) iteration while preventing garbage collection overhead from temporary intermediate arrays.
-**Action:** Always combine consecutive array filtering conditions into a single pass when parsing over the same dataset. Also implement early returns if filters are disabled.
+## 2024-04-18 - Avoid Repetitive Array Mapping for Max Value Calculations inside Map Loops
+**Learning:** In `PlatformComparison.jsx`, calculating the `Math.max` over an array property (like `posts` or `engagement`) directly *inside* another `map` function over the *same* array resulted in an O(N^2) complexity because the inner `map` iteration occurs once per element in the outer loop.
+**Action:** Always pre-calculate aggregate values like maximums or sums before mapping over arrays for visualization (like datasets in Chart.js) by pre-aggregating in a single-pass `reduce` to avoid redundant iterations and intermediate array allocations.
+## 2025-02-17 - Optimize task filter arrays and search query
+**Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
+**Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
