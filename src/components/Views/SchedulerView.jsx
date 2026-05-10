@@ -53,7 +53,7 @@ const SchedulerView = ({ selectedPlatform, setSelectedPlatform, selectedDate, se
       }
 
       // Filter by search query
-      if (query && !(p.title?.toLowerCase().includes(query) || p.platform?.toLowerCase().includes(query))) {
+      if (query && !(p.title?.toLowerCase()?.includes(query) || p.platform?.toLowerCase()?.includes(query))) {
         return false;
       }
 
