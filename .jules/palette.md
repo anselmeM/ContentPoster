@@ -10,3 +10,6 @@
 ## 2026-04-06 - Accessible Icon Buttons
 **Learning:** Icon-only buttons mapped from dynamic data often lack explicit `aria-label`s, rendering them inaccessible to screen readers. Relying only on title tooltips or visual labels on expanded states is insufficient.
 **Action:** Always map explicit string labels (e.g. `aria-label={item.label}`) when rendering icon buttons, especially in collapsed sidebars.
+## 2026-05-11 - Add ARIA label to Toast close button
+**Learning:** Icon-only buttons in components like toasts must have `aria-label` attributes so screen readers can interpret their function. Without it, screen reader users may not know what the button does.
+**Action:** When adding or reviewing icon-only buttons, especially in global UI components, always ensure they have an explicit and descriptive `aria-label`.
