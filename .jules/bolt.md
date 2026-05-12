@@ -51,3 +51,7 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+
+## 2026-04-03 - [O(K*N) chained array methods and M*N loops in Context filters]
+**Learning:** Found an anti-pattern in `TaskContext.tsx` where `.filter()` was chained multiple times to sequentially apply filters, leading to O(K*N) time complexity and redundant intermediate array allocations. Furthermore, operations like `.toLowerCase()` on the search query and array membership checks for categories/priorities were repeated inside the loop (O(M*N)).
+**Action:** Always collapse multiple array filtering requirements into a single `.filter()` pass (O(N)), and explicitly hoist invariant computations (e.g., string `.toLowerCase()` on a user query) and array-to-Set conversions outside the loop to maximize execution speed and minimize garbage collection.

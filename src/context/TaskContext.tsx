@@ -140,30 +140,35 @@ export function TaskProvider({ userId, children }: TaskProviderProps) {
   
   // Filter tasks
   const filteredTasks = useMemo(() => {
-    let result = [...tasks];
+    // Bolt Optimization: Pre-compute sets and normalized strings outside the loop
+    // and use a single-pass filter instead of chained .filter() methods to reduce O(K*N) to O(N).
+    const hasCategories = filters.categories.length > 0;
+    const categorySet = hasCategories ? new Set(filters.categories) : null;
     
-    // Apply status filter
-    if (filters.status === 'active') {
-      result = result.filter(t => !t.completed);
-    } else if (filters.status === 'completed') {
-      result = result.filter(t => t.completed);
-    }
+    const hasPriorities = filters.priorities.length > 0;
+    const prioritySet = hasPriorities ? new Set(filters.priorities) : null;
     
-    // Apply category filter
-    if (filters.categories.length > 0) {
-      result = result.filter(t => filters.categories.includes(t.category));
-    }
-    
-    // Apply priority filter
-    if (filters.priorities.length > 0) {
-      result = result.filter(t => filters.priorities.includes(t.priority));
-    }
-    
-    // Apply search query
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      result = result.filter(t => t.text.toLowerCase().includes(query));
-    }
+    const hasSearch = filters.searchQuery && filters.searchQuery.trim() !== '';
+    const normalizedQuery = hasSearch ? filters.searchQuery.toLowerCase() : null;
+
+    let result = tasks.filter(task => {
+      // Status filter
+      if (filters.status === 'active' && task.completed) return false;
+      if (filters.status === 'completed' && !task.completed) return false;
+
+      // Category filter
+      if (hasCategories && !categorySet!.has(task.category)) return false;
+
+      // Priority filter
+      if (hasPriorities && !prioritySet!.has(task.priority)) return false;
+
+      // Search query filter
+      if (hasSearch) {
+        if (!task.text.toLowerCase().includes(normalizedQuery!)) return false;
+      }
+
+      return true;
+    });
     
     // Sort
     result.sort((a, b) => {
