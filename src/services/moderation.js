@@ -131,8 +131,18 @@ export const moderateContent = (text, options = {}) => {
   }
   
   // 7. Check for repeated words
-  const repeatedWords = words.filter((word, i) => words.indexOf(word) !== i);
-  if (repeatedWords.length > 3) {
+  // ⚡ Bolt: O(N) lookup with Set instead of O(N²) indexOf inside filter
+  const seenWords = new Set();
+  let repeatedWordsCount = 0;
+  for (const word of words) {
+    if (seenWords.has(word)) {
+      repeatedWordsCount++;
+    } else {
+      seenWords.add(word);
+    }
+  }
+
+  if (repeatedWordsCount > 3) {
     issues.push({ type: 'warning', message: 'Repeated words detected' });
     spamScore += SPAM_SCORE_WEIGHTS.repeatedWords;
   }
@@ -145,9 +155,10 @@ export const moderateContent = (text, options = {}) => {
   }
   
   // Determine approval status
-  const approved = strictMode 
-    ? issues.filter(i => i.type === 'error').length === 0 && spamScore < 0.5
-    : issues.filter(i => i.type === 'error').length === 0 && spamScore < 1.0;
+  // ⚡ Bolt: Use .some() for early return instead of .filter().length
+  // Also compute once to avoid redundant array creation and loops
+  const hasError = issues.some(i => i.type === 'error');
+  const approved = !hasError && (strictMode ? spamScore < 0.5 : spamScore < 1.0);
   
   return {
     approved,
