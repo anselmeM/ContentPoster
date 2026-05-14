@@ -51,3 +51,6 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+## 2024-05-14 - Optimize Array.prototype.indexOf in Moderation Check
+**Learning:** Using `array.indexOf(item) !== i` inside `array.filter` for detecting duplicates in potentially long text content introduces an O(N^2) complexity bottleneck, causing moderation service to lag on large strings.
+**Action:** Always prefer an O(N) single-pass iteration with a `Set` to track duplicates and track counts to allow early returns.
