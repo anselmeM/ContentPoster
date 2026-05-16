@@ -37,7 +37,7 @@ const MediaLibrary = ({ onSelectMedia, onClose }) => {
       // In production, this would upload to Firebase Storage
       // For demo, create object URL
       const newMedia = {
-        id: Date.now().toString() + Math.random(),
+        id: crypto.randomUUID(),
         url: URL.createObjectURL(file),
         type: isImage ? 'image' : 'video',
         name: file.name,

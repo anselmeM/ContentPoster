@@ -21,3 +21,7 @@
 **Vulnerability:** Unsanitized variables `user.photoURL` and `item.url` were being injected directly into the `src` attribute of `<img>` tags in `PresenceIndicator.jsx` and `MediaLibrary.jsx`.
 **Learning:** Even though images might originate from known or internal sources, user-controlled inputs (like an uploaded avatar or media library item) can potentially be crafted to execute `javascript:` URIs if they are displayed without protocol validation.
 **Prevention:** Always wrap dynamically generated or user-controlled URLs in `src` or `href` attributes with a utility like `sanitizeURL` to restrict to allowed protocols.
+## 2024-05-18 - [Insecure Math.random Usage for ID Generation]
+**Vulnerability:** Used Math.random() for generating IDs in tasks, queues, and toasts.
+**Learning:** Math.random() is predictable and cryptographically insecure, making unique identifiers easily guessable.
+**Prevention:** Use the natively supported `crypto.randomUUID()` API for generating secure unique identifiers instead of Math.random().
