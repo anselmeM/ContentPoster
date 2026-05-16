@@ -116,13 +116,29 @@ const PlatformComparison = ({
   const winnerMetrics = useMemo(() => {
     if (filteredMetrics.length === 0) return {};
     
-    const sorted = [...filteredMetrics];
+    const initial = {
+      mostPosts: filteredMetrics[0],
+      highestEngagement: filteredMetrics[0],
+      highestReach: filteredMetrics[0],
+      bestEngagementRate: filteredMetrics[0],
+      bestGrowth: filteredMetrics[0]
+    };
+
+    const winners = filteredMetrics.reduce((acc, current) => {
+      if (current.posts > acc.mostPosts.posts) acc.mostPosts = current;
+      if (current.engagement > acc.highestEngagement.engagement) acc.highestEngagement = current;
+      if (current.reach > acc.highestReach.reach) acc.highestReach = current;
+      if (parseFloat(current.avgEngagementRate) > parseFloat(acc.bestEngagementRate.avgEngagementRate)) acc.bestEngagementRate = current;
+      if (current.growth > acc.bestGrowth.growth) acc.bestGrowth = current;
+      return acc;
+    }, initial);
+
     return {
-      mostPosts: sorted.sort((a, b) => b.posts - a.posts)[0]?.platform,
-      highestEngagement: sorted.sort((a, b) => b.engagement - a.engagement)[0]?.platform,
-      highestReach: sorted.sort((a, b) => b.reach - a.reach)[0]?.platform,
-      bestEngagementRate: sorted.sort((a, b) => parseFloat(b.avgEngagementRate) - parseFloat(a.avgEngagementRate))[0]?.platform,
-      bestGrowth: sorted.sort((a, b) => b.growth - a.growth)[0]?.platform
+      mostPosts: winners.mostPosts?.platform,
+      highestEngagement: winners.highestEngagement?.platform,
+      highestReach: winners.highestReach?.platform,
+      bestEngagementRate: winners.bestEngagementRate?.platform,
+      bestGrowth: winners.bestGrowth?.platform
     };
   }, [filteredMetrics]);
 
