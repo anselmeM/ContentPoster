@@ -51,3 +51,6 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+## 2026-03-31 - [O(N^2) Repeated Word Detection with indexOf]
+**Learning:** In `moderateContent`, using `.filter((word, i) => words.indexOf(word) !== i)` to detect repeated words causes O(N^2) time complexity because `indexOf` scans the array on every iteration. This is especially expensive for long text inputs.
+**Action:** When tracking repeated items or finding duplicates, use a single-pass `Set` approach. Combine this with an early `break` or `return` if you only need to confirm existence or a small threshold (e.g., > 3 occurrences), improving the worst-case complexity to O(N) and best-case to O(1) matching.
