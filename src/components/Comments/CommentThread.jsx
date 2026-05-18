@@ -40,6 +40,8 @@ const CommentItem = ({ comment, currentUserId, onDelete, canDelete }) => {
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Comment options"
+            aria-expanded={showMenu}
           >
             <i className="fas fa-ellipsis-h" />
           </button>
@@ -151,6 +153,7 @@ const CommentThread = ({ postId, canComment = true }) => {
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        aria-expanded={isExpanded}
       >
         <i className={clsx('fas fa-chevron-right transition-transform', isExpanded && 'rotate-90')} />
         <i className="fas fa-comment" />
