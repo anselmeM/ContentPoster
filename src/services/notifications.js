@@ -115,11 +115,15 @@ export const notificationService = {
   markAllAsRead: async (userId) => {
     try {
       const notifications = await notificationService.getNotifications(userId, { maxResults: 100 });
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       
-      for (const id of unreadIds) {
-        await notificationService.markAsRead(userId, id);
-      }
+      // Bolt Optimization: Single pass to extract unread IDs without intermediate array allocation
+      const unreadIds = notifications.reduce((acc, n) => {
+        if (!n.read) acc.push(n.id);
+        return acc;
+      }, []);
+
+      // Bolt Optimization: Run independent updates concurrently rather than sequentially
+      await Promise.all(unreadIds.map(id => notificationService.markAsRead(userId, id)));
       
       return true;
     } catch (error) {
