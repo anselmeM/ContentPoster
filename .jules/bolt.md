@@ -51,3 +51,7 @@
 ## 2025-02-17 - Optimize task filter arrays and search query
 **Learning:** In React components dealing with array `.filter()` loops, operations like creating an array `Set` or repeatedly invoking `.toLowerCase()` on the same search query inside the loop causes unnecessary garbage collection and O(N*M) lookup times.
 **Action:** Always pre-compute static conditions, extract constants (like `toLowerCase()` on user queries), and convert membership arrays to `Set`s outside the loop to reduce iteration time complexity to O(N).
+
+## 2026-04-03 - [RangeError and Intermediate Array Allocations from Math.max Spread Operator]
+**Learning:** Found an anti-pattern in `PlatformComparison.jsx` where `Math.max(...filteredMetrics.map(m => m.posts))` was called multiple times inside a `useMemo` block. Using the spread operator (`...`) on large mapped arrays can trigger a `RangeError: Maximum call stack size exceeded` because Javascript engines limit the number of arguments a function can accept. Additionally, each `map` creates an intermediate array that is immediately discarded, causing unnecessary memory allocation and garbage collection overhead in O(K*N) time complexity.
+**Action:** When calculating maximum or minimum values over an array of objects, replace chained `.map()` and spread operators with a single-pass `.reduce()` to aggregate all max values simultaneously. This prevents call stack limitations, avoids temporary array allocations, and improves performance to O(N) time complexity with O(1) space overhead.
