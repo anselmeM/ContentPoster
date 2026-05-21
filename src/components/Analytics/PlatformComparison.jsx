@@ -116,14 +116,36 @@ const PlatformComparison = ({
   const winnerMetrics = useMemo(() => {
     if (filteredMetrics.length === 0) return {};
     
-    const sorted = [...filteredMetrics];
-    return {
-      mostPosts: sorted.sort((a, b) => b.posts - a.posts)[0]?.platform,
-      highestEngagement: sorted.sort((a, b) => b.engagement - a.engagement)[0]?.platform,
-      highestReach: sorted.sort((a, b) => b.reach - a.reach)[0]?.platform,
-      bestEngagementRate: sorted.sort((a, b) => parseFloat(b.avgEngagementRate) - parseFloat(a.avgEngagementRate))[0]?.platform,
-      bestGrowth: sorted.sort((a, b) => b.growth - a.growth)[0]?.platform
-    };
+    return filteredMetrics.reduce((acc, curr) => {
+      if (!acc.mostPosts || curr.posts > acc._maxPosts) {
+        acc.mostPosts = curr.platform;
+        acc._maxPosts = curr.posts;
+      }
+      if (!acc.highestEngagement || curr.engagement > acc._maxEngagement) {
+        acc.highestEngagement = curr.platform;
+        acc._maxEngagement = curr.engagement;
+      }
+      if (!acc.highestReach || curr.reach > acc._maxReach) {
+        acc.highestReach = curr.platform;
+        acc._maxReach = curr.reach;
+      }
+      const currentRate = parseFloat(curr.avgEngagementRate);
+      if (!acc.bestEngagementRate || currentRate > acc._maxEngagementRate) {
+        acc.bestEngagementRate = curr.platform;
+        acc._maxEngagementRate = currentRate;
+      }
+      if (!acc.bestGrowth || curr.growth > acc._maxGrowth) {
+        acc.bestGrowth = curr.platform;
+        acc._maxGrowth = curr.growth;
+      }
+      return acc;
+    }, {
+      mostPosts: null, _maxPosts: -Infinity,
+      highestEngagement: null, _maxEngagement: -Infinity,
+      highestReach: null, _maxReach: -Infinity,
+      bestEngagementRate: null, _maxEngagementRate: -Infinity,
+      bestGrowth: null, _maxGrowth: -Infinity
+    });
   }, [filteredMetrics]);
 
   // Chart data - Bar comparison

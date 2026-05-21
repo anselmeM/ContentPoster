@@ -216,11 +216,32 @@ const PlatformPerformanceChart = ({
   const winnerMetrics = useMemo(() => {
     if (platformMetrics.length === 0) return null;
     
+    const aggregated = platformMetrics.reduce((acc, curr) => {
+      if (!acc.highestReach || curr.totalReach > acc._maxReach) {
+        acc.highestReach = curr.name;
+        acc._maxReach = curr.totalReach;
+      }
+      const currentRate = parseFloat(curr.engagementRate);
+      if (!acc.highestEngagementRate || currentRate > acc._maxEngagementRate) {
+        acc.highestEngagementRate = curr.name;
+        acc._maxEngagementRate = currentRate;
+      }
+      if (!acc.mostPosts || curr.posts > acc._maxPosts) {
+        acc.mostPosts = curr.name;
+        acc._maxPosts = curr.posts;
+      }
+      return acc;
+    }, {
+      highestReach: null, _maxReach: -Infinity,
+      highestEngagementRate: null, _maxEngagementRate: -Infinity,
+      mostPosts: null, _maxPosts: -Infinity
+    });
+
     return {
       bestPerforming: sortedPlatforms[0]?.name || 'N/A',
-      highestReach: [...platformMetrics].sort((a, b) => b.totalReach - a.totalReach)[0]?.name || 'N/A',
-      highestEngagementRate: [...platformMetrics].sort((a, b) => parseFloat(b.engagementRate) - parseFloat(a.engagementRate))[0]?.name || 'N/A',
-      mostPosts: [...platformMetrics].sort((a, b) => b.posts - a.posts)[0]?.name || 'N/A'
+      highestReach: aggregated.highestReach || 'N/A',
+      highestEngagementRate: aggregated.highestEngagementRate || 'N/A',
+      mostPosts: aggregated.mostPosts || 'N/A'
     };
   }, [platformMetrics, sortedPlatforms]);
 
