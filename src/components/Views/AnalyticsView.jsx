@@ -158,6 +158,9 @@ const AnalyticsView = ({ posts }) => {
 
   // Calculate analytics data
   const analytics = useMemo(() => {
+    // Bolt Optimization: Replace multiple array operations (filter, reduce, forEach)
+    // with a single O(N) pass to calculate all metrics, reducing memory allocation
+    // and significantly speeding up calculations.
     const totalPosts = filteredPosts.length;
     let completedPosts = 0;
     let scheduledPosts = 0;
