@@ -10,3 +10,7 @@
 ## 2026-04-06 - Accessible Icon Buttons
 **Learning:** Icon-only buttons mapped from dynamic data often lack explicit `aria-label`s, rendering them inaccessible to screen readers. Relying only on title tooltips or visual labels on expanded states is insufficient.
 **Action:** Always map explicit string labels (e.g. `aria-label={item.label}`) when rendering icon buttons, especially in collapsed sidebars.
+
+## 2026-05-18 - Missing ARIA Labels and Expanded States on Comment Action Buttons
+**Learning:** Found that the comment thread action menu button and comment thread toggle button lacked `aria-label` and `aria-expanded` attributes, reducing accessibility. The missing state indication causes screen reader users to be unaware of when a dropdown or accordion is open.
+**Action:** Ensure icon-only menu triggers get both `aria-label` and `aria-expanded={boolean}` linked to their state variables.

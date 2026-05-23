@@ -140,30 +140,32 @@ export function TaskProvider({ userId, children }: TaskProviderProps) {
   
   // Filter tasks
   const filteredTasks = useMemo(() => {
-    let result = [...tasks];
+    // Bolt Optimization: Replaced O(K*N) chained filters with a single O(N) pass
+    // and converted condition arrays to Sets to prevent O(N*M) lookup complexity.
+    const hasCategories = filters.categories.length > 0;
+    const categorySet = hasCategories ? new Set(filters.categories) : null;
     
-    // Apply status filter
-    if (filters.status === 'active') {
-      result = result.filter(t => !t.completed);
-    } else if (filters.status === 'completed') {
-      result = result.filter(t => t.completed);
-    }
+    const hasPriorities = filters.priorities.length > 0;
+    const prioritySet = hasPriorities ? new Set(filters.priorities) : null;
     
-    // Apply category filter
-    if (filters.categories.length > 0) {
-      result = result.filter(t => filters.categories.includes(t.category));
-    }
-    
-    // Apply priority filter
-    if (filters.priorities.length > 0) {
-      result = result.filter(t => filters.priorities.includes(t.priority));
-    }
-    
-    // Apply search query
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      result = result.filter(t => t.text.toLowerCase().includes(query));
-    }
+    const query = filters.searchQuery ? filters.searchQuery.toLowerCase() : null;
+
+    let result = tasks.filter(t => {
+      // Status filter
+      if (filters.status === 'active' && t.completed) return false;
+      if (filters.status === 'completed' && !t.completed) return false;
+
+      // Category filter
+      if (hasCategories && categorySet && !categorySet.has(t.category)) return false;
+
+      // Priority filter
+      if (hasPriorities && prioritySet && !prioritySet.has(t.priority)) return false;
+
+      // Search query
+      if (query && !t.text.toLowerCase().includes(query)) return false;
+
+      return true;
+    });
     
     // Sort
     result.sort((a, b) => {
