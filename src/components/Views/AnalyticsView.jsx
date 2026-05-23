@@ -177,6 +177,7 @@ const AnalyticsView = ({ posts }) => {
     }
     
     let totalEngagement = { likes: 0, comments: 0, shares: 0, views: 0 };
+    const byStatus = {};
     
     // Bolt Optimization: Single pass calculation for multiple metrics
     // O(5N) -> O(N) by combining 5 separate iterations over filteredPosts
