@@ -8,7 +8,7 @@ import LandingPage from './components/Landing/LandingPage';
 import LoadingSpinner from './components/UI/LoadingSpinner';
 import ToastContainer from './components/UI/ToastContainer';
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
-import { initNotifications } from './services/notifications';
+import { initNotifications, toast } from './services/notifications';
 import { triggerScheduler } from './services/triggerScheduler';
 
 function App() {
@@ -21,18 +21,24 @@ function App() {
     initNotifications();
   }, []);
 
-  // Start trigger scheduler when user logs in
+  // Network offline/online listeners
   useEffect(() => {
-    if (user) {
-      // Start the trigger scheduler with 60 second interval
-      triggerScheduler.start(user.uid, 60000);
-      
-      // Cleanup on unmount or user change
-      return () => {
-        triggerScheduler.stop();
-      };
-    }
-  }, [user]);
+    const handleOffline = () => {
+      toast.warning('Offline Mode', 'You are currently offline. Changes will be saved locally.');
+    };
+
+    const handleOnline = () => {
+      toast.success('Back Online', 'Network restored. Syncing changes...');
+    };
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
 
   // Skip link for accessibility
   const skipLink = (

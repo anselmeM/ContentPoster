@@ -130,6 +130,7 @@ export function TaskItem({
       )}
       role="listitem"
       aria-label={`Task: ${task.text}, ${task.completed ? 'completed' : 'not completed'}`}
+      data-testid="task-item-container"
     >
       {/* Selection Checkbox */}
       {onSelect && (
@@ -140,6 +141,7 @@ export function TaskItem({
             onChange={onSelect}
             className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
             aria-label={`Select task: ${task.text}`}
+            data-testid="selection-checkbox"
           />
         </div>
       )}
@@ -148,6 +150,8 @@ export function TaskItem({
       <button
         type="button"
         onClick={onToggle}
+        role="checkbox"
+        aria-checked={task.completed}
         className={clsx(
           'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center',
           'transition-all duration-200 hover:scale-110',
@@ -160,6 +164,7 @@ export function TaskItem({
               )
         )}
         aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        data-testid="completion-toggle"
       >
         {task.completed && (
           <i className="fas fa-check text-xs" aria-hidden="true" />
@@ -172,22 +177,32 @@ export function TaskItem({
         <div className="flex items-start gap-3">
           {/* Edit Mode */}
           {isEditing ? (
-            <input
-              ref={editInputRef}
-              type="text"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              onKeyDown={handleEditKeyDown}
-              onBlur={handleSaveEdit}
-              className={clsx(
-                'flex-1 px-3 py-1.5 rounded-lg',
-                'bg-gray-50 dark:bg-gray-700',
-                'border border-indigo-300 dark:border-indigo-600',
-                'focus:outline-none focus:ring-2 focus:ring-indigo-500',
-                'text-gray-900 dark:text-white'
-              )}
-              aria-label="Edit task text"
-            />
+            <div className="flex-1 flex gap-2">
+              <input
+                ref={editInputRef}
+                type="text"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={handleEditKeyDown}
+                className={clsx(
+                  'flex-1 px-3 py-1.5 rounded-lg',
+                  'bg-gray-50 dark:bg-gray-700',
+                  'border border-indigo-300 dark:border-indigo-600',
+                  'focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                  'text-gray-900 dark:text-white'
+                )}
+                aria-label="Edit task text"
+                data-testid="task-edit-input"
+              />
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                data-testid="save-button"
+              >
+                Save
+              </button>
+            </div>
           ) : (
             /* Display Mode */
             <button
@@ -239,6 +254,7 @@ export function TaskItem({
           )}
           title="Edit task"
           aria-label="Edit task"
+          data-testid="edit-button"
         >
           <i className="fas fa-pen text-sm" aria-hidden="true" />
         </button>
@@ -255,6 +271,7 @@ export function TaskItem({
           )}
           title={showDeleteConfirm ? 'Click again to confirm delete' : 'Delete task'}
           aria-label={showDeleteConfirm ? 'Confirm delete' : 'Delete task'}
+          data-testid={showDeleteConfirm ? 'confirm-delete-button' : 'delete-button'}
         >
           <i className={clsx('fas', showDeleteConfirm ? 'fa-trash' : 'fa-trash-alt', 'text-sm')} aria-hidden="true" />
         </button>

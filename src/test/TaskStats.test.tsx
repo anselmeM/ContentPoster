@@ -62,16 +62,15 @@ describe('TaskStats', () => {
     it('should display correct active count', () => {
       render(<TaskStats stats={defaultStats} />);
       
-      // Find the element containing "6" for remaining
-      expect(screen.getByText('6')).toBeInTheDocument();
+      const activePill = screen.getByText('Remaining').closest('div');
+      expect(activePill).toHaveTextContent('6');
     });
 
     it('should display correct completed count', () => {
       render(<TaskStats stats={defaultStats} />);
       
-      // There should be a "4" for completed
-      const completedElements = screen.getAllByText('4');
-      expect(completedElements.length).toBeGreaterThan(0);
+      const completedPill = screen.getByText('Completed').closest('div');
+      expect(completedPill).toHaveTextContent('4');
     });
 
     it('should display 100% when all tasks completed', () => {
@@ -140,7 +139,8 @@ describe('TaskStats', () => {
       render(<TaskStats stats={statsWithOverdue} />);
       
       const overduePill = screen.getByText('Overdue').closest('div');
-      expect(overduePill).toHaveClass(/animate-pulse/);
+      const pulseElement = overduePill?.querySelector('.animate-pulse');
+      expect(pulseElement).toBeInTheDocument();
     });
 
     it('should apply custom className', () => {
@@ -191,8 +191,11 @@ describe('TaskStats', () => {
       
       render(<TaskStats stats={largeStats} />);
       
-      expect(screen.getByText('500')).toBeInTheDocument(); // active
-      expect(screen.getByText('10')).toBeInTheDocument(); // overdue
+      const activePill = screen.getByText('Remaining').closest('div');
+      expect(activePill).toHaveTextContent('500');
+      
+      const overduePill = screen.getByText('Overdue').closest('div');
+      expect(overduePill).toHaveTextContent('10');
     });
   });
 

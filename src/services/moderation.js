@@ -162,8 +162,7 @@ export const moderateContent = (text, options = {}) => {
 // Check if content contains specific words
 export const containsWords = (text, wordList) => {
   const lowerText = text.toLowerCase();
-  const words = lowerText.split(/\s+/);
-  return wordList.filter(word => words.includes(word.toLowerCase()));
+  return wordList.filter(word => lowerText.includes(word.toLowerCase()));
 };
 
 // Filter/clean text by removing profanity

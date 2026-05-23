@@ -6,9 +6,8 @@ import { TaskItem } from '../Tasks/TaskItem';
 import { TaskStats } from '../Tasks/TaskStats';
 import TaskFilters from '../Tasks/TaskFilters';
 import { TaskCategory, TaskPriority, TaskCreateInput, DEFAULT_FILTERS, DEFAULT_SORT, Task, TaskFilters as TaskFiltersType, TaskSortConfig, TaskStats as TaskStatsType } from '../../types/task';
-import { useTaskFilters, useTaskStatusCounts } from '../../hooks/useTaskFilters';
+import { useTaskFilters } from '../../hooks/useTaskFilters';
 import { useTaskSort, parseSortOption } from '../../hooks/useTaskSort';
-import { calculateStats } from '../../utils/taskUtils';
 import LoadingSpinner from '../UI/LoadingSpinner';
 import type { User } from 'firebase/auth';
 
@@ -25,20 +24,45 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   const [showStats, setShowStats] = useState(true);
   
   // Filter and sort state
-  const [filterState, setFilterState] = useState<TaskFiltersType>(DEFAULT_FILTERS);
+  const [filterState, setFilterState] = useState<TaskFiltersType>({
+    ...DEFAULT_FILTERS,
+    searchQuery: searchQuery
+  });
   const [sortConfig, setSortConfig] = useState<TaskSortConfig>(DEFAULT_SORT);
 
+  // Sync searchQuery prop with internal filter state
+  useEffect(() => {
+    if (searchQuery !== undefined && searchQuery !== filterState.searchQuery) {
+      setFilterState(prev => ({ ...prev, searchQuery }));
+    }
+  }, [searchQuery, filterState.searchQuery]);
+
   // Apply filters using the custom hook
-  const filteredTasks = useTaskFilters(tasks, {
-    ...filterState,
-    searchQuery: filterState.searchQuery || searchQuery
-  });
+  const filteredTasks = useTaskFilters(tasks, filterState);
   
   // Apply sorting using the custom hook
   const sortedTasks = useTaskSort(filteredTasks, sortConfig);
   
-  // Get status counts
-  const statusCounts = useTaskStatusCounts(tasks);
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+N or Cmd+N for new task
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        const formContainer = document.querySelector('[data-testid="task-form-container"]');
+        if (formContainer) {
+          // Find the "Add a new task" button specifically within the form container
+          const addButton = formContainer.querySelector('button');
+          if (addButton) {
+            addButton.click();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -49,7 +73,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user?.uid]);
 
   // Handle creating a new task with full properties
   const handleCreateTask = async (input: TaskCreateInput) => {
@@ -208,10 +232,12 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
       )}
 
       {/* Task Form */}
-      <TaskForm
-        onSubmit={handleCreateTask}
-        onCancel={() => {}}
-      />
+      <div data-testid="task-form-container">
+        <TaskForm
+          onSubmit={handleCreateTask}
+          onCancel={() => {}}
+        />
+      </div>
 
       {/* Task List */}
       {sortedTasks.length === 0 ? (

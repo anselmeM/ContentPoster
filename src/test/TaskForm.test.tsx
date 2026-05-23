@@ -5,14 +5,44 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskForm } from '../components/Tasks/TaskForm';
 import { TaskCategory, TaskPriority, TaskCreateInput } from '../types/task';
 
+// Helper to wrap user-event actions in React's act() to suppress console warnings in React 18
+const setupUser = () => {
+  const user = userEvent.setup();
+  return {
+    click: async (element: HTMLElement) => {
+      await act(async () => {
+        await user.click(element);
+      });
+    },
+    type: async (element: HTMLElement, text: string) => {
+      await act(async () => {
+        await user.type(element, text);
+      });
+    },
+    selectOptions: async (element: HTMLElement, values: string | string[]) => {
+      await act(async () => {
+        await user.selectOptions(element, values);
+      });
+    },
+    keyboard: async (text: string) => {
+      await act(async () => {
+        await user.keyboard(text);
+      });
+    }
+  };
+};
+
 // Mock UI components
 vi.mock('../components/UI/PriorityBadge', () => ({
   PrioritySelector: ({ value, onChange, ...props }: any) => (
+    <div data-testid="priority-selector-visual" {...props} />
+  ),
+  PriorityDropdown: ({ value, onChange, ...props }: any) => (
     <select 
       data-testid="priority-selector" 
       value={value}
@@ -29,6 +59,9 @@ vi.mock('../components/UI/PriorityBadge', () => ({
 
 vi.mock('../components/UI/CategoryChip', () => ({
   CategorySelector: ({ value, onChange, ...props }: any) => (
+    <div data-testid="category-selector-visual" {...props} />
+  ),
+  CategoryDropdown: ({ value, onChange, ...props }: any) => (
     <select 
       data-testid="category-selector" 
       value={value}
@@ -69,52 +102,72 @@ describe('TaskForm', () => {
   });
 
   describe('rendering', () => {
-    it('should render text input', () => {
+    it('should render compact add button initially', () => {
       render(<TaskForm {...defaultProps} />);
       
+      expect(screen.getByText(/add a new task/i)).toBeInTheDocument();
+    });
+
+    it('should render text input when expanded', async () => {
+      const user = setupUser();
+      render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       expect(screen.getByTestId('task-text-input')).toBeInTheDocument();
     });
 
-    it('should render priority selector', () => {
+    it('should render priority selector when expanded', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
+      await user.click(screen.getByText(/add a new task/i));
       expect(screen.getByTestId('priority-selector')).toBeInTheDocument();
     });
 
-    it('should render category selector', () => {
+    it('should render category selector when expanded', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
+      await user.click(screen.getByText(/add a new task/i));
       expect(screen.getByTestId('category-selector')).toBeInTheDocument();
     });
 
-    it('should render date picker', () => {
+    it('should render date picker when expanded', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
+      await user.click(screen.getByText(/add a new task/i));
       expect(screen.getByTestId('date-picker')).toBeInTheDocument();
     });
 
-    it('should render submit button', () => {
+    it('should render submit button when expanded', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
+      await user.click(screen.getByText(/add a new task/i));
       expect(screen.getByTestId('submit-button')).toBeInTheDocument();
     });
 
-    it('should render cancel button', () => {
+    it('should render cancel button when expanded', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
+      await user.click(screen.getByText(/add a new task/i));
       expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
     });
 
-    it('should render in create mode by default', () => {
+    it('should render in create mode by default when expanded', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
-      expect(screen.getByTestId('submit-button')).toHaveTextContent(/add/i);
+      await user.click(screen.getByText(/add a new task/i));
+      expect(screen.getByTestId('submit-button')).toHaveTextContent(/add task/i);
     });
 
     it('should render in edit mode when isEditing is true', () => {
       render(<TaskForm {...defaultProps} isEditing={true} />);
       
-      expect(screen.getByTestId('submit-button')).toHaveTextContent(/save/i);
+      expect(screen.getByTestId('submit-button')).toHaveTextContent(/update task/i);
     });
   });
 
@@ -142,8 +195,11 @@ describe('TaskForm', () => {
       expect(datePicker).toHaveValue('2024-12-31');
     });
 
-    it('should use defaults when no initial values provided', () => {
+    it('should use defaults when no initial values provided', async () => {
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       expect(textInput).toHaveValue('');
@@ -158,8 +214,10 @@ describe('TaskForm', () => {
 
   describe('form interactions', () => {
     it('should update text when typing', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       await user.type(textInput, 'New task');
@@ -168,8 +226,10 @@ describe('TaskForm', () => {
     });
 
     it('should update priority when changed', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const prioritySelector = screen.getByTestId('priority-selector');
       await user.selectOptions(prioritySelector, TaskPriority.HIGH);
@@ -178,8 +238,10 @@ describe('TaskForm', () => {
     });
 
     it('should update category when changed', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const categorySelector = screen.getByTestId('category-selector');
       await user.selectOptions(categorySelector, TaskCategory.DEVELOPMENT);
@@ -188,8 +250,10 @@ describe('TaskForm', () => {
     });
 
     it('should update deadline when changed', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const datePicker = screen.getByTestId('date-picker');
       await user.type(datePicker, '2024-12-25');
@@ -200,9 +264,11 @@ describe('TaskForm', () => {
 
   describe('form submission', () => {
     it('should call onSubmit with correct data when form is submitted', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = vi.fn();
       render(<TaskForm {...defaultProps} onSubmit={onSubmit} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       await user.type(textInput, 'Test task');
@@ -222,9 +288,11 @@ describe('TaskForm', () => {
     });
 
     it('should show validation error when submitting empty text', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = vi.fn();
       render(<TaskForm {...defaultProps} onSubmit={onSubmit} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       // Leave empty and submit
@@ -236,9 +304,11 @@ describe('TaskForm', () => {
     });
 
     it('should clear form after successful submission in create mode', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = vi.fn();
       render(<TaskForm {...defaultProps} onSubmit={onSubmit} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       await user.type(textInput, 'Test task');
@@ -247,12 +317,13 @@ describe('TaskForm', () => {
       await user.click(submitButton);
       
       await waitFor(() => {
-        expect(textInput).toHaveValue('');
+        // Form should be collapsed again
+        expect(screen.getByText(/add a new task/i)).toBeInTheDocument();
       });
     });
 
     it('should not clear form after submission in edit mode', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = vi.fn();
       const initialValues = {
         text: 'Existing task'
@@ -271,9 +342,11 @@ describe('TaskForm', () => {
 
   describe('cancel interaction', () => {
     it('should call onCancel when cancel button is clicked', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onCancel = vi.fn();
       render(<TaskForm {...defaultProps} onCancel={onCancel} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const cancelButton = screen.getByTestId('cancel-button');
       await user.click(cancelButton);
@@ -284,8 +357,10 @@ describe('TaskForm', () => {
 
   describe('validation', () => {
     it('should show error for empty text', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       // Don't enter any text and submit
       const submitButton = screen.getByTestId('submit-button');
@@ -295,8 +370,10 @@ describe('TaskForm', () => {
     });
 
     it('should show error for whitespace-only text', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       await user.type(textInput, '   ');
@@ -308,8 +385,10 @@ describe('TaskForm', () => {
     });
 
     it('should clear error when user starts typing', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       // Submit empty to trigger error
       const submitButton = screen.getByTestId('submit-button');
@@ -327,9 +406,11 @@ describe('TaskForm', () => {
 
   describe('keyboard interactions', () => {
     it('should submit form on Cmd/Ctrl+Enter', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = vi.fn();
       render(<TaskForm {...defaultProps} onSubmit={onSubmit} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       await user.type(textInput, 'Test task{Meta}{Enter}');
@@ -338,9 +419,11 @@ describe('TaskForm', () => {
     });
 
     it('should cancel form on Escape', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onCancel = vi.fn();
       render(<TaskForm {...defaultProps} onCancel={onCancel} />);
+      
+      await user.click(screen.getByText(/add a new task/i));
       
       const textInput = screen.getByTestId('task-text-input');
       await user.type(textInput, '{Escape}');
@@ -351,18 +434,18 @@ describe('TaskForm', () => {
 
   describe('expanded state', () => {
     it('should show all fields when expanded', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<TaskForm {...defaultProps} />);
       
-      // Initially in collapsed state - priority/date not visible
-      const datePicker = screen.getByTestId('date-picker');
+      // Initially in collapsed state - form not visible
+      expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
       
-      // Click expand button or type more text to expand
-      const textInput = screen.getByTestId('task-text-input');
-      await user.type(textInput, 'Some task text that is long');
+      // Click expand button
+      const addPlaceholder = screen.getByText(/add a new task/i);
+      await user.click(addPlaceholder);
       
-      // After typing, the form should be expanded
-      expect(datePicker).toBeInTheDocument();
+      // After clicking, the form should be expanded
+      expect(screen.getByTestId('date-picker')).toBeInTheDocument();
     });
   });
 });

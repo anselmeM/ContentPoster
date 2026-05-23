@@ -18,6 +18,33 @@ import {
 } from '../types/task';
 
 /**
+ * Safely parses a deadline string into a local Date object.
+ * If the string is in YYYY-MM-DD format, parses it as local midnight.
+ * Otherwise parses it using the standard Date constructor.
+ * @param deadline - Date string
+ * @returns Date object
+ */
+export function parseDeadline(deadline: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
+    const [year, month, day] = deadline.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(deadline);
+}
+
+/**
+ * Get local date string in YYYY-MM-DD format
+ * @param date - Date object (default: current date)
+ * @returns local date string
+ */
+export function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Check if a deadline has passed (is overdue)
  * @param deadline - ISO date string or null
  * @returns true if deadline is past and task is not completed
@@ -26,7 +53,7 @@ export function isOverdue(deadline: string | null, completed: boolean = false): 
   if (!deadline || completed) return false;
   
   const now = new Date();
-  const deadlineDate = new Date(deadline);
+  const deadlineDate = parseDeadline(deadline);
   
   // Set deadline time to end of day for comparison
   deadlineDate.setHours(23, 59, 59, 999);
@@ -43,7 +70,7 @@ export function isDueToday(deadline: string | null): boolean {
   if (!deadline) return false;
   
   const now = new Date();
-  const deadlineDate = new Date(deadline);
+  const deadlineDate = parseDeadline(deadline);
   
   return (
     deadlineDate.getFullYear() === now.getFullYear() &&
@@ -63,7 +90,7 @@ export function isDueTomorrow(deadline: string | null): boolean {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  const deadlineDate = new Date(deadline);
+  const deadlineDate = parseDeadline(deadline);
   
   return (
     deadlineDate.getFullYear() === tomorrow.getFullYear() &&
@@ -80,7 +107,7 @@ export function isDueTomorrow(deadline: string | null): boolean {
 export function formatDeadline(deadline: string | null): string {
   if (!deadline) return '';
   
-  const deadlineDate = new Date(deadline);
+  const deadlineDate = parseDeadline(deadline);
   const now = new Date();
   
   // Check if it's today
@@ -195,7 +222,7 @@ export function calculateStats(tasks: Task[]): TaskStats {
   let completed = 0;
   let overdue = 0;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
   for (const task of tasks) {
     if (task.completed) {

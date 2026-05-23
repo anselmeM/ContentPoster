@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Deny read/write by default to ensure secure-by-default access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions for common security checks
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Rules for artifacts collection tree (posts, tasks, templates, settings, trash, media, audit logs)
+    match /artifacts/{appId}/users/{userId}/{collectionName}/{documentId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                    && (collectionName != 'posts' || isValidPost(request.resource.data))
+                    && (collectionName != 'tasks' || isValidTask(request.resource.data))
+                    && (collectionName != 'templates' || isValidTemplate(request.resource.data));
+    }
+
+    // Settings documents matching settings collection directly
+    match /artifacts/{appId}/users/{userId}/settings/{documentId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Rules for users collection tree (A/B testing, scheduled exports, subcollections)
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Validation helpers
+    function isValidPost(post) {
+      return post.title is string && post.title.size() > 0
+        && post.platform is string && post.platform in ['instagram', 'linkedin', 'dribbble', 'facebook', 'twitter', 'tiktok', 'pinterest', 'youtube', 'snapchat', 'reddit']
+        && (post.status == null || post.status in ['draft', 'scheduled', 'published', 'pending_review', 'approved', 'rejected']);
+    }
+
+    function isValidTask(task) {
+      return task.text is string && task.text.size() > 0
+        && task.completed is bool
+        && task.category is string
+        && task.priority is string && task.priority in ['low', 'medium', 'high', 'LOW', 'MEDIUM', 'HIGH'];
+    }
+
+    function isValidTemplate(template) {
+      return template.name is string && template.name.size() > 0
+        && template.title is string && template.title.size() > 0
+        && template.platform is string;
+    }
+  }
+}

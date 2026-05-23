@@ -5,14 +5,42 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TasksView from '../components/Views/TasksView';
 import { TaskProvider } from '../context/TaskContext';
 import { Task, TaskCategory, TaskPriority } from '../types/task';
 
+// Helper to wrap user-event actions in React's act() to suppress console warnings in React 18
+const setupUser = () => {
+  const user = userEvent.setup();
+  return {
+    click: async (element: HTMLElement) => {
+      await act(async () => {
+        await user.click(element);
+      });
+    },
+    type: async (element: HTMLElement, text: string) => {
+      await act(async () => {
+        await user.type(element, text);
+      });
+    },
+    selectOptions: async (element: HTMLElement, values: string | string[]) => {
+      await act(async () => {
+        await user.selectOptions(element, values);
+      });
+    },
+    keyboard: async (text: string) => {
+      await act(async () => {
+        await user.keyboard(text);
+      });
+    }
+  };
+};
+
 // Mock Firebase service
 vi.mock('../services/firebase', () => ({
+  db: {}, // Mock db object
   tasksService: {
     subscribe: vi.fn((userId, callback) => {
       // Immediately call with empty array
@@ -85,13 +113,13 @@ describe('TasksView', () => {
     it('should render the task form', () => {
       renderWithProvider(<TasksView />);
       
-      expect(screen.getByPlaceholderText(/add a new task/i)).toBeInTheDocument();
+      expect(screen.getByText(/add a new task/i)).toBeInTheDocument();
     });
 
     it('should render stats section', () => {
       renderWithProvider(<TasksView />);
       
-      expect(screen.getByText(/total/i)).toBeInTheDocument();
+      expect(screen.getByText(/remaining/i)).toBeInTheDocument();
     });
 
     it('should render filter tabs', () => {
@@ -105,10 +133,10 @@ describe('TasksView', () => {
 
   describe('task creation flow', () => {
     it('should expand form when clicking add task button', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderWithProvider(<TasksView />);
       
-      const addButton = screen.getByPlaceholderText(/add a new task/i);
+      const addButton = screen.getByText(/add a new task/i);
       await user.click(addButton);
       
       // Form should now be visible
@@ -116,11 +144,11 @@ describe('TasksView', () => {
     });
 
     it('should show validation error for empty task', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderWithProvider(<TasksView />);
       
       // Click to expand form
-      const addButton = screen.getByPlaceholderText(/add a new task/i);
+      const addButton = screen.getByText(/add a new task/i);
       await user.click(addButton);
       
       // Submit without entering text
@@ -133,7 +161,7 @@ describe('TasksView', () => {
 
   describe('filter interactions', () => {
     it('should switch to active filter when clicked', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderWithProvider(<TasksView />);
       
       const activeTab = screen.getByRole('tab', { name: /active/i });
@@ -143,7 +171,7 @@ describe('TasksView', () => {
     });
 
     it('should switch to completed filter when clicked', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderWithProvider(<TasksView />);
       
       const completedTab = screen.getByRole('tab', { name: /completed/i });
@@ -161,7 +189,7 @@ describe('TasksView', () => {
     });
 
     it('should show no results message when filters return empty', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderWithProvider(<TasksView />);
       
       // Click active filter
@@ -175,10 +203,10 @@ describe('TasksView', () => {
 
   describe('keyboard shortcuts', () => {
     it('should handle Ctrl+N for new task', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderWithProvider(<TasksView />);
       
-      await user.keyboard('{Control>n}');
+      await user.keyboard('{Control>}n{/Control}');
       
       // Form should be expanded
       expect(screen.getByLabelText(/category/i)).toBeInTheDocument();

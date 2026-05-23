@@ -10,7 +10,7 @@ import LoadingSpinner from '../UI/LoadingSpinner';
 
 // Lazy load view components for code splitting and faster initial load
 const SchedulerView = lazy(() => import('../Views/SchedulerView'));
-const TasksView = lazy(() => import('../Views/TasksView.tsx'));
+const TasksView = lazy(() => import('../Views/TasksView'));
 const TemplatesView = lazy(() => import('../Views/TemplatesView'));
 const SettingsView = lazy(() => import('../Views/SettingsView'));
 const AnalyticsView = lazy(() => import('../Views/AnalyticsView'));
@@ -39,12 +39,12 @@ const Dashboard = () => {
 
   // Load posts for analytics
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
     const unsubscribe = postsService.subscribe(user.uid, (postsData) => {
       setPosts(postsData);
     });
     return () => unsubscribe();
-  }, [user]);
+  }, [user?.uid]);
 
   const handleLogout = async () => {
     try {
@@ -88,18 +88,9 @@ const Dashboard = () => {
       </Suspense>
     ),
     media: (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Media Library</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">Manage your images and videos</p>
-          <button
-            onClick={() => setShowMediaLibrary(true)}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Open Media Library
-          </button>
-        </div>
-      </div>
+      <Suspense fallback={<LoadingSpinner />}>
+        <MediaLibrary isInline={true} />
+      </Suspense>
     ),
     tasks: (
       <Suspense fallback={<LoadingSpinner />}>

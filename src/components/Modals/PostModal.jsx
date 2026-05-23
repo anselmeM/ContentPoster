@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { postsService, settingsService } from '../../services/firebase';
 import { PLATFORMS, PLATFORM_LIST } from '../../config/platforms';
@@ -7,6 +7,8 @@ import { getHashtagSuggestions, validateHashtagCount, generateOptimalHashtags } 
 import { TRIGGER_TYPES, CONDITION_FIELDS, CONDITION_OPERATORS, TRIGGER_ACTIONS, formatCondition } from '../../utils/triggerEngine';
 import { sanitizeURL } from '../../utils/sanitizeUtils';
 import clsx from 'clsx';
+
+const MediaLibrary = lazy(() => import('../Views/MediaLibrary'));
 
 // Helper functions for best time suggestions
 const getSecondOptimalTime = (platform) => {
@@ -107,6 +109,7 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
   const [optimalTime, setOptimalTime] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conflictWarning, setConflictWarning] = useState(null);
+  const [showMediaLibrarySelector, setShowMediaLibrarySelector] = useState(false);
   const modalRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -456,9 +459,19 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
           
           {/* Image URL Input */}
           <div>
-            <label htmlFor="post-image" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Image URL
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="post-image" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Image URL
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowMediaLibrarySelector(true)}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+              >
+                <i className="fas fa-images mr-1" />
+                Choose from Library
+              </button>
+            </div>
             <input
               id="post-image"
               name="image"
@@ -1040,6 +1053,18 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
           </div>
         </form>
       </div>
+
+      {showMediaLibrarySelector && (
+        <Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /></div>}>
+          <MediaLibrary
+            onSelectMedia={(item) => {
+              setFormData(prev => ({ ...prev, image: item.url }));
+              setShowMediaLibrarySelector(false);
+            }}
+            onClose={() => setShowMediaLibrarySelector(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

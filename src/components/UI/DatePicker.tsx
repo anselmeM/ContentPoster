@@ -17,6 +17,7 @@ interface DatePickerProps {
   label?: string;
   error?: string;
   className?: string;
+  'data-testid'?: string;
 }
 
 /**
@@ -37,7 +38,8 @@ export function DatePicker({
   placeholder = 'Select date',
   label,
   error,
-  className 
+  className,
+  'data-testid': testId
 }: DatePickerProps) {
   const [isFocused, setIsFocused] = useState(false);
   
@@ -88,6 +90,7 @@ export function DatePicker({
           )}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? 'date-error' : undefined}
+          data-testid={testId}
         />
         
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">

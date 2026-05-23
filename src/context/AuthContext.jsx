@@ -58,6 +58,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendVerificationEmail = async () => {
+    try {
+      setError(null);
+      await authService.sendVerificationEmail();
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -66,6 +76,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     updatePassword,
+    sendVerificationEmail,
     clearError: () => setError(null)
   };
 

@@ -92,8 +92,15 @@ describe('isDueToday', () => {
   });
 
   it('should return true when deadline is today', () => {
-    const today = new Date().toISOString().split('T')[0];
-    expect(isDueToday(today + 'T12:00:00.000Z')).toBe(true);
+    expect(isDueToday(new Date().toISOString())).toBe(true);
+  });
+
+  it('should return true when deadline is today (YYYY-MM-DD)', () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    expect(isDueToday(`${year}-${month}-${day}`)).toBe(true);
   });
 
   it('should return false when deadline is tomorrow', () => {
@@ -118,9 +125,17 @@ describe('isDueTomorrow', () => {
     expect(isDueTomorrow(tomorrow.toISOString())).toBe(true);
   });
 
+  it('should return true when deadline is tomorrow (YYYY-MM-DD)', () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    expect(isDueTomorrow(`${year}-${month}-${day}`)).toBe(true);
+  });
+
   it('should return false when deadline is today', () => {
-    const today = new Date().toISOString().split('T')[0];
-    expect(isDueTomorrow(today + 'T12:00:00.000Z')).toBe(false);
+    expect(isDueTomorrow(new Date().toISOString())).toBe(false);
   });
 });
 
@@ -134,8 +149,15 @@ describe('formatDeadline', () => {
   });
 
   it('should return "Today" for today\'s deadline', () => {
-    const today = new Date().toISOString().split('T')[0];
-    expect(formatDeadline(today + 'T12:00:00.000Z')).toBe('Today');
+    expect(formatDeadline(new Date().toISOString())).toBe('Today');
+  });
+
+  it('should return "Today" for today\'s deadline (YYYY-MM-DD)', () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    expect(formatDeadline(`${year}-${month}-${day}`)).toBe('Today');
   });
 
   it('should return "Tomorrow" for tomorrow\'s deadline', () => {

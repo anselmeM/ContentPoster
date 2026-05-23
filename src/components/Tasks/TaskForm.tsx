@@ -7,8 +7,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { TaskCategory, TaskPriority, TaskCreateInput, PRIORITY_CONFIG, CATEGORY_CONFIG } from '../../types/task';
-import { PrioritySelector } from '../UI/PriorityBadge';
-import { CategorySelector } from '../UI/CategoryChip';
+import { PriorityDropdown } from '../UI/PriorityBadge';
+import { CategoryDropdown } from '../UI/CategoryChip';
 import { DatePicker } from '../UI/DatePicker';
 import clsx from 'clsx';
 
@@ -166,6 +166,7 @@ export function TaskForm({
                 aria-invalid={errors.text ? 'true' : 'false'}
                 aria-describedby={errors.text ? 'text-error' : 'text-hint'}
                 maxLength={maxChars}
+                data-testid="task-text-input"
               />
               
               {/* Character count */}
@@ -184,7 +185,7 @@ export function TaskForm({
             </div>
             
             {errors.text && (
-              <p id="text-error" className="text-sm text-red-600 dark:text-red-400">
+              <p id="text-error" className="text-sm text-red-600 dark:text-red-400" data-testid="error-message">
                 {errors.text}
               </p>
             )}
@@ -201,9 +202,10 @@ export function TaskForm({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Category
               </label>
-              <CategorySelector 
+              <CategoryDropdown 
                 value={category} 
                 onChange={setCategory}
+                data-testid="category-selector"
               />
             </div>
             
@@ -212,9 +214,10 @@ export function TaskForm({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Priority
               </label>
-              <PrioritySelector 
+              <PriorityDropdown 
                 value={priority} 
                 onChange={setPriority}
+                data-testid="priority-selector"
               />
             </div>
           </div>
@@ -226,6 +229,7 @@ export function TaskForm({
               value={deadline}
               onChange={setDeadline}
               min={new Date().toISOString().split('T')[0]}
+              data-testid="date-picker"
             />
           </div>
           
@@ -238,8 +242,10 @@ export function TaskForm({
                   setIsExpanded(false);
                   setText('');
                   setErrors({});
+                  onCancel();
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                data-testid="cancel-button"
               >
                 Cancel
               </button>
@@ -254,6 +260,7 @@ export function TaskForm({
                 'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
                 'transition-colors duration-200'
               )}
+              data-testid="submit-button"
             >
               {isEditing ? 'Update Task' : 'Add Task'}
             </button>

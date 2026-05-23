@@ -81,7 +81,7 @@ export function PriorityDot({ priority, className }: { priority: TaskPriority; c
 }
 
 /**
- * Priority selector for forms
+ * Priority selector for forms (visual button group)
  */
 interface PrioritySelectorProps {
   value: TaskPriority;
@@ -117,6 +117,52 @@ export function PrioritySelector({ value, onChange, className }: PrioritySelecto
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Priority dropdown for forms
+ */
+interface PriorityDropdownProps {
+  value: TaskPriority;
+  onChange: (priority: TaskPriority) => void;
+  className?: string;
+  'data-testid'?: string;
+}
+
+export function PriorityDropdown({ value, onChange, className, 'data-testid': testId }: PriorityDropdownProps) {
+  const config = PRIORITY_CONFIG[value];
+  
+  return (
+    <div className={clsx('relative', className)}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as TaskPriority)}
+        className={clsx(
+          'w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600',
+          'focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+          'dark:bg-gray-700 dark:text-white appearance-none cursor-pointer',
+          config.color
+        )}
+        aria-label="Select priority"
+        data-testid={testId}
+      >
+        {Object.values(TaskPriority).map((priority) => (
+          <option key={priority} value={priority}>
+            {PRIORITY_CONFIG[priority].label}
+          </option>
+        ))}
+      </select>
+      <div className={clsx(
+        'absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none',
+        config.color
+      )}>
+        <i className={clsx('fas', config.icon)} aria-hidden="true" />
+      </div>
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+        <i className="fas fa-chevron-down text-gray-400" aria-hidden="true" />
+      </div>
     </div>
   );
 }

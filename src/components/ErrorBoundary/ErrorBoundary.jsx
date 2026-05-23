@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { logAppError } from '../../services/firebase';
 
 // Global error boundary for catching React component errors
 export class ErrorBoundary extends React.Component {
@@ -19,6 +20,9 @@ export class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ errorInfo });
+    
+    // Log natively to Firebase Analytics
+    logAppError(error, errorInfo);
     
     // Call custom error handler if provided
     if (this.props.onError) {

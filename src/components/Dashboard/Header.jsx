@@ -16,6 +16,7 @@ const Header = ({ currentView, searchQuery, setSearchQuery, theme, toggleTheme, 
   const getTitle = () => {
     switch (currentView) {
       case 'scheduler': return 'Scheduled Post';
+      case 'media': return 'Media Library';
       case 'tasks': return 'My Tasks';
       case 'templates': return 'Templates';
       case 'settings': return 'Settings';

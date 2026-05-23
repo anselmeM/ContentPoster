@@ -7,7 +7,8 @@ import {
   signOut,
   updatePassword,
   EmailAuthProvider,
-  reauthenticateWithCredential
+  reauthenticateWithCredential,
+  sendEmailVerification
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -24,13 +25,47 @@ import {
   limit,
   startAfter,
   where,
-  getDocs
+  getDocs,
+  enableMultiTabIndexedDbPersistence
 } from 'firebase/firestore';
+import { getAnalytics, logEvent } from 'firebase/analytics';
+import { getPerformance } from 'firebase/performance';
 import firebaseConfig from '../config/firebase';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Initialize Analytics & Performance (only in browser environments)
+let analytics = null;
+let perf = null;
+if (typeof window !== 'undefined') {
+  analytics = getAnalytics(app);
+  perf = getPerformance(app);
+}
+
+// Custom error logging utility
+export const logAppError = (error, errorInfo = null) => {
+  console.error('[AppError]', error, errorInfo);
+  if (analytics) {
+    logEvent(analytics, 'app_crash', {
+      error_name: error?.name || 'Unknown',
+      error_message: error?.message || String(error),
+      error_stack: error?.stack || '',
+      component_stack: errorInfo?.componentStack || ''
+    });
+  }
+};
+
+// Enable offline persistence
+enableMultiTabIndexedDbPersistence(db)
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Multiple tabs open, offline persistence can only be enabled in one tab at a time.');
+    } else if (err.code === 'unimplemented') {
+      console.warn('The current browser does not support all of the features required to enable offline persistence.');
+    }
+  });
 
 // Export db for other services
 export { db };
@@ -52,7 +87,19 @@ export const authService = {
    
   signup: async (email, password) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      await sendEmailVerification(result.user);
+    } catch (err) {
+      console.error('Failed to send verification email on signup:', err);
+    }
     return result.user;
+  },
+
+  sendVerificationEmail: async () => {
+    const user = auth.currentUser;
+    if (user) {
+      await sendEmailVerification(user);
+    }
   },
    
   logout: () => signOut(auth),

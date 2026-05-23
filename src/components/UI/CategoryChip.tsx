@@ -175,9 +175,10 @@ interface CategoryDropdownProps {
   value: TaskCategory;
   onChange: (category: TaskCategory) => void;
   className?: string;
+  'data-testid'?: string;
 }
 
-export function CategoryDropdown({ value, onChange, className }: CategoryDropdownProps) {
+export function CategoryDropdown({ value, onChange, className, 'data-testid': testId }: CategoryDropdownProps) {
   const config = CATEGORY_CONFIG[value];
   
   return (
@@ -192,6 +193,7 @@ export function CategoryDropdown({ value, onChange, className }: CategoryDropdow
           config.color
         )}
         aria-label="Select category"
+        data-testid={testId}
       >
         {Object.values(TaskCategory).map((category) => (
           <option key={category} value={category}>

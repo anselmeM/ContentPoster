@@ -106,8 +106,19 @@ vi.mock('firebase/firestore', () => ({
   getFirestore: vi.fn(() => ({})),
   collection: vi.fn(() => ({})),
   doc: vi.fn(() => ({ id: 'mock-doc-id' })),
-  onSnapshot: vi.fn((doc, callback) => {
-    callback({ exists: () => false, data: () => ({}), id: 'mock-doc-id' });
+  onSnapshot: vi.fn((queryOrDoc, callback) => {
+    // Determine if it's a query/collection or a document
+    // We can check if it has a path or if it's a query object
+    // For simplicity in tests, we provide both interfaces
+    callback({ 
+      exists: () => false, 
+      data: () => ({}), 
+      id: 'mock-doc-id',
+      docs: [], // For collection snapshots
+      size: 0,
+      empty: true,
+      forEach: (cb) => [].forEach(cb)
+    });
     return vi.fn();
   }),
   addDoc: vi.fn(() => Promise.resolve({ id: 'mock-doc-id' })),

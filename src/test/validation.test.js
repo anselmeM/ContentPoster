@@ -127,12 +127,11 @@ describe('Validation Service', () => {
     });
 
     it('should reject unsupported video formats', () => {
-      const file = new File(['test'], 'test.avi', { type: 'video/x-msvideo' });
+      const file = new File(['test'], 'test.webm', { type: 'video/webm' });      
       const result = validateVideo(file, 'instagram');
       expect(result).toContain('Unsupported video format');
     });
   });
-
   describe('getCharacterLimit', () => {
     it('should return platform-specific character limit', () => {
       expect(getCharacterLimit('twitter')).toBe(280);

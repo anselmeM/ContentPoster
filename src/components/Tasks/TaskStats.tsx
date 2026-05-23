@@ -24,7 +24,10 @@ export function TaskStats({ stats, className }: TaskStatsProps) {
   const { total, active, completed, overdue, completionRate } = stats;
   
   return (
-    <div className={clsx('bg-white dark:bg-gray-800 rounded-lg p-4', className)}>
+    <div 
+      className={clsx('bg-white dark:bg-gray-800 rounded-lg p-4', className)}
+      data-testid="task-stats-container"
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Stats Pills */}
         <div className="flex flex-wrap items-center gap-3">
@@ -53,7 +56,10 @@ export function TaskStats({ stats, className }: TaskStatsProps) {
         
         {/* Progress Bar */}
         <div className="flex items-center gap-3 min-w-[200px]">
-          <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
+            data-testid="progress-bar"
+          >
             <div 
               className={clsx(
                 'h-full transition-all duration-500 ease-out rounded-full',
@@ -65,6 +71,7 @@ export function TaskStats({ stats, className }: TaskStatsProps) {
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={`${completionRate}% complete`}
+              data-testid="progress-fill"
             />
           </div>
           <span className={clsx(

@@ -87,7 +87,7 @@ function TaskFilters({ filters, onChange, stats, className }: TaskFiltersProps) 
       {/* Status Tabs + Search Row */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1" role="tablist">
           {[
             { key: 'all', label: 'All', count: stats.total },
             { key: 'active', label: 'Active', count: stats.active },
@@ -96,6 +96,7 @@ function TaskFilters({ filters, onChange, stats, className }: TaskFiltersProps) 
             <button
               key={tab.key}
               type="button"
+              role="tab"
               onClick={() => handleStatusChange(tab.key as 'all' | 'active' | 'completed')}
               className={clsx(
                 'px-4 py-2 rounded-md text-sm font-medium transition-all',
@@ -103,7 +104,7 @@ function TaskFilters({ filters, onChange, stats, className }: TaskFiltersProps) 
                   ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               )}
-              aria-current={filters.status === tab.key ? 'true' : undefined}
+              aria-selected={filters.status === tab.key}
             >
               {tab.label}
               <span className={clsx(
