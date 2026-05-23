@@ -283,18 +283,28 @@ export function compareDates(a: string | null, b: string | null): number {
  * @returns Filtered tasks
  */
 export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
+  // Bolt Optimization: Convert condition arrays to Sets outside the loop
+  // to change O(N*M) lookup complexity to O(N).
+  const hasCategories = filters.categories.length > 0;
+  const categorySet = hasCategories ? new Set(filters.categories) : null;
+
+  const hasPriorities = filters.priorities.length > 0;
+  const prioritySet = hasPriorities ? new Set(filters.priorities) : null;
+
+  const query = filters.searchQuery ? filters.searchQuery.toLowerCase() : null;
+
   return tasks.filter(task => {
     // Status filter
     if (filters.status === 'active' && task.completed) return false;
     if (filters.status === 'completed' && !task.completed) return false;
     
     // Category filter
-    if (filters.categories.length > 0 && !filters.categories.includes(task.category)) {
+    if (hasCategories && categorySet && !categorySet.has(task.category)) {
       return false;
     }
     
     // Priority filter
-    if (filters.priorities.length > 0 && !filters.priorities.includes(task.priority)) {
+    if (hasPriorities && prioritySet && !prioritySet.has(task.priority)) {
       return false;
     }
     
@@ -304,8 +314,7 @@ export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
     }
     
     // Search query filter
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
+    if (query) {
       const textMatch = task.text.toLowerCase().includes(query);
       const categoryMatch = task.category.toLowerCase().includes(query);
       if (!textMatch && !categoryMatch) {
