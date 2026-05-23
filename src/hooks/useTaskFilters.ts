@@ -19,15 +19,16 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
   return useMemo(() => {
     if (!tasks || tasks.length === 0) return [];
     
-    // Bolt Optimization: Convert condition arrays to Sets outside the loop
-    // to change O(N*M) lookup complexity to O(N).
+    // Bolt Optimization: Pre-compute sets and normalized search query outside the loop
+    // to change O(N*M) lookups to O(N) and prevent redundant string operations.
     const hasCategories = filters.categories.length > 0;
     const categorySet = hasCategories ? new Set(filters.categories) : null;
 
     const hasPriorities = filters.priorities.length > 0;
     const prioritySet = hasPriorities ? new Set(filters.priorities) : null;
 
-    const query = filters.searchQuery && filters.searchQuery.trim() !== '' ? filters.searchQuery.toLowerCase() : null;
+    const hasSearch = filters.searchQuery && filters.searchQuery.trim() !== '';
+    const normalizedQuery = hasSearch ? filters.searchQuery.toLowerCase() : null;
 
     return tasks.filter(task => {
       // Status filter (all/active/completed)
@@ -39,12 +40,12 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
       }
       
       // Category filter (multiple selection)
-      if (hasCategories && categorySet && !categorySet.has(task.category)) {
+      if (hasCategories && !categorySet!.has(task.category)) {
         return false;
       }
       
       // Priority filter (multiple selection)
-      if (hasPriorities && prioritySet && !prioritySet.has(task.priority)) {
+      if (hasPriorities && !prioritySet!.has(task.priority)) {
         return false;
       }
       
@@ -56,9 +57,9 @@ export function useTaskFilters(tasks: Task[], filters: TaskFilters): Task[] {
       }
       
       // Search query filter
-      if (query) {
-        const textMatch = task.text.toLowerCase().includes(query);
-        const categoryMatch = task.category.toLowerCase().includes(query);
+      if (hasSearch) {
+        const textMatch = task.text.toLowerCase().includes(normalizedQuery!);
+        const categoryMatch = task.category.toLowerCase().includes(normalizedQuery!);
         if (!textMatch && !categoryMatch) {
           return false;
         }
