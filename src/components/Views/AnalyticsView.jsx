@@ -169,6 +169,7 @@ const AnalyticsView = ({ posts }) => {
     
     // Posts by month initial setup
     const byMonth = {};
+
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
