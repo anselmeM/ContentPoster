@@ -235,8 +235,9 @@ export function CompactTaskList({
                 ? 'bg-green-500 border-green-500 text-white'
                 : 'border-gray-300 dark:border-gray-600'
             )}
+            aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
           >
-            {task.completed && <i className="fas fa-check text-xs" />}
+            {task.completed && <i className="fas fa-check text-xs" aria-hidden="true" />}
           </button>
           
           <span className={clsx(
