@@ -15,6 +15,7 @@ const TemplatesView = lazy(() => import('../Views/TemplatesView'));
 const SettingsView = lazy(() => import('../Views/SettingsView'));
 const AnalyticsView = lazy(() => import('../Views/AnalyticsView'));
 const MediaLibrary = lazy(() => import('../Views/MediaLibrary'));
+const WorkspaceView = lazy(() => import('../Views/WorkspaceView'));
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -105,6 +106,11 @@ const Dashboard = () => {
     settings: (
       <Suspense fallback={<LoadingSpinner />}>
         <SettingsView />
+      </Suspense>
+    ),
+    workspace: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <WorkspaceView />
       </Suspense>
     )
   };

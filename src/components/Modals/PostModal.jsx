@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { postsService, settingsService } from '../../services/firebase';
+import { postsService, settingsService, teamService } from '../../services/firebase';
 import { PLATFORMS, PLATFORM_LIST } from '../../config/platforms';
 import { getOptimalTimes, getNextOptimalSlot, getRelativeTime } from '../../utils/timezoneUtils';
 import { getHashtagSuggestions, validateHashtagCount, generateOptimalHashtags } from '../../utils/hashtagUtils';
@@ -83,7 +83,7 @@ const checkConflict = (newDate, newTime, existingPosts, currentPostId) => {
   return null;
 };
 
-const PostModal = ({ post, onClose, existingPosts = [] }) => {
+const PostModal = ({ post, onClose, existingPosts = [], workspaceId }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
@@ -283,10 +283,18 @@ const PostModal = ({ post, onClose, existingPosts = [] }) => {
         }
       };
       
-      if (post?.id) {
-        await postsService.update(user.uid, post.id, postData);
+      if (workspaceId) {
+        if (post?.id) {
+          await teamService.updateWorkspacePost(workspaceId, post.id, postData);
+        } else {
+          await teamService.createWorkspacePost(workspaceId, user.uid, postData);
+        }
       } else {
-        await postsService.create(user.uid, postData);
+        if (post?.id) {
+          await postsService.update(user.uid, post.id, postData);
+        } else {
+          await postsService.create(user.uid, postData);
+        }
       }
       
       onClose();
