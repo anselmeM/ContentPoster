@@ -131,8 +131,19 @@ export const moderateContent = (text, options = {}) => {
   }
   
   // 7. Check for repeated words
-  const repeatedWords = words.filter((word, i) => words.indexOf(word) !== i);
-  if (repeatedWords.length > 3) {
+  // Bolt Optimization: Replace O(N^2) filter/indexOf with O(N) Set tracking + early exit
+  let repeatedCount = 0;
+  const seenWords = new Set();
+  for (const word of words) {
+    if (seenWords.has(word)) {
+      repeatedCount++;
+      if (repeatedCount > 3) break;
+    } else {
+      seenWords.add(word);
+    }
+  }
+
+  if (repeatedCount > 3) {
     issues.push({ type: 'warning', message: 'Repeated words detected' });
     spamScore += SPAM_SCORE_WEIGHTS.repeatedWords;
   }
