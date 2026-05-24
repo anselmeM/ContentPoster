@@ -2,7 +2,7 @@
   "name": "content-cadence-functions",
   "description": "Cloud Functions for Content Cadence app",
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "main": "index.js",
   "dependencies": {
