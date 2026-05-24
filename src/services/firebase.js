@@ -30,11 +30,13 @@ import {
 } from 'firebase/firestore';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { getPerformance } from 'firebase/performance';
+import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../config/firebase';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // Initialize Analytics & Performance (only in browser environments)
 let analytics = null;
@@ -67,11 +69,11 @@ enableMultiTabIndexedDbPersistence(db)
     }
   });
 
-// Export db for other services
-export { db };
+// Export db and storage for other services
+export { db, storage };
 
 // Get app ID from environment or use default
-const appId = import.meta.env.VITE_APP_ID || 'default-app-id';
+export const appId = import.meta.env.VITE_APP_ID || 'default-app-id';
 
 // Default page size for pagination
 const DEFAULT_PAGE_SIZE = 20;

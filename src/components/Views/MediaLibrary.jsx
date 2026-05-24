@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { storageService } from '../../services/storage';
+import { toast } from '../../services/notifications';
 import { sanitizeURL } from '../../utils/sanitizeUtils';
 import { EmptyMediaState } from '../UI/EmptyState';
 import clsx from 'clsx';
@@ -17,14 +18,19 @@ const MediaLibrary = ({ onSelectMedia, onClose, isInline = false }) => {
   const dropZoneRef = useRef(null);
 
   useEffect(() => {
-    // Load media from storage (would connect to actual storage in production)
-    setIsLoading(false);
-    // Demo media items
-    setMedia([
-      { id: '1', url: 'https://placehold.co/400x300/6366f1/ffffff?text=Image+1', type: 'image', name: 'marketing-image-1.jpg', uploadedAt: Date.now() },
-      { id: '2', url: 'https://placehold.co/400x300/ec4899/ffffff?text=Image+2', type: 'image', name: 'product-photo.jpg', uploadedAt: Date.now() - 86400000 },
-      { id: '3', url: 'https://placehold.co/400x300/10b981/ffffff?text=Image+3', type: 'image', name: 'team-photo.jpg', uploadedAt: Date.now() - 172800000 },
-    ]);
+    if (!user) {
+      setMedia([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    const unsubscribe = storageService.subscribeFiles(user.uid, (items) => {
+      setMedia(items);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
   const processFiles = async (files) => {
@@ -33,48 +39,39 @@ const MediaLibrary = ({ onSelectMedia, onClose, isInline = false }) => {
     setUploading(true);
     setUploadProgress(0);
     
-    // Simulate progress bar filling up
-    const progressInterval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 95) {
-          clearInterval(progressInterval);
-          return 95;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 100);
-    
-    // Process files (simulated async upload)
-    const newMediaItems = [];
+    let uploadedCount = 0;
+    let failedCount = 0;
+
     for (const file of files) {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
       
-      if (!isImage && !isVideo) continue;
+      if (!isImage && !isVideo) {
+        toast.warning('Invalid File', `${file.name} is not an image or video.`);
+        continue;
+      }
 
-      // In production, this would upload to Firebase Storage
-      // For demo, create object URL
-      newMediaItems.push({
-        id: Date.now().toString() + Math.random(),
-        url: URL.createObjectURL(file),
-        type: isImage ? 'image' : 'video',
-        name: file.name,
-        uploadedAt: Date.now(),
-        file
-      });
+      try {
+        await storageService.uploadFile(user.uid, file, (progress) => {
+          setUploadProgress(progress);
+        });
+        uploadedCount++;
+      } catch (error) {
+        console.error('Error uploading file:', file.name, error);
+        failedCount++;
+      }
     }
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    clearInterval(progressInterval);
-    setUploadProgress(100);
-    
-    setTimeout(() => {
-      setMedia(prev => [...newMediaItems, ...prev]);
-      setUploading(false);
-      setUploadProgress(0);
-    }, 300); // Give time for progress bar to hit 100% before resetting
+    setUploading(false);
+    setUploadProgress(0);
+
+    if (uploadedCount > 0 && failedCount === 0) {
+      toast.success('Upload Complete', `Successfully uploaded ${uploadedCount} file${uploadedCount > 1 ? 's' : ''}.`);
+    } else if (uploadedCount > 0 && failedCount > 0) {
+      toast.warning('Upload Partial', `Uploaded ${uploadedCount} file${uploadedCount > 1 ? 's' : ''}, but ${failedCount} failed.`);
+    } else if (failedCount > 0) {
+      toast.error('Upload Failed', `Failed to upload ${failedCount} file${failedCount > 1 ? 's' : ''}.`);
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -105,9 +102,15 @@ const MediaLibrary = ({ onSelectMedia, onClose, isInline = false }) => {
     }
   };
 
-  const handleDelete = (mediaId) => {
-    if (window.confirm('Are you sure you want to delete this media?')) {
-      setMedia(prev => prev.filter(m => m.id !== mediaId));
+  const handleDelete = async (mediaItem) => {
+    if (window.confirm(`Are you sure you want to delete "${mediaItem.name}"?`)) {
+      try {
+        await storageService.deleteFile(user.uid, mediaItem.id, mediaItem.storagePath);
+        toast.info('Media Deleted', 'The file has been deleted from your library.');
+      } catch (error) {
+        console.error('Error deleting media:', error);
+        toast.error('Delete Failed', 'Could not delete the file.');
+      }
     }
   };
 
@@ -248,7 +251,7 @@ const MediaLibrary = ({ onSelectMedia, onClose, isInline = false }) => {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item)}
                     className="p-1.5 bg-white/95 dark:bg-gray-800/95 rounded-full text-red-600 shadow-sm hover:bg-white flex items-center justify-center w-8 h-8"
                     title="Delete"
                   >
@@ -268,7 +271,7 @@ const MediaLibrary = ({ onSelectMedia, onClose, isInline = false }) => {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item)}
                     className="px-4 py-2 bg-white text-red-600 rounded-lg hover:bg-red-50 font-medium text-sm transition-transform transform hover:scale-105"
                     title="Delete Media"
                   >
