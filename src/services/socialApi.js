@@ -1,11 +1,28 @@
 // Social Media API Integration Service
 // Handles authentication and posting to various social media platforms
+import { authService, db, appId } from './firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  deleteDoc 
+} from 'firebase/firestore';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const getApiBaseUrl = () => {
+  if (import.meta.env.DEV) {
+    return `http://localhost:5001/${import.meta.env.VITE_FIREBASE_PROJECT_ID}/us-central1/api`;
+  }
+  return `https://api-${import.meta.env.VITE_FIREBASE_PROJECT_ID}.a.run.app`;
+};
+const API_BASE_URL = getApiBaseUrl();
 
 // Generic fetch wrapper with auth
 const apiFetch = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('social_auth_token');
+  const currentUser = authService.getCurrentUser();
+  let token = null;
+  if (currentUser) {
+    token = await currentUser.getIdToken();
+  }
   
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -120,10 +137,18 @@ export const twitterService = {
   },
   
   // Disconnect
-  disconnect: () => {
+  disconnect: async (userId) => {
     localStorage.removeItem('twitter_token');
     localStorage.removeItem('twitter_refresh_token');
     localStorage.removeItem('twitter_user_id');
+    if (userId) {
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'connections', 'twitter');
+        await deleteDoc(docRef);
+      } catch (err) {
+        console.error('Failed to remove connection from database:', err);
+      }
+    }
   }
 };
 
@@ -254,9 +279,17 @@ export const instagramService = {
   },
   
   // Disconnect
-  disconnect: () => {
+  disconnect: async (userId) => {
     localStorage.removeItem('instagram_access_token');
     localStorage.removeItem('instagram_user_id');
+    if (userId) {
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'connections', 'instagram');
+        await deleteDoc(docRef);
+      } catch (err) {
+        console.error('Failed to remove connection from database:', err);
+      }
+    }
   }
 };
 
@@ -553,3 +586,49 @@ export const getAllConnectionStatus = () => ({
   snapchat: snapchatService.isConnected(),
   reddit: redditService.isConnected()
 });
+
+// Real-time subscription to connection states in Firestore
+export const subscribeConnections = (userId, callback) => {
+  const connCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'connections');
+  
+  return onSnapshot(
+    connCollectionRef,
+    (snapshot) => {
+      const status = {
+        twitter: twitterService.isConnected(),
+        instagram: instagramService.isConnected(),
+        pinterest: pinterestService.isConnected(),
+        youtube: youtubeService.isConnected(),
+        snapchat: snapchatService.isConnected(),
+        reddit: redditService.isConnected()
+      };
+      
+      snapshot.forEach((doc) => {
+        const platform = doc.id;
+        const data = doc.data();
+        status[platform] = data.connected || false;
+        
+        // Populate local storage if tokens are found to maintain frontend compatibility
+        if (platform === 'twitter' && data.accessToken) {
+          localStorage.setItem('twitter_token', data.accessToken);
+          if (data.refreshToken) localStorage.setItem('twitter_refresh_token', data.refreshToken);
+        } else if (platform === 'instagram' && data.accessToken) {
+          localStorage.setItem('instagram_access_token', data.accessToken);
+        }
+      });
+      
+      callback(status);
+    },
+    (error) => {
+      console.error('Failed to subscribe to connections:', error);
+      callback({
+        twitter: twitterService.isConnected(),
+        instagram: instagramService.isConnected(),
+        pinterest: pinterestService.isConnected(),
+        youtube: youtubeService.isConnected(),
+        snapchat: snapchatService.isConnected(),
+        reddit: redditService.isConnected()
+      });
+    }
+  );
+};

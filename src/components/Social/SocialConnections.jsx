@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
-import { getAllConnectionStatus, 
+import { useAuth } from '../../context/AuthContext';
+import { 
+  subscribeConnections,
   twitterService, 
   instagramService, 
   pinterestService, 
@@ -94,6 +96,7 @@ const PlatformConnectionCard = ({
 };
 
 const SocialConnections = () => {
+  const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState({
     twitter: false,
     instagram: false,
@@ -105,20 +108,16 @@ const SocialConnections = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    checkConnections();
-  }, []);
-  
-  const checkConnections = async () => {
+    if (!user) return;
+    
     setLoading(true);
-    try {
-      const status = getAllConnectionStatus();
+    const unsubscribe = subscribeConnections(user.uid, (status) => {
       setConnectionStatus(status);
-    } catch (error) {
-      console.error('Failed to check connections:', error);
-    } finally {
       setLoading(false);
-    }
-  };
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
   
   const platformConfigs = [
     {
@@ -128,7 +127,7 @@ const SocialConnections = () => {
       color: 'bg-black',
       description: 'Post tweets, threads, and media',
       onConnect: () => twitterService.initiateAuth(),
-      onDisconnect: () => twitterService.disconnect()
+      onDisconnect: () => twitterService.disconnect(user.uid)
     },
     {
       id: 'instagram',
@@ -137,7 +136,7 @@ const SocialConnections = () => {
       color: 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500',
       description: 'Post photos, videos, and stories',
       onConnect: () => instagramService.initiateAuth(),
-      onDisconnect: () => instagramService.disconnect()
+      onDisconnect: () => instagramService.disconnect(user.uid)
     },
     {
       id: 'pinterest',
