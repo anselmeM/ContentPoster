@@ -10,7 +10,7 @@ import clsx from 'clsx';
 const EditMediaModal = ({ item, userId, onClose }) => {
   const [name, setName] = useState(item.name || '');
   const [category, setCategory] = useState(item.category || 'uncategorized');
-  const [folder, setFolder] = useState(item.folder === '/' ? '' : item.folder.replace(/^\//, ''));
+  const [folder, setFolder] = useState((item.folder || '/').replace(/^\//, ''));
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState(item.tags || []);
   const [isSaving, setIsSaving] = useState(false);
