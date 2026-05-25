@@ -55,3 +55,7 @@
 ## 2024-05-21 - Optimize O(N log N) Array Sorts for Maximum Value Calculation
 **Learning:** In `PlatformComparison.jsx` and `PlatformPerformanceChart.jsx`, multiple `[...array].sort()` calls were used to determine the platform with the maximum metric values (e.g., `posts`, `engagement`, `reach`). This approach duplicates the array and performs O(N log N) sorting for each metric individually, resulting in O(K * N log N) time complexity and redundant memory allocations.
 **Action:** When finding elements with the maximum or minimum values across multiple distinct properties, use a single O(N) pass (e.g., `.reduce()`) to calculate all metrics simultaneously. This avoids creating intermediary arrays and reduces execution time.
+
+## 2024-05-22 - Optimize O(N^2) duplicate word check in moderation
+**Learning:** Found an anti-pattern in `moderateContent` where `words.filter((word, i) => words.indexOf(word) !== i)` was used to find duplicate words. This approach has an O(N^2) time complexity because `indexOf` is called for every word in the array. This can become a performance bottleneck for longer texts.
+**Action:** When tracking duplicates or unique items in an array, avoid using `indexOf` inside array iteration methods like `filter` or `map`. Instead, use a single O(N) pass with a `Set` to track seen items, combining it with an early `break` or `return` if a specific threshold (e.g., > 3 duplicates) is met to achieve O(1) best-case execution time.
