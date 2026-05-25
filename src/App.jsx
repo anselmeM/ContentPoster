@@ -10,11 +10,54 @@ import ToastContainer from './components/UI/ToastContainer';
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import { initNotifications, toast } from './services/notifications';
 import { triggerScheduler } from './services/triggerScheduler';
+import { twitterService, instagramService } from './services/socialApi';
 
 function App() {
   const { user, loading } = useAuth();
   const [showSignup, setShowSignup] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [isProcessingCallback, setIsProcessingCallback] = useState(false);
+
+  // Handle social media OAuth callbacks
+  useEffect(() => {
+    if (!user) return;
+
+    const path = window.location.pathname;
+    if (path.startsWith('/auth/twitter/callback') || path.startsWith('/auth/facebook/callback')) {
+      const handleCallback = async () => {
+        setIsProcessingCallback(true);
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const platform = path.includes('twitter') ? 'Twitter' : 'Instagram';
+
+        if (!code) {
+          toast.error('Connection Failed', `No authorization code returned from ${platform}.`);
+          setIsProcessingCallback(false);
+          localStorage.setItem('currentDashboardView', 'settings');
+          window.history.replaceState({}, document.title, '/');
+          return;
+        }
+
+        try {
+          if (platform === 'Twitter') {
+            await twitterService.handleAuthCallback(code);
+          } else {
+            await instagramService.handleAuthCallback(code);
+          }
+          toast.success('Connection Successful', `Successfully linked your ${platform} account!`);
+        } catch (err) {
+          console.error(`Error connecting to ${platform}:`, err);
+          toast.error('Connection Failed', `Failed to link your ${platform} account: ${err.message}`);
+        } finally {
+          setIsProcessingCallback(false);
+          localStorage.setItem('currentDashboardView', 'settings');
+          window.location.href = '/';
+        }
+      };
+
+      handleCallback();
+    }
+  }, [user]);
 
   // Initialize notifications
   useEffect(() => {
@@ -47,11 +90,11 @@ function App() {
     </a>
   );
 
-  if (loading) {
+  if (loading || isProcessingCallback) {
     return (
       <>
         {skipLink}
-        <LoadingSpinner />
+        <LoadingSpinner message={isProcessingCallback ? "Connecting your social media account..." : "Loading..."} />
       </>
     );
   }

@@ -20,7 +20,14 @@ const WorkspaceView = lazy(() => import('../Views/WorkspaceView'));
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [currentView, setCurrentView] = useState('scheduler');
+  const [currentView, setCurrentView] = useState(() => {
+    const redirectView = localStorage.getItem('currentDashboardView');
+    if (redirectView) {
+      localStorage.removeItem('currentDashboardView');
+      return redirectView;
+    }
+    return 'scheduler';
+  });
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved ? JSON.parse(saved) : false;

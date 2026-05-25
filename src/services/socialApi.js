@@ -167,7 +167,7 @@ export const instagramService = {
   
   // Exchange code for access token
   handleAuthCallback: async (code) => {
-    const response = await apiFetch('/facebook/oauth/token', {
+    const response = await apiFetch('/auth/facebook/token', {
       method: 'POST',
       body: JSON.stringify({ 
         code,
