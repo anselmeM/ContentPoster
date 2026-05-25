@@ -51,7 +51,7 @@ function App() {
         } finally {
           setIsProcessingCallback(false);
           localStorage.setItem('currentDashboardView', 'settings');
-          window.location.href = '/';
+          window.history.replaceState({}, document.title, '/');
         }
       };
 
