@@ -12,7 +12,8 @@ import {
   doc, 
   onSnapshot, 
   query, 
-  orderBy 
+  orderBy,
+  updateDoc
 } from 'firebase/firestore';
 
 export const storageService = {
@@ -49,6 +50,9 @@ export const storageService = {
               storagePath: storagePath,
               type: fileType,
               size: file.size,
+              tags: [],
+              folder: '/',
+              category: 'uncategorized',
               uploadedAt: Date.now()
             };
             
@@ -105,6 +109,16 @@ export const storageService = {
         callback([]);
       }
     );
+  },
+
+  // Update file metadata (tags, folder, category) in Firestore
+  updateFileMetadata: async (userId, mediaId, metadata) => {
+    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'media', mediaId);
+    await updateDoc(docRef, {
+      ...metadata,
+      updatedAt: Date.now()
+    });
+    return true;
   }
 };
 
