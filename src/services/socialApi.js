@@ -12,7 +12,7 @@ const getApiBaseUrl = () => {
   if (import.meta.env.DEV) {
     return `http://localhost:5001/${import.meta.env.VITE_FIREBASE_PROJECT_ID}/us-central1/api`;
   }
-  return `https://api-${import.meta.env.VITE_FIREBASE_PROJECT_ID}.a.run.app`;
+  return `https://us-central1-${import.meta.env.VITE_FIREBASE_PROJECT_ID}.cloudfunctions.net/api`;
 };
 const API_BASE_URL = getApiBaseUrl();
 
