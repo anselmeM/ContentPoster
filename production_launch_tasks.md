@@ -6,11 +6,11 @@ This checklist tracks all remaining steps required to harden, secure, and deploy
 
 ## 1. Firebase Hardening & Security (P0)
 
-### [/] Firestore Security Rules
+### [x] Firestore Security Rules
 - [x] Create `firestore.rules` in the root directory.
 - [x] Restrict access so users can only read/write their own document tree under `/databases/{database}/documents/artifacts/{appId}/users/{userId}/`.
 - [x] Implement data-level validation (e.g., validate that `status` must be one of `draft`, `scheduled`, or `published`).
-- [ ] Deploy and verify security rules using `npx firebase deploy --only firestore` (requires CLI authentication via `npx firebase login`).
+- [x] Deploy and verify security rules using `npx firebase deploy --only firestore` (requires CLI authentication via `npx firebase login`).
 
 ### [/] Firebase Authentication Constraints
 - [ ] Go to Firebase Console -> Authentication -> Settings -> Authorized Domains (Manual).
