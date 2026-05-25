@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import clsx from 'clsx';
 
 // Day names and hour labels
@@ -33,6 +33,27 @@ const EngagementHeatmap = ({
   onCellClick,
   colorScheme = 'green'
 }) => {
+  const containerRef = useRef(null);
+
+  const handleExportPNG = async () => {
+    if (!containerRef.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const isDarkMode = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+      const canvas = await html2canvas(containerRef.current, {
+        backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      const link = document.createElement('a');
+      link.download = `engagement_heatmap_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Failed to export heatmap as PNG:', err);
+    }
+  };
   const [selectedCell, setSelectedCell] = useState(null);
   const [tooltipData, setTooltipData] = useState(null);
 
@@ -294,13 +315,21 @@ const EngagementHeatmap = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+    <div ref={containerRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-            <i className="fas fa-calendar-alt mr-2 text-indigo-600" />
-            Engagement Heatmap
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+            <i className="fas fa-calendar-alt text-indigo-650" />
+            <span>Engagement Heatmap</span>
+            <button
+              onClick={handleExportPNG}
+              className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              title="Export as PNG"
+              aria-label="Export heatmap as PNG"
+            >
+              <i className="fas fa-camera text-xs" />
+            </button>
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Visualize posting patterns and engagement distribution

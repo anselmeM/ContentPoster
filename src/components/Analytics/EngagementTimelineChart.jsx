@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -48,6 +48,27 @@ const EngagementTimelineChart = ({
   comparisonEnabled = false,
   onPostClick
 }) => {
+  const containerRef = useRef(null);
+
+  const handleExportPNG = async () => {
+    if (!containerRef.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const isDarkMode = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+      const canvas = await html2canvas(containerRef.current, {
+        backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      const link = document.createElement('a');
+      link.download = `engagement_timeline_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Failed to export timeline chart as PNG:', err);
+    }
+  };
   // Process posts into daily engagement data with per-post metrics
   const timelineData = useMemo(() => {
     const now = new Date();
@@ -320,13 +341,21 @@ const EngagementTimelineChart = ({
   }, [timelineData]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+    <div ref={containerRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-            <i className="fas fa-chart-line mr-2 text-indigo-600" />
-            Engagement Timeline
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+            <i className="fas fa-chart-line text-indigo-650" />
+            <span>Engagement Timeline</span>
+            <button
+              onClick={handleExportPNG}
+              className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              title="Export as PNG"
+              aria-label="Export chart as PNG"
+            >
+              <i className="fas fa-camera text-xs" />
+            </button>
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Daily engagement metrics with per-post breakdown
