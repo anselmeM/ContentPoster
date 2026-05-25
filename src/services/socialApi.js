@@ -49,7 +49,7 @@ export const twitterService = {
     const redirectUri = `${window.location.origin}/auth/twitter/callback`;
     const scope = 'tweet.read tweet.write users.read offline.access';
     
-    const authUrl = `https://twitter.com/i/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=twitter_auth`;
+    const authUrl = `https://twitter.com/i/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=twitter_auth&code_challenge=challenge&code_challenge_method=plain`;
     
     window.location.href = authUrl;
   },
