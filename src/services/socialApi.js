@@ -49,16 +49,31 @@ export const twitterService = {
     const redirectUri = `${window.location.origin}/auth/twitter/callback`;
     const scope = 'tweet.read tweet.write users.read offline.access';
     
-    const authUrl = `https://twitter.com/i/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=twitter_auth&code_challenge=challenge&code_challenge_method=plain`;
+    // Generate PKCE code verifier (RFC 7636)
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    const codeVerifier = btoa(String.fromCharCode.apply(null, array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+      
+    localStorage.setItem('twitter_code_verifier', codeVerifier);
+    
+    const authUrl = `https://twitter.com/i/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=twitter_auth&code_challenge=${codeVerifier}&code_challenge_method=plain`;
     
     window.location.href = authUrl;
   },
   
   // Exchange code for tokens
   handleAuthCallback: async (code) => {
+    const codeVerifier = localStorage.getItem('twitter_code_verifier') || 'challenge';
     const response = await apiFetch('/auth/twitter/token', {
       method: 'POST',
-      body: JSON.stringify({ code })
+      body: JSON.stringify({ 
+        code, 
+        codeVerifier,
+        redirectUri: `${window.location.origin}/auth/twitter/callback` 
+      })
     });
     
     if (response.access_token) {

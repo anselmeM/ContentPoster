@@ -38,7 +38,7 @@ const authenticateUser = async (req, res, next) => {
  * Route: Exchange Twitter OAuth 2.0 authorization code for tokens
  */
 app.post("/auth/twitter/token", authenticateUser, async (req, res) => {
-  const { code, redirectUri } = req.body;
+  const { code, redirectUri, codeVerifier } = req.body;
   const userId = req.user.uid;
 
   const clientId = process.env.TWITTER_CLIENT_ID;
@@ -53,7 +53,7 @@ app.post("/auth/twitter/token", authenticateUser, async (req, res) => {
     grant_type: "authorization_code",
     client_id: clientId,
     redirect_uri: redirectUri || `${req.headers.origin}/auth/twitter/callback`,
-    code_verifier: "challenge"
+    code_verifier: codeVerifier || "challenge"
   });
 
   try {
