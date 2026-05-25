@@ -31,6 +31,20 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Rules for team workspaces
+    match /artifacts/{appId}/workspaces/{workspaceId} {
+      allow read, write: if isAuthenticated();
+      
+      match /{allSubcollections=**} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Rules for members' workspaces list
+    match /artifacts/{appId}/members/{userId}/workspaces/{workspaceId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Rules for users collection tree (A/B testing, scheduled exports, subcollections)
     match /users/{userId}/{allPaths=**} {
       allow read, write: if isOwner(userId);

@@ -414,8 +414,15 @@ export const teamService = {
     
     // Add owner as member with owner role
     const membersRef = getWorkspaceMembersRef(docRef.id);
-    await addDoc(membersRef, {
+    await setDoc(doc(membersRef, userId), {
       userId,
+      role: TEAM_ROLES.OWNER,
+      joinedAt: Date.now()
+    });
+    
+    // Add workspace to user's workspace list
+    const userWorkspacesRef = collection(db, 'artifacts', appId, 'members', userId, 'workspaces');
+    await setDoc(doc(userWorkspacesRef, docRef.id), {
       role: TEAM_ROLES.OWNER,
       joinedAt: Date.now()
     });
