@@ -20,6 +20,7 @@ const RoleBadge = ({ role }) => {
   const roleConfig = {
     [TEAM_ROLES.OWNER]: { label: 'Owner', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 border border-purple-200 dark:border-purple-800' },
     [TEAM_ROLES.ADMIN]: { label: 'Admin', color: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 border border-red-200 dark:border-red-800' },
+    [TEAM_ROLES.REVIEWER]: { label: 'Reviewer', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 border border-amber-200 dark:border-amber-800' },
     [TEAM_ROLES.EDITOR]: { label: 'Editor', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-200 dark:border-blue-800' },
     [TEAM_ROLES.VIEWER]: { label: 'Viewer', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600' }
   };
@@ -255,6 +256,7 @@ const AddMemberModal = ({ isOpen, onClose, onSubmit }) => {
             >
               <option value={TEAM_ROLES.VIEWER}>Viewer - Read-only access to posts</option>
               <option value={TEAM_ROLES.EDITOR}>Editor - Can create and update drafts</option>
+              <option value={TEAM_ROLES.REVIEWER}>Reviewer - Can review and approve/reject posts</option>
               <option value={TEAM_ROLES.ADMIN}>Admin - Full member and setting controls</option>
             </select>
           </div>
@@ -313,6 +315,7 @@ const MemberList = ({ members, currentUserId, onRemove, onUpdateRole, canManage 
                 >
                   <option value={TEAM_ROLES.VIEWER}>Viewer</option>
                   <option value={TEAM_ROLES.EDITOR}>Editor</option>
+                  <option value={TEAM_ROLES.REVIEWER}>Reviewer</option>
                   <option value={TEAM_ROLES.ADMIN}>Admin</option>
                 </select>
                 <button

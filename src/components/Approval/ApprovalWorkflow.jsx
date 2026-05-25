@@ -98,7 +98,7 @@ const ApprovalActions = ({ post, onStatusChange }) => {
   }
   
   const userRole = currentWorkspace.userRole;
-  const canApprove = userRole === TEAM_ROLES.OWNER || userRole === TEAM_ROLES.ADMIN;
+  const canApprove = userRole === TEAM_ROLES.OWNER || userRole === TEAM_ROLES.ADMIN || userRole === TEAM_ROLES.REVIEWER;
   const canEditPost = canEdit(userRole);
   
   const handleStatusChange = async (newStatus) => {

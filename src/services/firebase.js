@@ -388,6 +388,7 @@ const getWorkspacePostsRef = (workspaceId) =>
 export const TEAM_ROLES = {
   OWNER: 'owner',
   ADMIN: 'admin',
+  REVIEWER: 'reviewer',
   EDITOR: 'editor',
   VIEWER: 'viewer'
 };
