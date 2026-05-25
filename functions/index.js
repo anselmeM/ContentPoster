@@ -348,3 +348,278 @@ exports.evaluateScheduledPosts = onSchedule({
     throw new Error("Trigger check execution failed");
   }
 });
+
+/**
+ * Helper function to calculate the next run time for exports
+ */
+const calculateNextRun = (frequency, time) => {
+  const now = new Date();
+  const [hours, minutes] = (time || "09:00").split(":").map(Number);
+  
+  let nextRun = new Date(now);
+  nextRun.setHours(hours, minutes, 0, 0);
+  
+  switch (frequency) {
+    case "daily":
+      if (nextRun <= now) {
+        nextRun.setDate(nextRun.getDate() + 1);
+      }
+      break;
+      
+    case "weekly":
+      nextRun.setDate(nextRun.getDate() + 7);
+      break;
+      
+    case "monthly":
+      nextRun.setMonth(nextRun.getMonth() + 1);
+      break;
+      
+    default:
+      if (nextRun <= now) {
+        nextRun.setDate(nextRun.getDate() + 1);
+      }
+  }
+  
+  return nextRun.toISOString();
+};
+
+/**
+ * Format post data into the requested export file format
+ */
+const generateReportContent = (posts, format, scheduleName) => {
+  const headers = ["ID", "Title", "Content", "Platform", "Status", "Date", "Time", "Likes", "Comments", "Shares", "Views"];
+
+  if (format === "json") {
+    return JSON.stringify(posts, null, 2);
+  }
+
+  if (format === "csv") {
+    const csvRows = posts.map(p => {
+      const likes = p.engagement?.likes || 0;
+      const comments = p.engagement?.comments || 0;
+      const shares = p.engagement?.shares || 0;
+      const views = p.engagement?.views || 0;
+      return [
+        p.id,
+        p.title || "",
+        p.content || "",
+        p.platform || "",
+        p.status || "",
+        p.date || "",
+        p.time || "",
+        likes,
+        comments,
+        shares,
+        views
+      ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
+    });
+    return [headers.join(","), ...csvRows].join("\n");
+  }
+
+  if (format === "excel") {
+    // Generate simple openable HTML spreadsheet
+    const rows = posts.map(p => {
+      const likes = p.engagement?.likes || 0;
+      const comments = p.engagement?.comments || 0;
+      const shares = p.engagement?.shares || 0;
+      const views = p.engagement?.views || 0;
+      return `<tr>
+        <td>${p.id}</td>
+        <td>${p.title || ""}</td>
+        <td>${p.content || ""}</td>
+        <td>${p.platform || ""}</td>
+        <td>${p.status || ""}</td>
+        <td>${p.date || ""}</td>
+        <td>${p.time || ""}</td>
+        <td>${likes}</td>
+        <td>${comments}</td>
+        <td>${shares}</td>
+        <td>${views}</td>
+      </tr>`;
+    });
+
+    return `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Analytics Report</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+      <body>
+        <h3>${scheduleName} - Generated ${new Date().toLocaleString()}</h3>
+        <table border="1">
+          <thead>
+            <tr bgcolor="#eeeeee">${headers.map(h => `<th>${h}</th>`).join("")}</tr>
+          </thead>
+          <tbody>
+            ${rows.join("")}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+  }
+
+  // Fallback: Text summary report for PDF
+  const totalLikes = posts.reduce((sum, p) => sum + (p.engagement?.likes || 0), 0);
+  const totalComments = posts.reduce((sum, p) => sum + (p.engagement?.comments || 0), 0);
+  const totalShares = posts.reduce((sum, p) => sum + (p.engagement?.shares || 0), 0);
+  const totalViews = posts.reduce((sum, p) => sum + (p.engagement?.views || 0), 0);
+
+  const platformBreakdown = posts.reduce((acc, p) => {
+    acc[p.platform] = (acc[p.platform] || 0) + 1;
+    return acc;
+  }, {});
+
+  const breakdownText = Object.entries(platformBreakdown)
+    .map(([plat, count]) => `  • ${plat}: ${count} posts`)
+    .join("\n");
+
+  const postDetails = posts.map((p, i) => {
+    const likes = p.engagement?.likes || 0;
+    const comments = p.engagement?.comments || 0;
+    const shares = p.engagement?.shares || 0;
+    const views = p.engagement?.views || 0;
+    return `${i + 1}. ${p.title || "(Untitled)"} [${p.platform}] - Status: ${p.status}
+   Scheduled: ${p.date || "N/A"} ${p.time || "N/A"}
+   Likes: ${likes} | Comments: ${comments} | Shares: ${shares} | Views: ${views}
+   Content: ${p.content || "(No caption)"}
+   `;
+  }).join("\n");
+
+  return `================================================================================
+Content Cadence - Analytics Report: ${scheduleName}
+Generated: ${new Date().toLocaleString()}
+================================================================================
+
+Summary:
+  • Total Posts Evaluated: ${posts.length}
+  • Total Likes: ${totalLikes}
+  • Total Comments: ${totalComments}
+  • Total Shares: ${totalShares}
+  • Total Views: ${totalViews}
+
+Platform Breakdown:
+${breakdownText || "  (No posts evaluated)"}
+
+================================================================================
+Individual Post Metrics:
+================================================================================
+${postDetails || "(No posts available)"}
+`;
+};
+
+/**
+ * Scheduled Cloud Function to process scheduled exports
+ */
+exports.processScheduledExports = onSchedule({
+  schedule: "every 15 minutes"
+}, async (event) => {
+  console.log(`[Exports] Starting scheduled exports evaluation...`);
+  const now = new Date().toISOString();
+  let processedCount = 0;
+
+  try {
+    const snapshot = await db.collectionGroup("scheduled_exports")
+      .where("enabled", "==", true)
+      .get();
+
+    if (snapshot.empty) {
+      console.log("[Exports] No active scheduled export configurations found.");
+      return null;
+    }
+
+    for (const docSnap of snapshot.docs) {
+      const scheduleData = docSnap.data();
+      const nextRun = scheduleData.nextRun;
+
+      // Evaluate if due (filtering locally in JS to avoid composite index overhead)
+      if (nextRun && nextRun <= now) {
+        console.log(`[Exports] Export job "${scheduleData.name}" is due. Processing...`);
+
+        // Parse path: users/{userId}/{appId}/scheduled_exports/{docId}
+        const pathParts = docSnap.ref.path.split("/");
+        const userId = pathParts[1];
+        const appId = pathParts[2];
+        const docId = docSnap.id;
+
+        try {
+          // Fetch user posts
+          const postsSnapshot = await db.collection("artifacts")
+            .doc(appId)
+            .collection("users")
+            .doc(userId)
+            .collection("posts")
+            .get();
+
+          const posts = postsSnapshot.docs.map(p => ({ id: p.id, ...p.data() }));
+          console.log(`[Exports] Found ${posts.length} posts for user ${userId}. Generating report...`);
+
+          // Format content
+          const format = scheduleData.format || "csv";
+          const content = generateReportContent(posts, format, scheduleData.name);
+
+          let contentType = "text/plain";
+          if (format === "json") contentType = "application/json";
+          else if (format === "csv") contentType = "text/csv";
+          else if (format === "excel") contentType = "application/vnd.ms-excel";
+          else if (format === "pdf") contentType = "application/pdf";
+
+          // Save file to default storage bucket
+          const bucket = admin.storage().bucket();
+          const cleanName = scheduleData.name.replace(/[^a-zA-Z0-9]/g, "_");
+          const fileName = `exports/${userId}/${docId}/${cleanName}_${Date.now()}.${format}`;
+          const fileRef = bucket.file(fileName);
+
+          await fileRef.save(content, {
+            metadata: { contentType }
+          });
+
+          // Build a direct download URL using firebasestorage path
+          const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileName)}?alt=media`;
+          console.log(`[Exports] Report uploaded to Storage: ${fileName}`);
+
+          // Add in-app notification for the user
+          await db.collection("artifacts")
+            .doc(appId)
+            .collection("users")
+            .doc(userId)
+            .collection("notifications")
+            .add({
+              type: "system_alert",
+              title: "Export Generated",
+              message: `Your scheduled export "${scheduleData.name}" has been generated in ${format.toUpperCase()} format.`,
+              data: {
+                exportId: docId,
+                name: scheduleData.name,
+                format: format,
+                downloadUrl: downloadUrl,
+                timestamp: Date.now()
+              },
+              read: false,
+              userId: userId,
+              timestamp: Date.now(),
+              createdAt: new Date().toISOString()
+            });
+
+          // Calculate next run time and update schedule document
+          const nextRunTime = calculateNextRun(scheduleData.frequency, scheduleData.time);
+          await docSnap.ref.update({
+            lastRun: new Date().toISOString(),
+            nextRun: nextRunTime,
+            updatedAt: new Date().toISOString()
+          });
+
+          console.log(`[Exports] Export job ${docId} processed successfully. Next run: ${nextRunTime}`);
+          processedCount++;
+
+        } catch (jobError) {
+          console.error(`[Exports] Failed to process export job ${docId}:`, jobError);
+        }
+      }
+    }
+
+    console.log(`[Exports] Evaluation finished. Processed ${processedCount} due exports.`);
+    return null;
+  } catch (err) {
+    console.error("[Exports] Critical error in exports evaluator:", err);
+    throw err;
+  }
+});
+
