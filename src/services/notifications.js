@@ -117,9 +117,9 @@ export const notificationService = {
       const notifications = await notificationService.getNotifications(userId, { maxResults: 100 });
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       
-      for (const id of unreadIds) {
-        await notificationService.markAsRead(userId, id);
-      }
+      // ⚡ Bolt: Parallelize independent database updates to resolve network waterfalls
+      // Reduces total latency from O(N) sequential round-trips to the duration of the slowest request
+      await Promise.all(unreadIds.map(id => notificationService.markAsRead(userId, id)));
       
       return true;
     } catch (error) {
