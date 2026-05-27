@@ -191,16 +191,17 @@ const PlatformComparison = ({
 
   // Chart data - Radar comparison
   const radarData = useMemo(() => {
-    // Bolt Optimization: Pre-calculate max values to avoid O(P^2) complexity
-    // Replaced multiple Math.max(...filteredMetrics.map(...)) calls inside the map with O(1) property lookups.
-    const maxValues = {
-      posts: Math.max(1, ...filteredMetrics.map(m => m.posts)),
-      engagement: Math.max(1, ...filteredMetrics.map(m => m.engagement)),
-      reach: Math.max(1, ...filteredMetrics.map(m => m.reach)),
-      avgLikes: Math.max(1, ...filteredMetrics.map(m => m.avgLikes)),
-      avgComments: Math.max(1, ...filteredMetrics.map(m => m.avgComments)),
-      growth: Math.max(1, ...filteredMetrics.map(m => m.growth))
-    };
+    // Bolt Optimization: Pre-calculate max values in a single pass to avoid O(K*N) complexity
+    // and prevent RangeError from spread operators on large arrays.
+    const maxValues = filteredMetrics.reduce((acc, m) => {
+      acc.posts = Math.max(acc.posts, m.posts || 0);
+      acc.engagement = Math.max(acc.engagement, m.engagement || 0);
+      acc.reach = Math.max(acc.reach, m.reach || 0);
+      acc.avgLikes = Math.max(acc.avgLikes, m.avgLikes || 0);
+      acc.avgComments = Math.max(acc.avgComments, m.avgComments || 0);
+      acc.growth = Math.max(acc.growth, m.growth || 0);
+      return acc;
+    }, { posts: 1, engagement: 1, reach: 1, avgLikes: 1, avgComments: 1, growth: 1 });
 
     return {
       labels: ['Posts', 'Engagement', 'Reach', 'Avg Likes', 'Avg Comments', 'Growth'],

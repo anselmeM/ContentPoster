@@ -59,3 +59,7 @@
 ## 2024-05-22 - Optimize O(N^2) duplicate word check in moderation
 **Learning:** Found an anti-pattern in `moderateContent` where `words.filter((word, i) => words.indexOf(word) !== i)` was used to find duplicate words. This approach has an O(N^2) time complexity because `indexOf` is called for every word in the array. This can become a performance bottleneck for longer texts.
 **Action:** When tracking duplicates or unique items in an array, avoid using `indexOf` inside array iteration methods like `filter` or `map`. Instead, use a single O(N) pass with a `Set` to track seen items, combining it with an early `break` or `return` if a specific threshold (e.g., > 3 duplicates) is met to achieve O(1) best-case execution time.
+
+## 2026-05-27 - Single-pass reduction for computing multiple maximums
+**Learning:** Using multiple `Math.max(...array.map())` calls iteratively to compute max values introduces an O(K*N) time complexity and can trigger `RangeError: Maximum call stack size exceeded` due to the spread operator expanding large arrays.
+**Action:** Use a single-pass `.reduce()` (O(N) complexity) when tracking maximum metrics over large data arrays to prevent unnecessary garbage collection and stack overflows.
