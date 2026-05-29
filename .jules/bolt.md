@@ -59,3 +59,7 @@
 ## 2024-05-22 - Optimize O(N^2) duplicate word check in moderation
 **Learning:** Found an anti-pattern in `moderateContent` where `words.filter((word, i) => words.indexOf(word) !== i)` was used to find duplicate words. This approach has an O(N^2) time complexity because `indexOf` is called for every word in the array. This can become a performance bottleneck for longer texts.
 **Action:** When tracking duplicates or unique items in an array, avoid using `indexOf` inside array iteration methods like `filter` or `map`. Instead, use a single O(N) pass with a `Set` to track seen items, combining it with an early `break` or `return` if a specific threshold (e.g., > 3 duplicates) is met to achieve O(1) best-case execution time.
+
+## 2025-02-12 - Prevent Cascading Memoization Failures in React
+**Learning:** If a derived array/object (e.g., `Object.keys().filter()`) is created directly in a component body and passed as a dependency to downstream `useMemo` hooks, it breaks their memoization completely because it gets a new reference on every render.
+**Action:** Always wrap derived objects/arrays in `useMemo` when they are used as dependencies for other expensive hooks.

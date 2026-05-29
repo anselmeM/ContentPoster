@@ -150,7 +150,12 @@ const ContentTypeChart = ({
   }, [posts]);
 
   // Filter out zero-count types
-  const activeTypes = Object.keys(typeMetrics).filter(type => typeMetrics[type].count > 0);
+  // Bolt Optimization: Wrapped in useMemo to prevent recreating the array on every render,
+  // which broke the memoization of distributionData, engagementData, totalEngagementData,
+  // and bestPerformer since activeTypes was used as a dependency in all of them.
+  const activeTypes = useMemo(() => {
+    return Object.keys(typeMetrics).filter(type => typeMetrics[type].count > 0);
+  }, [typeMetrics]);
 
   // Chart data for distribution
   const distributionData = useMemo(() => ({
