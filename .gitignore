@@ -104,3 +104,11 @@ Icon
 *~
 .DS_Store
 .Trash
+
+# ==========================================
+# Markdown Files
+# ==========================================
+*.md
+!README.md
+!readme.md
+!Readme.md
