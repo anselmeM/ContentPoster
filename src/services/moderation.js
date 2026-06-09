@@ -157,9 +157,10 @@ export const moderateContent = (text, options = {}) => {
   }
   
   // Determine approval status
+  // ⚡ Bolt: Use .some() instead of .filter().length for O(1) early exit and avoiding array allocation
   const approved = strictMode 
-    ? issues.filter(i => i.type === 'error').length === 0 && spamScore < 0.5
-    : issues.filter(i => i.type === 'error').length === 0 && spamScore < 1.0;
+    ? !issues.some(i => i.type === 'error') && spamScore < 0.5
+    : !issues.some(i => i.type === 'error') && spamScore < 1.0;
   
   return {
     approved,
