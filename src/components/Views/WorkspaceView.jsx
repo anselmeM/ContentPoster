@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTeam } from '../../context/TeamContext';
 import { useAuth } from '../../context/AuthContext';
 import { TEAM_ROLES, POST_STATUS, teamService } from '../../services/firebase';
@@ -452,20 +452,24 @@ const WorkspaceView = () => {
   const canManage = currentWorkspace && canManageMembers(activeUserRole);
   
   // Filter workspace posts
-  const filteredPosts = posts.filter(post => {
-    // Search filter
-    if (postSearchQuery) {
-      const q = postSearchQuery.toLowerCase();
-      const matchTitle = post.title?.toLowerCase()?.includes(q);
-      const matchContent = post.content?.toLowerCase()?.includes(q);
-      if (!matchTitle && !matchContent) return false;
-    }
-    // Status filter
-    if (postStatusFilter !== 'All' && post.status !== postStatusFilter) {
-      return false;
-    }
-    return true;
-  });
+  // Bolt Optimization: Memoize the filteredPosts array to avoid O(N) array iteration and
+  // intermediate array allocation on every component re-render unless dependencies change.
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      // Search filter
+      if (postSearchQuery) {
+        const q = postSearchQuery.toLowerCase();
+        const matchTitle = post.title?.toLowerCase()?.includes(q);
+        const matchContent = post.content?.toLowerCase()?.includes(q);
+        if (!matchTitle && !matchContent) return false;
+      }
+      // Status filter
+      if (postStatusFilter !== 'All' && post.status !== postStatusFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [posts, postSearchQuery, postStatusFilter]);
   
   if (loading) {
     return (
