@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { lazyImport } from '../../utils/lazyImport';
 import { useAuth } from '../../context/AuthContext';
 import { postsService, settingsService, teamService } from '../../services/firebase';
 import { PLATFORMS, PLATFORM_LIST } from '../../config/platforms';
@@ -8,7 +9,7 @@ import { TRIGGER_TYPES, CONDITION_FIELDS, CONDITION_OPERATORS, TRIGGER_ACTIONS, 
 import { sanitizeURL } from '../../utils/sanitizeUtils';
 import clsx from 'clsx';
 
-const MediaLibrary = lazy(() => import('../Views/MediaLibrary'));
+const MediaLibrary = lazyImport(() => import('../Views/MediaLibrary'));
 
 // Helper functions for best time suggestions
 const getSecondOptimalTime = (platform) => {

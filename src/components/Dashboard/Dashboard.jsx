@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { lazyImport } from '../../utils/lazyImport';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import Sidebar from './Sidebar';
@@ -9,13 +10,13 @@ import { postsService } from '../../services/firebase';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 // Lazy load view components for code splitting and faster initial load
-const SchedulerView = lazy(() => import('../Views/SchedulerView'));
-const TasksView = lazy(() => import('../Views/TasksView'));
-const TemplatesView = lazy(() => import('../Views/TemplatesView'));
-const SettingsView = lazy(() => import('../Views/SettingsView'));
-const AnalyticsView = lazy(() => import('../Views/AnalyticsView'));
-const MediaLibrary = lazy(() => import('../Views/MediaLibrary'));
-const WorkspaceView = lazy(() => import('../Views/WorkspaceView'));
+const SchedulerView = lazyImport(() => import('../Views/SchedulerView'));
+const TasksView = lazyImport(() => import('../Views/TasksView'));
+const TemplatesView = lazyImport(() => import('../Views/TemplatesView'));
+const SettingsView = lazyImport(() => import('../Views/SettingsView'));
+const AnalyticsView = lazyImport(() => import('../Views/AnalyticsView'));
+const MediaLibrary = lazyImport(() => import('../Views/MediaLibrary'));
+const WorkspaceView = lazyImport(() => import('../Views/WorkspaceView'));
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
