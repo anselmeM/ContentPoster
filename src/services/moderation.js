@@ -157,9 +157,11 @@ export const moderateContent = (text, options = {}) => {
   }
   
   // Determine approval status
+  // Bolt Optimization: Replaced O(N) .filter().length with O(1) best-case .some() to short-circuit array evaluation and prevent intermediate array allocation.
+  const hasErrors = issues.some(i => i.type === 'error');
   const approved = strictMode 
-    ? issues.filter(i => i.type === 'error').length === 0 && spamScore < 0.5
-    : issues.filter(i => i.type === 'error').length === 0 && spamScore < 1.0;
+    ? !hasErrors && spamScore < 0.5
+    : !hasErrors && spamScore < 1.0;
   
   return {
     approved,
