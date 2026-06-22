@@ -54,7 +54,7 @@ const EditMediaModal = ({ item, userId, onClose }) => {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-150 dark:border-gray-700 animate-fadeIn">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Edit Media Details</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-white" aria-label="Close edit modal">
             <i className="fas fa-times text-lg" />
           </button>
         </div>
@@ -113,7 +113,7 @@ const EditMediaModal = ({ item, userId, onClose }) => {
               {tags.map(t => (
                 <span key={t} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-850">
                   #{t}
-                  <button type="button" onClick={() => handleRemoveTag(t)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200">
+                  <button type="button" onClick={() => handleRemoveTag(t)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200" aria-label={`Remove tag ${t}`}>
                     <i className="fas fa-times text-[10px]" />
                   </button>
                 </span>
