@@ -407,10 +407,12 @@ const AnalyticsView = ({ posts }) => {
       timePerformance[timeSlot].count += 1;
     });
     
-    const bestDay = Object.entries(dayPerformance)
-      .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
-    const bestTime = Object.entries(timePerformance)
-      .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
+    const bestDay = Object.entries(dayPerformance).reduce((best, current) =>
+      !best || (current[1].total / current[1].count) > (best[1].total / best[1].count) ? current : best
+    , null);
+    const bestTime = Object.entries(timePerformance).reduce((best, current) =>
+      !best || (current[1].total / current[1].count) > (best[1].total / best[1].count) ? current : best
+    , null);
     
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
