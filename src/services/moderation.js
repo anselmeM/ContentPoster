@@ -157,9 +157,11 @@ export const moderateContent = (text, options = {}) => {
   }
   
   // Determine approval status
+  // Performance optimization: Using !some() instead of filter().length === 0
+  // avoids iterating the entire array and prevents intermediate array allocation
   const approved = strictMode 
-    ? issues.filter(i => i.type === 'error').length === 0 && spamScore < 0.5
-    : issues.filter(i => i.type === 'error').length === 0 && spamScore < 1.0;
+    ? !issues.some(i => i.type === 'error') && spamScore < 0.5
+    : !issues.some(i => i.type === 'error') && spamScore < 1.0;
   
   return {
     approved,
