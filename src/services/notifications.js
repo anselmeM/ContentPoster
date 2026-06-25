@@ -117,9 +117,9 @@ export const notificationService = {
       const notifications = await notificationService.getNotifications(userId, { maxResults: 100 });
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       
-      for (const id of unreadIds) {
-        await notificationService.markAsRead(userId, id);
-      }
+      // ⚡ Bolt Optimization: Use Promise.all to execute network updates in parallel,
+      // avoiding N+1 sequential request waterfall.
+      await Promise.all(unreadIds.map(id => notificationService.markAsRead(userId, id)));
       
       return true;
     } catch (error) {
