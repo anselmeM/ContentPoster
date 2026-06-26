@@ -39,7 +39,7 @@ interface TaskItemProps {
  *   onSelect={() => toggleSelect(task.id)}
  * />
  */
-export function TaskItem({ 
+export const TaskItem = React.memo(function TaskItem({
   task, 
   isSelected = false,
   isEditing = false,
@@ -287,7 +287,19 @@ export function TaskItem({
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.text === nextProps.task.text &&
+    prevProps.task.completed === nextProps.task.completed &&
+    prevProps.task.priority === nextProps.task.priority &&
+    prevProps.task.category === nextProps.task.category &&
+    prevProps.task.deadline === nextProps.task.deadline &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isEditing === nextProps.isEditing &&
+    prevProps.className === nextProps.className
+  );
+});
 
 /**
  * Task Item Skeleton (loading state)

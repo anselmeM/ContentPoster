@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { tasksService } from '../../services/firebase';
 import { TaskForm } from '../Tasks/TaskForm';
@@ -76,7 +76,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
   }, [user?.uid]);
 
   // Handle creating a new task with full properties
-  const handleCreateTask = async (input: TaskCreateInput) => {
+  const handleCreateTask = useCallback(async (input: TaskCreateInput) => {
     if (!user || !input.text.trim()) return;
 
     await tasksService.create(user.uid, {
@@ -86,27 +86,27 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
       priority: input.priority || TaskPriority.MEDIUM,
       deadline: input.deadline || null
     });
-  };
+  }, [user]);
 
   // Handle updating task text (inline editing)
-  const handleUpdateTaskText = async (taskId: string, text: string) => {
+  const handleUpdateTaskText = useCallback(async (taskId: string, text: string) => {
     if (!user || !text.trim()) return;
     
     await tasksService.update(user.uid, taskId, { text: text.trim() });
     setEditingTaskId(null);
-  };
+  }, [user]);
 
   // Handle toggling task completion
-  const handleToggleTask = async (taskId: string, currentCompletedStatus: boolean) => {
+  const handleToggleTask = useCallback(async (taskId: string, currentCompletedStatus: boolean) => {
     if (!user) return;
     await tasksService.update(user.uid, taskId, {
       completed: !currentCompletedStatus,
       completedAt: !currentCompletedStatus ? Date.now() : null
     });
-  };
+  }, [user]);
 
   // Handle deleting a task
-  const handleDeleteTask = async (taskId: string) => {
+  const handleDeleteTask = useCallback(async (taskId: string) => {
     if (!user) return;
     await tasksService.delete(user.uid, taskId);
     // Also remove from selection if selected
@@ -115,20 +115,20 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
       next.delete(taskId);
       return next;
     });
-  };
+  }, [user]);
 
   // Handle bulk delete
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     if (!user || selectedTaskIds.size === 0) return;
     
     for (const taskId of selectedTaskIds) {
       await tasksService.delete(user.uid, taskId);
     }
     setSelectedTaskIds(new Set());
-  };
+  }, [user, selectedTaskIds]);
 
   // Handle task selection for bulk actions
-  const handleToggleSelectTask = (taskId: string) => {
+  const handleToggleSelectTask = useCallback((taskId: string) => {
     setSelectedTaskIds(prev => {
       const next = new Set(prev);
       if (next.has(taskId)) {
@@ -138,17 +138,22 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
       }
       return next;
     });
-  };
+  }, []);
+
+  // Handle edit task toggling
+  const handleEditTask = useCallback((taskId: string) => {
+    setEditingTaskId(prev => prev === taskId ? null : taskId);
+  }, []);
 
   // Handle filter changes
-  const handleFilterChange = (newFilters: TaskFiltersType) => {
+  const handleFilterChange = useCallback((newFilters: TaskFiltersType) => {
     setFilterState(newFilters);
-  };
+  }, []);
 
   // Handle sort changes
-  const handleSortChange = (value: string) => {
+  const handleSortChange = useCallback((value: string) => {
     setSortConfig(parseSortOption(value));
-  };
+  }, []);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -255,7 +260,7 @@ const TasksView = ({ searchQuery = '' }: TasksViewProps) => {
               isSelected={selectedTaskIds.has(task.id)}
               isEditing={editingTaskId === task.id}
               onToggle={() => handleToggleTask(task.id, task.completed)}
-              onEdit={() => setEditingTaskId(task.id === editingTaskId ? null : task.id)}
+              onEdit={() => handleEditTask(task.id)}
               onSave={(text) => handleUpdateTaskText(task.id, text)}
               onDelete={() => handleDeleteTask(task.id)}
               onSelect={() => handleToggleSelectTask(task.id)}
