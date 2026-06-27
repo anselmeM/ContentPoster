@@ -78,8 +78,12 @@ export const queueService = {
   enqueue: async (userId, postData) => {
     const queue = postQueue.get(userId) || [];
     
+    const randomSuffix = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().split('-')[0]
+      : Math.random().toString(36).substr(2, 9);
+
     const queueItem = {
-      id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `queue_${Date.now()}_${randomSuffix}`,
       userId,
       postData,
       status: 'queued',

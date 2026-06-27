@@ -399,7 +399,10 @@ export function sortTasks(tasks: Task[], sort: TaskSortConfig): Task[] {
  * @returns UUID string
  */
 export function generateTaskId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const randomSuffix = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID().split('-')[0]
+    : Math.random().toString(36).substr(2, 9);
+  return `${Date.now()}-${randomSuffix}`;
 }
 
 /**

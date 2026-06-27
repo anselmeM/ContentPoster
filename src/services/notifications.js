@@ -160,8 +160,12 @@ const toastService = {
   listeners: [],
   
   show: function(options) {
+    const randomSuffix = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().split('-')[0]
+      : Math.random().toString(36).substr(2, 9);
+
     const toast = {
-      id: `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `toast_${Date.now()}_${randomSuffix}`,
       type: options.type || 'info', // success, error, warning, info
       title: options.title,
       message: options.message,
