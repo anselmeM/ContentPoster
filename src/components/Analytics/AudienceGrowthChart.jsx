@@ -147,7 +147,9 @@ const AudienceGrowthChart = ({
       const dailyAvg = (growth / timeRange).toFixed(1);
       
       // Find best day
-      const bestDay = [...data].sort((a, b) => b.engagement - a.engagement)[0];
+      const bestDay = data.reduce((best, current) =>
+        (current.engagement ?? 0) > (best.engagement ?? 0) ? current : best
+      , data[0]);
       
       stats[platform] = {
         startFollowers: start,
