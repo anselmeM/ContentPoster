@@ -407,10 +407,29 @@ const AnalyticsView = ({ posts }) => {
       timePerformance[timeSlot].count += 1;
     });
     
-    const bestDay = Object.entries(dayPerformance)
-      .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
-    const bestTime = Object.entries(timePerformance)
-      .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
+    // Bolt Optimization: Replaced O(N log N) sort with O(N) reduce
+    const dayEntries = Object.entries(dayPerformance);
+    const bestDay = dayEntries.length > 0
+      ? dayEntries.reduce((best, current) => {
+          const currentAvg = current[1].total / current[1].count;
+          const bestAvg = best[1].total / best[1].count;
+          // Handle NaN cases appropriately using fallback to 0
+          const currValue = isNaN(currentAvg) ? 0 : currentAvg;
+          const bestValue = isNaN(bestAvg) ? 0 : bestAvg;
+          return currValue > bestValue ? current : best;
+        })
+      : null;
+
+    const timeEntries = Object.entries(timePerformance);
+    const bestTime = timeEntries.length > 0
+      ? timeEntries.reduce((best, current) => {
+          const currentAvg = current[1].total / current[1].count;
+          const bestAvg = best[1].total / best[1].count;
+          const currValue = isNaN(currentAvg) ? 0 : currentAvg;
+          const bestValue = isNaN(bestAvg) ? 0 : bestAvg;
+          return currValue > bestValue ? current : best;
+        })
+      : null;
     
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
