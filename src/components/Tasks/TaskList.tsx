@@ -42,7 +42,7 @@ interface TaskListProps {
  *   onDeleteTask={deleteTask}
  * />
  */
-export function TaskList({ 
+export const TaskList = React.memo(function TaskList({
   tasks, 
   selectedIds, 
   isLoading = false,
@@ -190,7 +190,16 @@ export function TaskList({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.tasks === nextProps.tasks &&
+    prevProps.selectedIds === nextProps.selectedIds &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.editingTaskId === nextProps.editingTaskId &&
+    prevProps.emptyMessage === nextProps.emptyMessage &&
+    prevProps.className === nextProps.className
+  );
+});
 
 /**
  * Compact Task List (for sidebar/inline usage)
@@ -202,7 +211,7 @@ interface CompactTaskListProps {
   className?: string;
 }
 
-export function CompactTaskList({ 
+export const CompactTaskList = React.memo(function CompactTaskList({
   tasks, 
   maxItems = 5,
   onToggleTask,
@@ -258,6 +267,6 @@ export function CompactTaskList({
       )}
     </div>
   );
-}
+});
 
 export default TaskList;
