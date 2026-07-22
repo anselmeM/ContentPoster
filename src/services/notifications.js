@@ -117,9 +117,10 @@ export const notificationService = {
       const notifications = await notificationService.getNotifications(userId, { maxResults: 100 });
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       
-      for (const id of unreadIds) {
-        await notificationService.markAsRead(userId, id);
-      }
+      // Bolt Optimization: Parallelize independent network requests using Promise.all
+      // to resolve network waterfalls. This reduces total latency from O(N) sequential
+      // round-trips to approximately the duration of the slowest single request.
+      await Promise.all(unreadIds.map(id => notificationService.markAsRead(userId, id)));
       
       return true;
     } catch (error) {
