@@ -78,8 +78,14 @@ export const queueService = {
   enqueue: async (userId, postData) => {
     const queue = postQueue.get(userId) || [];
     
+    // Security Enhancement: Use cryptographically secure random number generation
+    // to prevent predictable queue IDs. Math.random() is vulnerable to PRNG state exposure.
+    const randomPart = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substr(2, 9);
+
     const queueItem = {
-      id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `queue_${Date.now()}_${randomPart}`,
       userId,
       postData,
       status: 'queued',

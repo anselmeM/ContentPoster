@@ -160,8 +160,14 @@ const toastService = {
   listeners: [],
   
   show: function(options) {
+    // Security Enhancement: Use cryptographically secure random number generation
+    // to prevent predictable toast IDs. Math.random() is vulnerable to PRNG state exposure.
+    const randomPart = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substr(2, 9);
+
     const toast = {
-      id: `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `toast_${Date.now()}_${randomPart}`,
       type: options.type || 'info', // success, error, warning, info
       title: options.title,
       message: options.message,
