@@ -115,11 +115,15 @@ export const notificationService = {
   markAllAsRead: async (userId) => {
     try {
       const notifications = await notificationService.getNotifications(userId, { maxResults: 100 });
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
       
-      for (const id of unreadIds) {
-        await notificationService.markAsRead(userId, id);
-      }
+      // Bolt Optimization: Use a single reduce pass instead of filter + map
+      // and parallelize network requests with Promise.all to resolve the sequential waterfall.
+      const unreadIds = notifications.reduce((acc, n) => {
+        if (!n.read) acc.push(n.id);
+        return acc;
+      }, []);
+
+      await Promise.all(unreadIds.map(id => notificationService.markAsRead(userId, id)));
       
       return true;
     } catch (error) {
