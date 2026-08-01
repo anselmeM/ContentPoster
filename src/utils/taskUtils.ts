@@ -399,7 +399,12 @@ export function sortTasks(tasks: Task[], sort: TaskSortConfig): Task[] {
  * @returns UUID string
  */
 export function generateTaskId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Security enhancement: Use cryptographically secure random number generation
+  // where available to prevent predictable IDs, falling back to Math.random() in non-secure contexts.
+  const randomPart = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).substr(2, 9);
+  return `${Date.now()}-${randomPart}`;
 }
 
 /**
